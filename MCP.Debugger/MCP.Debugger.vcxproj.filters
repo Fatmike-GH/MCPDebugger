@@ -1,0 +1,363 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Managed">
+      <UniqueIdentifier>{c00a7896-24cf-4065-9a4f-8678c3838b35}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Native">
+      <UniqueIdentifier>{728291b5-dd2b-4656-985b-64fdfe20e664}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Native\Threading">
+      <UniqueIdentifier>{ff5cf032-9c6b-445a-be55-ee842093c910}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Adapters">
+      <UniqueIdentifier>{241a9688-7cd4-4311-bcfd-971c526bb03e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Native\Debugger">
+      <UniqueIdentifier>{3626cc67-29f1-45fe-9c2a-bd7c80ec8c99}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Native\ProcessExplorer">
+      <UniqueIdentifier>{d5c82baa-1fea-4617-a47a-ae2aea4f8c6c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Native\Debugger\Interfaces">
+      <UniqueIdentifier>{7af9aebf-4e00-4e24-a84a-3aba8cc08996}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Native\Debugger\DebugEventHandler">
+      <UniqueIdentifier>{89589970-01b9-4983-b410-289f4dbf690e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Native\Debugger\DebugEventHandler\Interfaces">
+      <UniqueIdentifier>{978bbb24-ca1b-4e11-b0a0-021068b720a2}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Native\ProcessExplorer\Interfaces">
+      <UniqueIdentifier>{01a36e8e-46ee-42a3-837a-552960cd9ae7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Native\PEFile">
+      <UniqueIdentifier>{54a8cf88-61ec-487e-a386-16852100557d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Native\Debugger\Commands">
+      <UniqueIdentifier>{abe08bdf-a295-4978-9296-39db71146d79}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Native\Debugger\Commands\Base">
+      <UniqueIdentifier>{17d639e1-3735-4072-b44e-774fa5638685}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Native\Disassembler">
+      <UniqueIdentifier>{42714bb2-76dd-49f6-b349-a82531eb5803}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Managed\Interfaces">
+      <UniqueIdentifier>{de95e9a8-640d-45b4-bafc-ac06ec560aaf}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="Managed\DebuggerService.cpp">
+      <Filter>Managed</Filter>
+    </ClCompile>
+    <ClCompile Include="Native\Threading\EventWaiter.cpp">
+      <Filter>Native\Threading</Filter>
+    </ClCompile>
+    <ClCompile Include="Adapters\DebuggerEventHandlerAdapter.cpp">
+      <Filter>Adapters</Filter>
+    </ClCompile>
+    <ClCompile Include="Native\Debugger\BreakpointManager.cpp">
+      <Filter>Native\Debugger</Filter>
+    </ClCompile>
+    <ClCompile Include="Native\Debugger\Debugger.cpp">
+      <Filter>Native\Debugger</Filter>
+    </ClCompile>
+    <ClCompile Include="Native\Debugger\DebuggerThread.cpp">
+      <Filter>Native\Debugger</Filter>
+    </ClCompile>
+    <ClCompile Include="Native\Debugger\Breakpoint.cpp">
+      <Filter>Native\Debugger</Filter>
+    </ClCompile>
+    <ClCompile Include="Native\ProcessExplorer\PEImage.cpp">
+      <Filter>Native\ProcessExplorer</Filter>
+    </ClCompile>
+    <ClCompile Include="Native\Debugger\DebugEventHandler\CreateProcessEventHandler.cpp">
+      <Filter>Native\Debugger\DebugEventHandler</Filter>
+    </ClCompile>
+    <ClCompile Include="Native\Debugger\DebugEventHandler\CreateThreadEventHandler.cpp">
+      <Filter>Native\Debugger\DebugEventHandler</Filter>
+    </ClCompile>
+    <ClCompile Include="Native\Debugger\DebugEventHandler\DefaultEventHandler.cpp">
+      <Filter>Native\Debugger\DebugEventHandler</Filter>
+    </ClCompile>
+    <ClCompile Include="Native\Debugger\DebugEventHandler\ExceptionEventHandler.cpp">
+      <Filter>Native\Debugger\DebugEventHandler</Filter>
+    </ClCompile>
+    <ClCompile Include="Native\Debugger\DebugEventHandler\ExitProcessEventHandler.cpp">
+      <Filter>Native\Debugger\DebugEventHandler</Filter>
+    </ClCompile>
+    <ClCompile Include="Native\Debugger\DebugEventHandler\ExitThreadEventHandler.cpp">
+      <Filter>Native\Debugger\DebugEventHandler</Filter>
+    </ClCompile>
+    <ClCompile Include="Native\Debugger\DebugEventHandler\LoadDllEventHandler.cpp">
+      <Filter>Native\Debugger\DebugEventHandler</Filter>
+    </ClCompile>
+    <ClCompile Include="Native\Debugger\DebugEventHandler\OutputDebugStringEventHandler.cpp">
+      <Filter>Native\Debugger\DebugEventHandler</Filter>
+    </ClCompile>
+    <ClCompile Include="Native\Debugger\DebugEventHandler\UnloadDllEventHandler.cpp">
+      <Filter>Native\Debugger\DebugEventHandler</Filter>
+    </ClCompile>
+    <ClCompile Include="Native\Debugger\DebugEventHandler\DebugEventHandler.cpp">
+      <Filter>Native\Debugger\DebugEventHandler</Filter>
+    </ClCompile>
+    <ClCompile Include="Native\Debugger\DebugEventHandler\DebugEventStorage.cpp">
+      <Filter>Native\Debugger\DebugEventHandler</Filter>
+    </ClCompile>
+    <ClCompile Include="Native\Debugger\DebuggerCommandQueue.cpp">
+      <Filter>Native\Debugger</Filter>
+    </ClCompile>
+    <ClCompile Include="Native\ProcessExplorer\ProcessExplorer.cpp">
+      <Filter>Native\ProcessExplorer</Filter>
+    </ClCompile>
+    <ClCompile Include="Native\PEFile\PEFile.cpp">
+      <Filter>Native\PEFile</Filter>
+    </ClCompile>
+    <ClCompile Include="Native\ProcessExplorer\ModuleAnalyzer.cpp">
+      <Filter>Native\ProcessExplorer</Filter>
+    </ClCompile>
+    <ClCompile Include="Native\ProcessExplorer\ProcessDataStore.cpp">
+      <Filter>Native\ProcessExplorer</Filter>
+    </ClCompile>
+    <ClCompile Include="Native\ProcessExplorer\ModuleInfo.cpp">
+      <Filter>Native\ProcessExplorer</Filter>
+    </ClCompile>
+    <ClCompile Include="Native\Debugger\Commands\Base\ICommand.cpp">
+      <Filter>Native\Debugger\Commands\Base</Filter>
+    </ClCompile>
+    <ClCompile Include="Managed\UiDispatcher.cpp">
+      <Filter>Managed</Filter>
+    </ClCompile>
+    <ClCompile Include="Native\Debugger\Commands\ReadMemoryCommand.cpp">
+      <Filter>Native\Debugger\Commands</Filter>
+    </ClCompile>
+    <ClCompile Include="Native\Debugger\Commands\RemoveBreakpointCommand.cpp">
+      <Filter>Native\Debugger\Commands</Filter>
+    </ClCompile>
+    <ClCompile Include="Native\Debugger\Commands\SetBreakpointCommand.cpp">
+      <Filter>Native\Debugger\Commands</Filter>
+    </ClCompile>
+    <ClCompile Include="Native\Debugger\Commands\StopCommand.cpp">
+      <Filter>Native\Debugger\Commands</Filter>
+    </ClCompile>
+    <ClCompile Include="Native\Debugger\Commands\WriteMemoryCommand.cpp">
+      <Filter>Native\Debugger\Commands</Filter>
+    </ClCompile>
+    <ClCompile Include="Native\Debugger\Commands\StepIntoCommand.cpp">
+      <Filter>Native\Debugger\Commands</Filter>
+    </ClCompile>
+    <ClCompile Include="Native\Disassembler\Disassembler.cpp">
+      <Filter>Native\Disassembler</Filter>
+    </ClCompile>
+    <ClCompile Include="Native\Debugger\Commands\DisassembleCommand.cpp">
+      <Filter>Native\Debugger\Commands</Filter>
+    </ClCompile>
+    <ClCompile Include="Managed\ConsoleDispatcher.cpp">
+      <Filter>Managed</Filter>
+    </ClCompile>
+    <ClCompile Include="Native\Debugger\Commands\StepOverCommand.cpp">
+      <Filter>Native\Debugger\Commands</Filter>
+    </ClCompile>
+    <ClCompile Include="Native\Disassembler\SymbolResolver.cpp">
+      <Filter>Native\Disassembler</Filter>
+    </ClCompile>
+    <ClCompile Include="Native\Debugger\Commands\TryResolveStringCommand.cpp">
+      <Filter>Native\Debugger\Commands</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="Managed\DebuggerService.h">
+      <Filter>Managed</Filter>
+    </ClInclude>
+    <ClInclude Include="Native\Threading\EventWaiter.h">
+      <Filter>Native\Threading</Filter>
+    </ClInclude>
+    <ClInclude Include="Adapters\DebuggerEventHandlerAdapter.h">
+      <Filter>Adapters</Filter>
+    </ClInclude>
+    <ClInclude Include="Native\Debugger\BreakpointManager.h">
+      <Filter>Native\Debugger</Filter>
+    </ClInclude>
+    <ClInclude Include="Native\Debugger\Debugger.h">
+      <Filter>Native\Debugger</Filter>
+    </ClInclude>
+    <ClInclude Include="Native\Debugger\DebuggerThread.h">
+      <Filter>Native\Debugger</Filter>
+    </ClInclude>
+    <ClInclude Include="Native\Debugger\Interfaces\IDebuggerEventHandler.h">
+      <Filter>Native\Debugger\Interfaces</Filter>
+    </ClInclude>
+    <ClInclude Include="Native\Debugger\Breakpoint.h">
+      <Filter>Native\Debugger</Filter>
+    </ClInclude>
+    <ClInclude Include="Native\ProcessExplorer\PEImage.h">
+      <Filter>Native\ProcessExplorer</Filter>
+    </ClInclude>
+    <ClInclude Include="Native\Debugger\DebugEventHandler\CreateProcessEventHandler.h">
+      <Filter>Native\Debugger\DebugEventHandler</Filter>
+    </ClInclude>
+    <ClInclude Include="Native\Debugger\DebugEventHandler\CreateThreadEventHandler.h">
+      <Filter>Native\Debugger\DebugEventHandler</Filter>
+    </ClInclude>
+    <ClInclude Include="Native\Debugger\DebugEventHandler\DefaultEventHandler.h">
+      <Filter>Native\Debugger\DebugEventHandler</Filter>
+    </ClInclude>
+    <ClInclude Include="Native\Debugger\DebugEventHandler\ExceptionEventHandler.h">
+      <Filter>Native\Debugger\DebugEventHandler</Filter>
+    </ClInclude>
+    <ClInclude Include="Native\Debugger\DebugEventHandler\ExitProcessEventHandler.h">
+      <Filter>Native\Debugger\DebugEventHandler</Filter>
+    </ClInclude>
+    <ClInclude Include="Native\Debugger\DebugEventHandler\ExitThreadEventHandler.h">
+      <Filter>Native\Debugger\DebugEventHandler</Filter>
+    </ClInclude>
+    <ClInclude Include="Native\Debugger\DebugEventHandler\LoadDllEventHandler.h">
+      <Filter>Native\Debugger\DebugEventHandler</Filter>
+    </ClInclude>
+    <ClInclude Include="Native\Debugger\DebugEventHandler\OutputDebugStringEventHandler.h">
+      <Filter>Native\Debugger\DebugEventHandler</Filter>
+    </ClInclude>
+    <ClInclude Include="Native\Debugger\DebugEventHandler\UnloadDllEventHandler.h">
+      <Filter>Native\Debugger\DebugEventHandler</Filter>
+    </ClInclude>
+    <ClInclude Include="Native\Debugger\DebugEventHandler\DebugEventHandler.h">
+      <Filter>Native\Debugger\DebugEventHandler</Filter>
+    </ClInclude>
+    <ClInclude Include="Native\Debugger\DebugEventHandler\Interfaces\IDebugEventHandler.h">
+      <Filter>Native\Debugger\DebugEventHandler\Interfaces</Filter>
+    </ClInclude>
+    <ClInclude Include="Native\Debugger\DebugEventHandler\HandleResult.h">
+      <Filter>Native\Debugger\DebugEventHandler</Filter>
+    </ClInclude>
+    <ClInclude Include="Native\Debugger\DebugEventHandler\DebugEventStorage.h">
+      <Filter>Native\Debugger\DebugEventHandler</Filter>
+    </ClInclude>
+    <ClInclude Include="Native\Debugger\DebuggerCommandQueue.h">
+      <Filter>Native\Debugger</Filter>
+    </ClInclude>
+    <ClInclude Include="Native\Debugger\DebugEventHandler\Interfaces\IDebugEventStorageListener.h">
+      <Filter>Native\Debugger\DebugEventHandler\Interfaces</Filter>
+    </ClInclude>
+    <ClInclude Include="Native\ProcessExplorer\ProcessExplorer.h">
+      <Filter>Native\ProcessExplorer</Filter>
+    </ClInclude>
+    <ClInclude Include="Native\ProcessExplorer\Interfaces\IProcessExplorerListener.h">
+      <Filter>Native\ProcessExplorer\Interfaces</Filter>
+    </ClInclude>
+    <ClInclude Include="Native\PEFile\PEFile.h">
+      <Filter>Native\PEFile</Filter>
+    </ClInclude>
+    <ClInclude Include="Native\ProcessExplorer\ModuleAnalyzer.h">
+      <Filter>Native\ProcessExplorer</Filter>
+    </ClInclude>
+    <ClInclude Include="Native\ProcessExplorer\ProcessDataStore.h">
+      <Filter>Native\ProcessExplorer</Filter>
+    </ClInclude>
+    <ClInclude Include="Native\ProcessExplorer\ModuleInfo.h">
+      <Filter>Native\ProcessExplorer</Filter>
+    </ClInclude>
+    <ClInclude Include="Native\ProcessExplorer\ModuleExport.h">
+      <Filter>Native\ProcessExplorer</Filter>
+    </ClInclude>
+    <ClInclude Include="Native\ProcessExplorer\ModuleSection.h">
+      <Filter>Native\ProcessExplorer</Filter>
+    </ClInclude>
+    <ClInclude Include="Native\ProcessExplorer\ModuleImport.h">
+      <Filter>Native\ProcessExplorer</Filter>
+    </ClInclude>
+    <ClInclude Include="Native\ProcessExplorer\ModuleImportFunction.h">
+      <Filter>Native\ProcessExplorer</Filter>
+    </ClInclude>
+    <ClInclude Include="Native\Debugger\Interfaces\BreakpointEventArgs.h">
+      <Filter>Native\Debugger\Interfaces</Filter>
+    </ClInclude>
+    <ClInclude Include="Native\Debugger\Interfaces\ExitProcessEventArgs.h">
+      <Filter>Native\Debugger\Interfaces</Filter>
+    </ClInclude>
+    <ClInclude Include="Native\Debugger\DebugEventHandler\DllInfo.h">
+      <Filter>Native\Debugger\DebugEventHandler</Filter>
+    </ClInclude>
+    <ClInclude Include="Native\Debugger\DebugEventHandler\ProcessInfo.h">
+      <Filter>Native\Debugger\DebugEventHandler</Filter>
+    </ClInclude>
+    <ClInclude Include="Native\Debugger\DebugEventHandler\ThreadInfo.h">
+      <Filter>Native\Debugger\DebugEventHandler</Filter>
+    </ClInclude>
+    <ClInclude Include="Native\Debugger\Commands\Base\ICommand.h">
+      <Filter>Native\Debugger\Commands\Base</Filter>
+    </ClInclude>
+    <ClInclude Include="Native\Debugger\Commands\Base\ICommandResult.h">
+      <Filter>Native\Debugger\Commands\Base</Filter>
+    </ClInclude>
+    <ClInclude Include="Native\Debugger\Commands\Base\CommandType.h">
+      <Filter>Native\Debugger\Commands\Base</Filter>
+    </ClInclude>
+    <ClInclude Include="Native\Debugger\Commands\CommandResult.h">
+      <Filter>Native\Debugger\Commands</Filter>
+    </ClInclude>
+    <ClInclude Include="Native\Debugger\Commands\ReadMemoryResult.h">
+      <Filter>Native\Debugger\Commands</Filter>
+    </ClInclude>
+    <ClInclude Include="Native\Debugger\Commands\ReadMemoryCommand.h">
+      <Filter>Native\Debugger\Commands</Filter>
+    </ClInclude>
+    <ClInclude Include="Native\Debugger\Commands\WriteMemoryCommand.h">
+      <Filter>Native\Debugger\Commands</Filter>
+    </ClInclude>
+    <ClInclude Include="Native\Debugger\Commands\Command.h">
+      <Filter>Native\Debugger\Commands</Filter>
+    </ClInclude>
+    <ClInclude Include="Managed\UiDispatcher.h">
+      <Filter>Managed</Filter>
+    </ClInclude>
+    <ClInclude Include="Native\Debugger\Commands\Base\ICommandContext.h">
+      <Filter>Native\Debugger\Commands\Base</Filter>
+    </ClInclude>
+    <ClInclude Include="Native\Debugger\Commands\RemoveBreakpointCommand.h">
+      <Filter>Native\Debugger\Commands</Filter>
+    </ClInclude>
+    <ClInclude Include="Native\Debugger\Commands\SetBreakpointCommand.h">
+      <Filter>Native\Debugger\Commands</Filter>
+    </ClInclude>
+    <ClInclude Include="Native\Debugger\Commands\StopCommand.h">
+      <Filter>Native\Debugger\Commands</Filter>
+    </ClInclude>
+    <ClInclude Include="Native\Debugger\Commands\StepIntoCommand.h">
+      <Filter>Native\Debugger\Commands</Filter>
+    </ClInclude>
+    <ClInclude Include="Native\Disassembler\Disassembler.h">
+      <Filter>Native\Disassembler</Filter>
+    </ClInclude>
+    <ClInclude Include="Native\Disassembler\Instruction.h">
+      <Filter>Native\Disassembler</Filter>
+    </ClInclude>
+    <ClInclude Include="Native\Debugger\Commands\DisassembleCommand.h">
+      <Filter>Native\Debugger\Commands</Filter>
+    </ClInclude>
+    <ClInclude Include="Native\Debugger\Commands\DisassembleResult.h">
+      <Filter>Native\Debugger\Commands</Filter>
+    </ClInclude>
+    <ClInclude Include="Managed\ConsoleDispatcher.h">
+      <Filter>Managed</Filter>
+    </ClInclude>
+    <ClInclude Include="Managed\ActionWrapper.h">
+      <Filter>Managed</Filter>
+    </ClInclude>
+    <ClInclude Include="Managed\Interfaces\IDispatcher.h">
+      <Filter>Managed\Interfaces</Filter>
+    </ClInclude>
+    <ClInclude Include="Native\Debugger\Commands\StepOverCommand.h">
+      <Filter>Native\Debugger\Commands</Filter>
+    </ClInclude>
+    <ClInclude Include="Native\Disassembler\SymbolResolver.h">
+      <Filter>Native\Disassembler</Filter>
+    </ClInclude>
+    <ClInclude Include="Native\Debugger\Commands\TryResolveStringCommand.h">
+      <Filter>Native\Debugger\Commands</Filter>
+    </ClInclude>
+    <ClInclude Include="Native\Debugger\Commands\TryResolveStringResult.h">
+      <Filter>Native\Debugger\Commands</Filter>
+    </ClInclude>
+  </ItemGroup>
+</Project>

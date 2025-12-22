@@ -1,0 +1,53 @@
+#include "ModuleAnalyzer.h"
+#include "ModuleInfo.h"
+
+namespace MCP::Native::ProcessExplorer
+{
+  ModuleInfoPtr ModuleAnalyzer::AnalyzeModule(HANDLE hProcess, HANDLE hFile, void* baseAddress)
+  {
+    if (hProcess == nullptr || baseAddress == nullptr) return nullptr;
+
+    PEImage peImage(hProcess, (DWORD_PTR)baseAddress);
+    if (!peImage.IsValid())
+    {
+      return nullptr;
+    }
+
+    return CreateModuleInfo(peImage, baseAddress, hFile);
+  }
+
+  ModuleInfoPtr ModuleAnalyzer::CreateModuleInfo(PEImage& peImage, void* baseAddress, HANDLE hFile)
+  {
+    std::wstring path = GetPathFromHandle(hFile);
+    DWORD sizeOfImage = peImage.GetSizeOfImage();
+
+    return std::make_shared<ModuleInfo>(
+      baseAddress,
+      sizeOfImage,
+      std::move(path),
+      peImage.GetSections(),
+      peImage.GetExports(),
+      peImage.GetImports()
+    );
+  }
+
+  std::wstring ModuleAnalyzer::GetPathFromHandle(HANDLE hFile)
+  {
+    if (hFile == nullptr) return std::wstring();
+
+    wchar_t buffer[MAX_PATH];
+    if (GetFinalPathNameByHandleW(hFile, buffer, MAX_PATH, FILE_NAME_NORMALIZED) == 0)
+    {
+      return std::wstring();
+    }
+
+    std::wstring path(buffer);
+    static const std::wstring prefix = L"\\\\?\\";
+    if (path.rfind(prefix, 0) == 0)
+    {
+      return path.substr(prefix.length());
+    }
+
+    return path;
+  }
+}

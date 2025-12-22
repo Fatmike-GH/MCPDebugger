@@ -1,0 +1,10 @@
+<Project>
+  <Import Project="../Directory.Build.props" />
+  <PropertyGroup>
+	<OutputPath>..\build\$(Configuration)\$(Platform)\MCP.Debugger.Tester\</OutputPath>
+	<BaseIntermediateOutputPath>..\build\$(Configuration)\$(Platform)\obj\MCP.Debugger.Tester\</BaseIntermediateOutputPath>
+	<MSBuildProjectExtensionsPath>..\build\$(Configuration)\$(Platform)\ext\MCP.Debugger.Tester\</MSBuildProjectExtensionsPath>
+    <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+    <AppendRuntimeIdentifierToOutputPath>false</AppendRuntimeIdentifierToOutputPath>
+  </PropertyGroup>
+</Project>

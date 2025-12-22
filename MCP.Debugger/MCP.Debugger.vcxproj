@@ -1,0 +1,264 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="Adapters\DebuggerEventHandlerAdapter.cpp" />
+    <ClCompile Include="Managed\DebuggerService.cpp" />
+    <ClCompile Include="Managed\ConsoleDispatcher.cpp" />
+    <ClCompile Include="Managed\UiDispatcher.cpp" />
+    <ClCompile Include="Native\Debugger\Breakpoint.cpp" />
+    <ClCompile Include="Native\Debugger\BreakpointManager.cpp" />
+    <ClCompile Include="Native\Debugger\Commands\Base\ICommand.cpp" />
+    <ClCompile Include="Native\Debugger\Commands\DisassembleCommand.cpp" />
+    <ClCompile Include="Native\Debugger\Commands\ReadMemoryCommand.cpp" />
+    <ClCompile Include="Native\Debugger\Commands\RemoveBreakpointCommand.cpp" />
+    <ClCompile Include="Native\Debugger\Commands\SetBreakpointCommand.cpp" />
+    <ClCompile Include="Native\Debugger\Commands\StepIntoCommand.cpp" />
+    <ClCompile Include="Native\Debugger\Commands\StepOverCommand.cpp" />
+    <ClCompile Include="Native\Debugger\Commands\StopCommand.cpp" />
+    <ClCompile Include="Native\Debugger\Commands\TryResolveStringCommand.cpp" />
+    <ClCompile Include="Native\Debugger\Commands\WriteMemoryCommand.cpp" />
+    <ClCompile Include="Native\Debugger\DebugEventHandler\CreateProcessEventHandler.cpp" />
+    <ClCompile Include="Native\Debugger\DebugEventHandler\CreateThreadEventHandler.cpp" />
+    <ClCompile Include="Native\Debugger\DebugEventHandler\DebugEventHandler.cpp" />
+    <ClCompile Include="Native\Debugger\DebugEventHandler\DebugEventStorage.cpp" />
+    <ClCompile Include="Native\Debugger\DebugEventHandler\DefaultEventHandler.cpp" />
+    <ClCompile Include="Native\Debugger\DebugEventHandler\ExceptionEventHandler.cpp" />
+    <ClCompile Include="Native\Debugger\DebugEventHandler\ExitProcessEventHandler.cpp" />
+    <ClCompile Include="Native\Debugger\DebugEventHandler\ExitThreadEventHandler.cpp" />
+    <ClCompile Include="Native\Debugger\DebugEventHandler\LoadDllEventHandler.cpp" />
+    <ClCompile Include="Native\Debugger\DebugEventHandler\OutputDebugStringEventHandler.cpp" />
+    <ClCompile Include="Native\Debugger\DebugEventHandler\UnloadDllEventHandler.cpp" />
+    <ClCompile Include="Native\Debugger\Debugger.cpp" />
+    <ClCompile Include="Native\Debugger\DebuggerCommandQueue.cpp" />
+    <ClCompile Include="Native\Debugger\DebuggerThread.cpp" />
+    <ClCompile Include="Native\Disassembler\Disassembler.cpp" />
+    <ClCompile Include="Native\Disassembler\SymbolResolver.cpp" />
+    <ClCompile Include="Native\PEFile\PEFile.cpp" />
+    <ClCompile Include="Native\ProcessExplorer\ModuleAnalyzer.cpp" />
+    <ClCompile Include="Native\ProcessExplorer\ModuleInfo.cpp" />
+    <ClCompile Include="Native\ProcessExplorer\PEImage.cpp" />
+    <ClCompile Include="Native\ProcessExplorer\ProcessDataStore.cpp" />
+    <ClCompile Include="Native\ProcessExplorer\ProcessExplorer.cpp" />
+    <ClCompile Include="Native\Threading\EventWaiter.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="Adapters\DebuggerEventHandlerAdapter.h" />
+    <ClInclude Include="Managed\ActionWrapper.h" />
+    <ClInclude Include="Managed\DebuggerService.h" />
+    <ClInclude Include="Managed\ConsoleDispatcher.h" />
+    <ClInclude Include="Managed\UiDispatcher.h" />
+    <ClInclude Include="Managed\Interfaces\IDispatcher.h" />
+    <ClInclude Include="Native\Debugger\Breakpoint.h" />
+    <ClInclude Include="Native\Debugger\BreakpointManager.h" />
+    <ClInclude Include="Native\Debugger\Commands\Base\ICommand.h" />
+    <ClInclude Include="Native\Debugger\Commands\Base\ICommandContext.h" />
+    <ClInclude Include="Native\Debugger\Commands\Base\ICommandResult.h" />
+    <ClInclude Include="Native\Debugger\Commands\Base\CommandType.h" />
+    <ClInclude Include="Native\Debugger\Commands\Command.h" />
+    <ClInclude Include="Native\Debugger\Commands\CommandResult.h" />
+    <ClInclude Include="Native\Debugger\Commands\DisassembleCommand.h" />
+    <ClInclude Include="Native\Debugger\Commands\DisassembleResult.h" />
+    <ClInclude Include="Native\Debugger\Commands\ReadMemoryCommand.h" />
+    <ClInclude Include="Native\Debugger\Commands\ReadMemoryResult.h" />
+    <ClInclude Include="Native\Debugger\Commands\RemoveBreakpointCommand.h" />
+    <ClInclude Include="Native\Debugger\Commands\SetBreakpointCommand.h" />
+    <ClInclude Include="Native\Debugger\Commands\StepIntoCommand.h" />
+    <ClInclude Include="Native\Debugger\Commands\StepOverCommand.h" />
+    <ClInclude Include="Native\Debugger\Commands\StopCommand.h" />
+    <ClInclude Include="Native\Debugger\Commands\TryResolveStringCommand.h" />
+    <ClInclude Include="Native\Debugger\Commands\TryResolveStringResult.h" />
+    <ClInclude Include="Native\Debugger\Commands\WriteMemoryCommand.h" />
+    <ClInclude Include="Native\Debugger\DebugEventHandler\DllInfo.h" />
+    <ClInclude Include="Native\Debugger\DebugEventHandler\Interfaces\IDebugEventStorageListener.h" />
+    <ClInclude Include="Native\Debugger\DebugEventHandler\ProcessInfo.h" />
+    <ClInclude Include="Native\Debugger\DebugEventHandler\ThreadInfo.h" />
+    <ClInclude Include="Native\Debugger\DebugEventHandler\CreateProcessEventHandler.h" />
+    <ClInclude Include="Native\Debugger\DebugEventHandler\CreateThreadEventHandler.h" />
+    <ClInclude Include="Native\Debugger\DebugEventHandler\DebugEventHandler.h" />
+    <ClInclude Include="Native\Debugger\DebugEventHandler\DebugEventStorage.h" />
+    <ClInclude Include="Native\Debugger\DebugEventHandler\DefaultEventHandler.h" />
+    <ClInclude Include="Native\Debugger\DebugEventHandler\ExceptionEventHandler.h" />
+    <ClInclude Include="Native\Debugger\DebugEventHandler\ExitProcessEventHandler.h" />
+    <ClInclude Include="Native\Debugger\DebugEventHandler\ExitThreadEventHandler.h" />
+    <ClInclude Include="Native\Debugger\DebugEventHandler\HandleResult.h" />
+    <ClInclude Include="Native\Debugger\DebugEventHandler\Interfaces\IDebugEventHandler.h" />
+    <ClInclude Include="Native\Debugger\DebugEventHandler\LoadDllEventHandler.h" />
+    <ClInclude Include="Native\Debugger\DebugEventHandler\OutputDebugStringEventHandler.h" />
+    <ClInclude Include="Native\Debugger\DebugEventHandler\UnloadDllEventHandler.h" />
+    <ClInclude Include="Native\Debugger\Debugger.h" />
+    <ClInclude Include="Native\Debugger\DebuggerCommandQueue.h" />
+    <ClInclude Include="Native\Debugger\DebuggerThread.h" />
+    <ClInclude Include="Native\Debugger\Interfaces\BreakpointEventArgs.h" />
+    <ClInclude Include="Native\Debugger\Interfaces\ExitProcessEventArgs.h" />
+    <ClInclude Include="Native\Debugger\Interfaces\IDebuggerEventHandler.h" />
+    <ClInclude Include="Native\Disassembler\Disassembler.h" />
+    <ClInclude Include="Native\Disassembler\Instruction.h" />
+    <ClInclude Include="Native\Disassembler\SymbolResolver.h" />
+    <ClInclude Include="Native\PEFile\PEFile.h" />
+    <ClInclude Include="Native\ProcessExplorer\Interfaces\IProcessExplorerListener.h" />
+    <ClInclude Include="Native\ProcessExplorer\ModuleAnalyzer.h" />
+    <ClInclude Include="Native\ProcessExplorer\ModuleExport.h" />
+    <ClInclude Include="Native\ProcessExplorer\ModuleImport.h" />
+    <ClInclude Include="Native\ProcessExplorer\ModuleImportFunction.h" />
+    <ClInclude Include="Native\ProcessExplorer\ModuleInfo.h" />
+    <ClInclude Include="Native\ProcessExplorer\ModuleSection.h" />
+    <ClInclude Include="Native\ProcessExplorer\PEImage.h" />
+    <ClInclude Include="Native\ProcessExplorer\ProcessDataStore.h" />
+    <ClInclude Include="Native\ProcessExplorer\ProcessExplorer.h" />
+    <ClInclude Include="Native\Threading\EventWaiter.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\MCP.Debugger.Types\MCP.Debugger.Types.csproj">
+      <Project>{d4509d6f-eb46-4b1f-9ca6-56e15268d2f9}</Project>
+    </ProjectReference>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <VCProjectVersion>17.0</VCProjectVersion>
+    <EnableManagedPackageReferenceSupport>true</EnableManagedPackageReferenceSupport>
+    <ProjectGuid>{4ECC1B90-B2FB-03CF-A1F3-40EA603A0206}</ProjectGuid>
+    <Keyword>NetCoreCProj</Keyword>
+    <RootNamespace>MCPDebugger</RootNamespace>
+    <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+    <TargetFramework>net8.0</TargetFramework>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v143</PlatformToolset>
+    <CLRSupport>NetCore</CLRSupport>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v143</PlatformToolset>
+    <CLRSupport>NetCore</CLRSupport>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v143</PlatformToolset>
+    <CLRSupport>NetCore</CLRSupport>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v143</PlatformToolset>
+    <CLRSupport>NetCore</CLRSupport>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="Shared">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <OutDir>$(SolutionDir)\build\$(Configuration)\x86\</OutDir>
+    <IntDir>$(SolutionDir)\build\$(Configuration)\x86\obj\MCP.Debugger\</IntDir>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <OutDir>$(SolutionDir)\build\$(Configuration)\x86\</OutDir>
+    <IntDir>$(SolutionDir)\build\$(Configuration)\x86\obj\MCP.Debugger\</IntDir>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <OutDir>$(SolutionDir)\build\$(Configuration)\x64\</OutDir>
+    <IntDir>$(SolutionDir)\build\$(Configuration)\x64\obj\MCP.Debugger\</IntDir>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <OutDir>$(SolutionDir)\build\$(Configuration)\x64\</OutDir>
+    <IntDir>$(SolutionDir)\build\$(Configuration)\x64\obj\MCP.Debugger\</IntDir>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <PrecompiledHeaderFile>
+      </PrecompiledHeaderFile>
+      <WarningLevel>Level3</WarningLevel>
+      <PreprocessorDefinitions>WIN32;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PrecompiledHeaderOutputFile />
+      <LanguageStandard>stdcpp20</LanguageStandard>
+    </ClCompile>
+    <Link>
+      <AdditionalDependencies>.\Native\Zydis\x86\Zydis.lib</AdditionalDependencies>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <ClCompile>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <PrecompiledHeaderFile>
+      </PrecompiledHeaderFile>
+      <WarningLevel>Level3</WarningLevel>
+      <PreprocessorDefinitions>_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PrecompiledHeaderOutputFile />
+      <LanguageStandard>stdcpp20</LanguageStandard>
+    </ClCompile>
+    <Link>
+      <AdditionalDependencies>.\Native\Zydis\x64\Zydis.lib</AdditionalDependencies>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <PrecompiledHeaderFile>
+      </PrecompiledHeaderFile>
+      <WarningLevel>Level3</WarningLevel>
+      <PreprocessorDefinitions>WIN32;NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PrecompiledHeaderOutputFile />
+      <LanguageStandard>stdcpp20</LanguageStandard>
+    </ClCompile>
+    <Link>
+      <AdditionalDependencies>.\Native\Zydis\x86\Zydis.lib</AdditionalDependencies>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <ClCompile>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <PrecompiledHeaderFile>
+      </PrecompiledHeaderFile>
+      <WarningLevel>Level3</WarningLevel>
+      <PreprocessorDefinitions>NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PrecompiledHeaderOutputFile />
+      <LanguageStandard>stdcpp20</LanguageStandard>
+    </ClCompile>
+    <Link>
+      <AdditionalDependencies>.\Native\Zydis\x64\Zydis.lib</AdditionalDependencies>
+    </Link>
+  </ItemDefinitionGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>
