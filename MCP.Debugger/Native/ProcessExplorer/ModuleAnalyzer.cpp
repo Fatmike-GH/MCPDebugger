@@ -78,7 +78,7 @@ namespace MCP::Native::ProcessExplorer
     wchar_t mappedPath[MAX_PATH];
     if (GetMappedFileNameW(hProcess, baseAddress, mappedPath, MAX_PATH))
     {
-      // This returns a device path; you may need to convert it to a drive letter
+      // This returns a device path
       return std::wstring(mappedPath);
     }
     return L"";
