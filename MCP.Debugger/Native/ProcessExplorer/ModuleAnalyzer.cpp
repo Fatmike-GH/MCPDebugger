@@ -1,5 +1,6 @@
 #include "ModuleAnalyzer.h"
 #include "ModuleInfo.h"
+#include <psapi.h>
 
 namespace MCP::Native::ProcessExplorer
 {
@@ -13,12 +14,23 @@ namespace MCP::Native::ProcessExplorer
       return nullptr;
     }
 
-    return CreateModuleInfo(peImage, baseAddress, hFile);
+    return CreateModuleInfo(peImage, hProcess, hFile, baseAddress);
   }
 
-  ModuleInfoPtr ModuleAnalyzer::CreateModuleInfo(PEImage& peImage, void* baseAddress, HANDLE hFile)
+  ModuleInfoPtr ModuleAnalyzer::CreateModuleInfo(PEImage& peImage, HANDLE hProcess, HANDLE hFile, void* baseAddress)
   {
     std::wstring path = GetPathFromHandle(hFile);
+
+    if (path.empty() && hProcess != nullptr)
+    {
+      path = GetPathFromProcess(hProcess);
+    }
+
+    if (path.empty() && hProcess != nullptr && baseAddress != nullptr)
+    {
+      path = GetPathFromBaseAddress(hProcess, baseAddress);
+    }
+
     DWORD sizeOfImage = peImage.GetSizeOfImage();
 
     return std::make_shared<ModuleInfo>(
@@ -49,5 +61,26 @@ namespace MCP::Native::ProcessExplorer
     }
 
     return path;
+  }
+
+  std::wstring ModuleAnalyzer::GetPathFromProcess(HANDLE hProcess)
+  {
+    wchar_t path[MAX_PATH];
+    DWORD size = MAX_PATH;
+    if (QueryFullProcessImageNameW(hProcess, 0, path, &size)) {
+      return std::wstring(path);
+    }
+    return L"";
+  }
+
+  std::wstring ModuleAnalyzer::GetPathFromBaseAddress(HANDLE hProcess, void* baseAddress)
+  {
+    wchar_t mappedPath[MAX_PATH];
+    if (GetMappedFileNameW(hProcess, baseAddress, mappedPath, MAX_PATH))
+    {
+      // This returns a device path; you may need to convert it to a drive letter
+      return std::wstring(mappedPath);
+    }
+    return L"";
   }
 }

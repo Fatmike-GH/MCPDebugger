@@ -13,7 +13,9 @@ namespace MCP::Native::ProcessExplorer
     static ModuleInfoPtr AnalyzeModule(HANDLE hProcess, HANDLE hFile, void* baseAddress);
 
   private:
-    static ModuleInfoPtr CreateModuleInfo(PEImage& peImage, void* baseAddress, HANDLE hFile);
+    static ModuleInfoPtr CreateModuleInfo(PEImage& peImage, HANDLE hProcess, HANDLE hFile, void* baseAddress);
     static std::wstring GetPathFromHandle(HANDLE hFile);
+    static std::wstring GetPathFromProcess(HANDLE hProcess);
+    static std::wstring GetPathFromBaseAddress(HANDLE hProcess, void* baseAddress);
   };
 }
