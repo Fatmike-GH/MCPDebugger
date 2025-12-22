@@ -9,7 +9,7 @@ It is a 32 bit windows crackme with GUI.
 There are two textfields where the user has to enter a name and a valid serial number.
 There are two buttons:
 - One to apply the entered serial number: Its the Register Button. There is no feedback when the serial is wrong.
-- One "Go" Button. It shows a MessageBox that the function is only availbe in the registered version.
+- One "Go" Button. It shows a MessageBox that the function is only available in the registered version.
 - I can help you with inputs (like pressing buttons in an application, or entering text) and you can set
   the breakpoints in advance to react to the user input if required.
 

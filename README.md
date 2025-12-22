@@ -137,7 +137,7 @@ Enter the full path to `MCP.Server.exe` you built in Step 1.
 
 ## Solution Overview
 
-The project is organized into the following components:
+The Visual Studio solution is organized into the following projects:
 
 - **MCP.Debugger**  
   The core debugger implemented in C++. It includes a C++/CLI bridge to expose a managed interface for .NET clients.
