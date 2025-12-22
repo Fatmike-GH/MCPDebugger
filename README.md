@@ -130,10 +130,10 @@ Enter the full path to `MCP.Server.exe` you built in Step 1.
 
 #### VS Code: Toolbar with installed extensions and MCP Server
 
-![image](Images/VSCode_Toolbar.png)
+![image](Images/VSCode_Toolbar.PNG)
 
 #### VS Code: Copilot Chat Window
-![image](Images/VSCode_Agent.png)
+![image](Images/VSCode_Agent.PNG)
 
 ## Solution Overview
 
