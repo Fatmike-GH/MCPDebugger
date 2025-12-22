@@ -159,4 +159,4 @@ The repository includes example projects to help get started with static analysi
   The `Example_x64` and `Example_x86` projects provide a simple console application used as an introductory debugging target. The application prompts the user to enter a password at runtime. The correct password for both examples is *secret*.
 
 - **MCP_Debugging_Sessions**  
-  A folder containing more complex debugging sessions that leverage dynamic analysis and debugging. In these sessions **Claude Opus 4.5** was used. The targets can be downloaded [here.](https://crackmes.one/user/Fatmike)  
+  A folder containing more complex debugging sessions that leverage dynamic analysis and debugging. In these sessions **Claude Opus 4.5** was used. The targets can be downloaded [here.](https://crackmes.one/user/Fatmike) Please note that the targets were unpacked using `UPX -d` before using the MCP Debugger.
