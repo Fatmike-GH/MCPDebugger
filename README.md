@@ -9,6 +9,12 @@ The debugger is integrated with an **MCP server written in C#**, built using the
 **Keywords**:  
 MCP, debugger, disassembler, static analysis, dynamic analysis, debugging, AI, EXE, executable, Windows
 
+## Demo
+
+![image](Images/Demo.gif)
+
+> *Gemini CLI* was used as MCP Client in the Demo
+
 ## MCP Tools
 
 The MCP server exposes the following tools to interact with the debugger:
