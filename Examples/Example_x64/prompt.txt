@@ -6,5 +6,5 @@ Do not use debugging features like single stepping etc. focus on static analysis
 
 The target is a console application and expects a valid key as user input. Find the valid key!
 
-This is you target:
+This is your target:
 D:\MCPDebugger\Example_x64\Example.exe

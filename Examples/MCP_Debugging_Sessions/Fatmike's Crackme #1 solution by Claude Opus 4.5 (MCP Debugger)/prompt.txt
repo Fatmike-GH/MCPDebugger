@@ -11,7 +11,7 @@ As a professional reverse engineer you will always do the following steps:
     the breakpoints in advance to react to the user input if required.
     You carefully step through the code to understand in detail what is going on, while focusing on your main task.
 
-This is you target:
+This is your target:
 D:\Crackme#1.exe
 
 Description:
