@@ -2,7 +2,7 @@
 
 ## Introduction
 
-This project is a self-made, lightweight **C++ debugger** developed for learning and experimentation. It implements core debugging functionality from scratch without relying on existing debugger frameworks. For instruction decoding the [Zydis](https://github.com/zyantific/zydis) disassembler is used.
+This project is a self-made, lightweight **MCP Debugger Server** written in c++, developed for learning and experimentation. It implements core debugging functionality from scratch without relying on existing debugger frameworks. For instruction decoding the [Zydis](https://github.com/zyantific/zydis) disassembler is used.
 
 The debugger is integrated with an **MCP server written in C#**, built using the [official MCP C# SDK](https://github.com/modelcontextprotocol/csharp-sdk). The MCP server exposes the debugger functionality as structured tools, enabling external clients to control execution, inspect memory, and analyze the debuggee through a clean interface.
 
