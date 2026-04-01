@@ -7,7 +7,7 @@ This project is a self-made, lightweight **C++ debugger** developed for learning
 The debugger is integrated with an **MCP server written in C#**, built using the [official MCP C# SDK](https://github.com/modelcontextprotocol/csharp-sdk). The MCP server exposes the debugger functionality as structured tools, enabling external clients to control execution, inspect memory, and analyze the debuggee through a clean interface.
 
 **Keywords**:  
-MCP, debugger, disassembler, static analysis, dynamic analysis, debugging, AI, EXE, executable, Windows
+MCP server, debugger, disassembler, static analysis, dynamic analysis, debugging, AI, EXE, executable, Windows
 
 ## Demo
 
