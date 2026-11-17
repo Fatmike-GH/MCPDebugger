@@ -168,3 +168,54 @@ The Visual Studio solution is organized into the following projects:
 
 - **MCP.Server**  
   The C# MCP server that exposes debugger functionality as MCP tools for external clients.
+
+Test projects (solution folder `Tests`, NUnit):
+
+- **MCP.Debugger.IntegrationTests**  
+  Integration tests of the debugger through its managed .NET interface, run against the sample targets in `Examples`.
+
+- **MCP.Server.IntegrationTests**  
+  Integration tests of the MCP server: they start the built `MCP.Server.exe` and call its tools as an MCP client over stdio.
+
+- **MCP.Debugger.Tests**, **MCP.Debugger.Types.Tests**, **MCP.Server.Tests**  
+  Unit-test projects of the corresponding projects. They are set up but do not contain tests yet.
+
+## Running the tests
+
+The integration tests debug the sample targets `Examples\Example_x64\Example.exe` and `Examples\Example_x86\Example.exe` up to their entry point and a few instructions beyond it. They need no user interaction; a console window of the sample target may show up briefly.
+
+1. Build the solution for the configuration and platform you want to test (see [Step 1: Build the Solution](#step-1-build-the-solution)). The tests always run against that build: the x64 tests debug the x64 sample target with the x64 debugger and server, the x86 tests the x86 ones. The .NET 10 runtime of the same architecture must be installed.
+2. Run the tests of that build from the repository root:
+
+```
+dotnet test "build/<Configuration>/<Platform>/MCP.*Tests/MCP.*Tests.dll"
+```
+
+| Build | Command |
+| :--- | :--- |
+| **Debug x64** | `dotnet test "build/Debug/x64/MCP.*Tests/MCP.*Tests.dll"` |
+| **Debug x86** | `dotnet test "build/Debug/x86/MCP.*Tests/MCP.*Tests.dll"` |
+| **Release x64** | `dotnet test "build/Release/x64/MCP.*Tests/MCP.*Tests.dll"` |
+| **Release x86** | `dotnet test "build/Release/x86/MCP.*Tests/MCP.*Tests.dll"` |
+
+A run takes about 15 seconds.
+
+- The command takes the built test assemblies, not the solution: `dotnet test MCPDebugger.slnx` does not work, because the `dotnet` command line cannot load the C++/CLI project of the solution.
+- **Exit code 0** means that all tests passed. The unit-test projects without tests are reported with the note that no test is available; they do not make the run fail.
+- **A non-zero exit code** means that at least one test failed, or that the check at the end of a run found an `Example.exe` or `MCP.Server.exe` process the tests left behind. In the second case all tests are listed as passed and the output contains `TearDown failed for test fixture ... RunFixture`.
+- Do not run the two integration-test assemblies in parallel: both debug the same sample target, and the check at the end of a run would report the processes of the other assembly.
+- In Visual Studio the tests are listed and run in the **Test Explorer**, for the solution platform (x64 or x86) that is currently selected.
+
+### Test packages
+
+All test projects use the same package versions; they are defined once in `Tests.props`.
+
+| Package | Version | License | Purpose |
+| :--- | :--- | :--- | :--- |
+| `NUnit` | 5.0.0 | MIT | Test framework |
+| `NUnit3TestAdapter` | 6.3.1 | MIT | Lets `dotnet test` and the Visual Studio Test Explorer find and run NUnit tests |
+| `Microsoft.NET.Test.Sdk` | 18.12.0 | MIT | Test host and build integration of the test projects |
+| `NUnit.Analyzers` | 4.15.0 | MIT | Compile-time checks of the test code |
+| `ModelContextProtocol.Core` | 2.4.0 | Apache-2.0 | MCP client of the server integration tests (same version as the SDK used by `MCP.Server`); only in `MCP.Server.IntegrationTests` |
+
+The packages these pull in (Microsoft test platform and `Microsoft.Extensions.*` packages) are licensed under MIT.

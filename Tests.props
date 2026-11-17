@@ -1,0 +1,36 @@
+<Project>
+
+  <!-- Settings and packages shared by all test projects. Each test project imports this file from its
+       Directory.Build.props, so target framework and package versions exist in one place only. -->
+  <PropertyGroup>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>disable</Nullable>
+    <Platforms>x64;x86</Platforms>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+  <!-- 64-bit specific -->
+  <PropertyGroup Condition="'$(Platform)' == 'x64'">
+    <PlatformTarget>x64</PlatformTarget>
+    <DefineConstants>$(DefineConstants);X64</DefineConstants>
+  </PropertyGroup>
+
+  <!-- 32-bit specific -->
+  <PropertyGroup Condition="'$(Platform)' == 'x86'">
+    <PlatformTarget>x86</PlatformTarget>
+    <DefineConstants>$(DefineConstants);X86</DefineConstants>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Using Include="NUnit.Framework" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="18.12.0" />
+    <PackageReference Include="NUnit" Version="5.0.0" />
+    <PackageReference Include="NUnit3TestAdapter" Version="6.3.1" />
+    <PackageReference Include="NUnit.Analyzers" Version="4.15.0" />
+  </ItemGroup>
+
+</Project>

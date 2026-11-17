@@ -18,4 +18,30 @@
     <Platform Solution="*|x64" Project="x64" />
     <Platform Solution="*|x86" Project="x86" />
   </Project>
+  <Folder Name="/Tests/">
+    <Project Path="MCP.Debugger.IntegrationTests/MCP.Debugger.IntegrationTests.csproj">
+      <BuildDependency Project="MCP.Debugger.Types/MCP.Debugger.Types.csproj" />
+      <Platform Solution="*|x64" Project="x64" />
+      <Platform Solution="*|x86" Project="x86" />
+    </Project>
+    <Project Path="MCP.Debugger.Tests/MCP.Debugger.Tests.csproj">
+      <BuildDependency Project="MCP.Debugger.Types/MCP.Debugger.Types.csproj" />
+      <Platform Solution="*|x64" Project="x64" />
+      <Platform Solution="*|x86" Project="x86" />
+    </Project>
+    <Project Path="MCP.Debugger.Types.Tests/MCP.Debugger.Types.Tests.csproj">
+      <Platform Solution="*|x64" Project="x64" />
+      <Platform Solution="*|x86" Project="x86" />
+    </Project>
+    <Project Path="MCP.Server.IntegrationTests/MCP.Server.IntegrationTests.csproj">
+      <BuildDependency Project="MCP.Server/MCP.Server.csproj" />
+      <Platform Solution="*|x64" Project="x64" />
+      <Platform Solution="*|x86" Project="x86" />
+    </Project>
+    <Project Path="MCP.Server.Tests/MCP.Server.Tests.csproj">
+      <BuildDependency Project="MCP.Debugger.Types/MCP.Debugger.Types.csproj" />
+      <Platform Solution="*|x64" Project="x64" />
+      <Platform Solution="*|x86" Project="x86" />
+    </Project>
+  </Folder>
 </Solution>

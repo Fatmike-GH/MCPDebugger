@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- The solution lists the server as a build dependency of this project so that a solution build always
+       produces the server the tests start. MSBuild turns such a dependency into a hidden project reference,
+       which would copy the server's launcher (exe, deps.json, runtimeconfig.json) without its assemblies into
+       this project's output - an MCP.Server.exe that cannot run. The tests start the server from its own
+       output folder, so the hidden reference is switched off. -->
+  <PropertyGroup>
+    <AddSyntheticProjectReferencesForSolutionDependencies>false</AddSyntheticProjectReferencesForSolutionDependencies>
+  </PropertyGroup>
+
+  <!-- No project reference: the tests start the built MCP.Server.exe and talk to it as an MCP client.
+       The client comes from the SDK package in the version the server ships. -->
+  <ItemGroup>
+    <PackageReference Include="ModelContextProtocol.Core" Version="2.4.0" />
+  </ItemGroup>
+
+</Project>
