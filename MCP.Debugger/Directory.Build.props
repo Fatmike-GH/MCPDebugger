@@ -1,9 +1,15 @@
 <Project>
   <Import Project="../Directory.Build.props" />
   <PropertyGroup>
-	<OutputPath>..\build\$(Configuration)\$(Platform)\</OutputPath>
-	<BaseIntermediateOutputPath>..\build\$(Configuration)\$(Platform)\obj\MCP.Debugger\</BaseIntermediateOutputPath>
-	<MSBuildProjectExtensionsPath>..\build\$(Configuration)\$(Platform)\ext\MCP.Debugger\</MSBuildProjectExtensionsPath>
+	<!-- The solution platform "x86" is the project platform "Win32" for this C++ project. NuGet restore of the
+	     solution evaluates the project with the solution's platform name, the build with the project's name.
+	     Both must resolve to the same folder, otherwise the build looks for the restore output
+	     (project.assets.json) in a folder restore never wrote to. -->
+	<BuildPlatformFolder>$(Platform)</BuildPlatformFolder>
+	<BuildPlatformFolder Condition="'$(Platform)' == 'Win32'">x86</BuildPlatformFolder>
+	<OutputPath>..\build\$(Configuration)\$(BuildPlatformFolder)\</OutputPath>
+	<BaseIntermediateOutputPath>..\build\$(Configuration)\$(BuildPlatformFolder)\obj\MCP.Debugger\</BaseIntermediateOutputPath>
+	<MSBuildProjectExtensionsPath>..\build\$(Configuration)\$(BuildPlatformFolder)\ext\MCP.Debugger\</MSBuildProjectExtensionsPath>
     <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
     <AppendRuntimeIdentifierToOutputPath>false</AppendRuntimeIdentifierToOutputPath>
   </PropertyGroup>

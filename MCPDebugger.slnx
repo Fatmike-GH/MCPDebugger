@@ -1,0 +1,21 @@
+<Solution>
+  <Configurations>
+    <Platform Name="x64" />
+    <Platform Name="x86" />
+  </Configurations>
+  <Project Path="MCP.Debugger.Tester/MCP.Debugger.Tester.csproj">
+    <BuildDependency Project="MCP.Debugger.Types/MCP.Debugger.Types.csproj" />
+    <Platform Solution="*|x64" Project="x64" />
+    <Platform Solution="*|x86" Project="x86" />
+  </Project>
+  <Project Path="MCP.Debugger.Types/MCP.Debugger.Types.csproj">
+    <Platform Solution="*|x64" Project="x64" />
+    <Platform Solution="*|x86" Project="x86" />
+  </Project>
+  <Project Path="MCP.Debugger/MCP.Debugger.vcxproj" />
+  <Project Path="MCP.Server/MCP.Server.csproj">
+    <BuildDependency Project="MCP.Debugger.Types/MCP.Debugger.Types.csproj" />
+    <Platform Solution="*|x64" Project="x64" />
+    <Platform Solution="*|x86" Project="x86" />
+  </Project>
+</Solution>

@@ -21,9 +21,11 @@ This guide provides a step-by-step process for building and integrating the **MC
 
 ### Step 1: Build the Solution
 Before configuring VS Code, you must compile the mcp server:
-1. Open `MCPDebugger.sln` in Visual Studio.
+1. Open `MCPDebugger.slnx` in Visual Studio 2026. Required workloads: **Desktop development with C++** including the **C++/CLI support for v145 build tools** component, and **.NET desktop development** (it installs the .NET 10 SDK the solution targets). Older Visual Studio versions do not have the v145 toolset and cannot build the solution.
 2. Build the solution
 3. Confirm that `MCP.Server.exe` exists in your `\build\Release\x86` or `\build\Release\x64` subfolder.
+
+> `MCP.Server.exe` needs the .NET 10 runtime in its own architecture: the x86 server needs the x86 runtime, the x64 server the x64 runtime.
 
 ### Step 2: Install Required VS Code Extensions
 Ensure the following extensions are installed and active in VS Code:
