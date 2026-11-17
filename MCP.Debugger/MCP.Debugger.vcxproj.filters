@@ -51,6 +51,9 @@
     <ClCompile Include="Managed\DebuggerService.cpp">
       <Filter>Managed</Filter>
     </ClCompile>
+    <ClCompile Include="Managed\DebuggerServiceCollectionExtensions.cpp">
+      <Filter>Managed</Filter>
+    </ClCompile>
     <ClCompile Include="Native\Threading\EventWaiter.cpp">
       <Filter>Native\Threading</Filter>
     </ClCompile>
@@ -168,6 +171,9 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Managed\DebuggerService.h">
+      <Filter>Managed</Filter>
+    </ClInclude>
+    <ClInclude Include="Managed\DebuggerServiceCollectionExtensions.h">
       <Filter>Managed</Filter>
     </ClInclude>
     <ClInclude Include="Native\Threading\EventWaiter.h">
@@ -345,6 +351,9 @@
       <Filter>Managed</Filter>
     </ClInclude>
     <ClInclude Include="Managed\Interfaces\IDispatcher.h">
+      <Filter>Managed\Interfaces</Filter>
+    </ClInclude>
+    <ClInclude Include="Managed\Interfaces\IDebuggerService.h">
       <Filter>Managed\Interfaces</Filter>
     </ClInclude>
     <ClInclude Include="Native\Debugger\Commands\StepOverCommand.h">

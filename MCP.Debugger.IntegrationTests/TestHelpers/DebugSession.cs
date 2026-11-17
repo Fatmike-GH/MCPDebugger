@@ -2,11 +2,12 @@ using System.ComponentModel;
 using System.Diagnostics;
 using MCP.Debugger.Types.EventArgs;
 using MCP.Debugger.Types.Interop;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace MCP.Debugger.IntegrationTests.TestHelpers
 {
   /// <summary>
-  /// One debugging session of the sample target, driven through <see cref="DebuggerService"/>.
+  /// One debugging session of the sample target, driven through <see cref="IDebuggerService"/>.
   /// Every wait is bounded by <see cref="WaitTimeout"/>. Disposing ends the session and makes sure the debuggee
   /// process is gone, so a failed test leaves nothing behind (one exception: a start that never returns, see
   /// <see cref="Dispose"/>).
@@ -24,8 +25,14 @@ namespace MCP.Debugger.IntegrationTests.TestHelpers
     /// </summary>
     public static readonly TimeSpan WaitTimeout = TimeSpan.FromSeconds(15);
 
+    /// <summary>
+    /// The container that created the service, set up the way an executable sets it up. It owns the service:
+    /// disposing it disposes the service.
+    /// </summary>
+    private readonly ServiceProvider _serviceProvider;
+
     /// <summary>The service under test.</summary>
-    private readonly DebuggerService _service;
+    private readonly IDebuggerService _service;
 
     /// <summary>Completed with the context of the first system breakpoint event.</summary>
     private readonly TaskCompletionSource<CONTEXT> _systemBreakpoint =
@@ -46,16 +53,24 @@ namespace MCP.Debugger.IntegrationTests.TestHelpers
     /// <summary>True once <see cref="Dispose"/> ran.</summary>
     private bool _isDisposed;
 
-    /// <summary>Creates the service. No debuggee is started yet.</summary>
+    /// <summary>
+    /// Creates the service the way an executable obtains it: from a container that holds a console dispatcher
+    /// and the registrations of the debugger assembly. No debuggee is started yet.
+    /// </summary>
     public DebugSession()
     {
-      _service = new DebuggerService(new ConsoleDispatcher());
+      var serviceCollection = new ServiceCollection();
+      serviceCollection.AddSingleton<IDispatcher, ConsoleDispatcher>();
+      serviceCollection.AddDebuggerService();
+      _serviceProvider = serviceCollection.BuildServiceProvider();
+
+      _service = _serviceProvider.GetRequiredService<IDebuggerService>();
       _service.SystemBreakpoint += OnSystemBreakpoint;
       _service.SingleStep += OnSingleStep;
     }
 
     /// <summary>The service under test, for the calls a test makes itself.</summary>
-    public DebuggerService Service => _service;
+    public IDebuggerService Service => _service;
 
     /// <summary>The debuggee process; null until a start succeeded.</summary>
     public Process Debuggee => _debuggee;
@@ -210,14 +225,14 @@ namespace MCP.Debugger.IntegrationTests.TestHelpers
     }
 
     /// <summary>
-    /// Ends the session: stops the debugger when it runs, disposes the service and, should the debuggee have
-    /// survived that, ends the process.
+    /// Ends the session: stops the debugger when it runs, disposes the container - and with it the service -
+    /// and, should the debuggee have survived that, ends the process.
     /// </summary>
     /// <remarks>
     /// One case is not cleaned up: a start that ran into its timeout and is still blocked inside the service.
     /// Stopping or disposing the service underneath that call is not safe - it could hang or crash the test
-    /// host and take the whole run with it - so the service is left alone. A debuggee the hanging start
-    /// created lives until the test host ends, and the check at the end of the run reports it.
+    /// host and take the whole run with it - so the container and its service are left alone. A debuggee the
+    /// hanging start created lives until the test host ends, and the check at the end of the run reports it.
     /// </remarks>
     public void Dispose()
     {
@@ -241,7 +256,7 @@ namespace MCP.Debugger.IntegrationTests.TestHelpers
           _service.Stop();
         }
 
-        _service.Dispose();
+        _serviceProvider.Dispose();
       }
       finally
       {

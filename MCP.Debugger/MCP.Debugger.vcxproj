@@ -21,6 +21,7 @@
   <ItemGroup>
     <ClCompile Include="Adapters\DebuggerEventHandlerAdapter.cpp" />
     <ClCompile Include="Managed\DebuggerService.cpp" />
+    <ClCompile Include="Managed\DebuggerServiceCollectionExtensions.cpp" />
     <ClCompile Include="Managed\ConsoleDispatcher.cpp" />
     <ClCompile Include="Managed\UiDispatcher.cpp" />
     <ClCompile Include="Native\Debugger\Breakpoint.cpp" />
@@ -63,8 +64,10 @@
     <ClInclude Include="Adapters\DebuggerEventHandlerAdapter.h" />
     <ClInclude Include="Managed\ActionWrapper.h" />
     <ClInclude Include="Managed\DebuggerService.h" />
+    <ClInclude Include="Managed\DebuggerServiceCollectionExtensions.h" />
     <ClInclude Include="Managed\ConsoleDispatcher.h" />
     <ClInclude Include="Managed\UiDispatcher.h" />
+    <ClInclude Include="Managed\Interfaces\IDebuggerService.h" />
     <ClInclude Include="Managed\Interfaces\IDispatcher.h" />
     <ClInclude Include="Native\Debugger\Breakpoint.h" />
     <ClInclude Include="Native\Debugger\BreakpointManager.h" />
@@ -129,6 +132,9 @@
     <ProjectReference Include="..\MCP.Debugger.Types\MCP.Debugger.Types.csproj">
       <Project>{d4509d6f-eb46-4b1f-9ca6-56e15268d2f9}</Project>
     </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="10.0.15" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>18.0</VCProjectVersion>

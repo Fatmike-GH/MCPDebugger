@@ -6,17 +6,26 @@ namespace MCP.Debugger.Tester
 {
   public partial class Main : Form
   {
-    private MCP.Debugger.DebuggerService _service;
+    /// <summary>The debugger the form drives. Owned by the composition root, not by the form.</summary>
+    private MCP.Debugger.IDebuggerService _service;
 
     private uint _processId;
     private uint _threadId;
     private nint _imageBase;
     private nint _entryPoint;
 
-    public Main()
+    /// <summary>Creates the form on top of a debugger service. No debuggee is started yet.</summary>
+    /// <param name="service">
+    /// The debugger the form drives. Its events must arrive on the UI thread, because the handlers update
+    /// controls.
+    /// </param>
+    /// <exception cref="ArgumentNullException"><paramref name="service"/> is null.</exception>
+    public Main(MCP.Debugger.IDebuggerService service)
     {
+      ArgumentNullException.ThrowIfNull(service);
+
       InitializeComponent();
-      _service = new MCP.Debugger.DebuggerService(new MCP.Debugger.UiDispatcher());
+      _service = service;
       _service.SystemBreakpoint += Service_SystemBreakpoint;
       _service.EntryPointBreakpoint += Service_EntryPointBreakpoint;
       _service.Breakpoint += Service_Breakpoint;

@@ -14,11 +14,18 @@ namespace MCP.Server.McpTools
   [McpServerToolType]
   public class DebuggerTools : McpToolBase
   {
-    private MCP.Debugger.DebuggerService _debuggerService;
+    /// <summary>The debugger the tools drive. Owned by the composition root, not by this class.</summary>
+    private MCP.Debugger.IDebuggerService _debuggerService;
     private JsonSerializerOptions _jsonSerializerOptions;
-    public DebuggerTools()
+
+    /// <summary>Creates the tools on top of a debugger service. No debuggee is started yet.</summary>
+    /// <param name="debuggerService">The debugger the tools drive.</param>
+    /// <exception cref="ArgumentNullException"><paramref name="debuggerService"/> is null.</exception>
+    public DebuggerTools(MCP.Debugger.IDebuggerService debuggerService)
     {
-      _debuggerService = new MCP.Debugger.DebuggerService(new MCP.Debugger.ConsoleDispatcher());
+      ArgumentNullException.ThrowIfNull(debuggerService);
+
+      _debuggerService = debuggerService;
       _debuggerService.ExitProcess += DebuggerService_ExitProcess;
 
       _jsonSerializerOptions = new JsonSerializerOptions()

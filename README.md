@@ -180,6 +180,15 @@ Test projects (solution folder `Tests`, NUnit):
 - **MCP.Debugger.Tests**, **MCP.Debugger.Types.Tests**, **MCP.Server.Tests**  
   Unit-test projects of the corresponding projects. They are set up but do not contain tests yet.
 
+### Packages
+
+The executables wire their objects with a dependency-injection container: the server, the tester and the debugger integration tests create the debugger through it, and `MCP.Debugger` offers the registration for it. Every project references the same version.
+
+| Package | Version | License | Used by |
+| :--- | :--- | :--- | :--- |
+| `Microsoft.Extensions.DependencyInjection` | 10.0.15 | MIT | `MCP.Server`, `MCP.Debugger.Tester`, `MCP.Debugger.IntegrationTests`: the container |
+| `Microsoft.Extensions.DependencyInjection.Abstractions` | 10.0.15 | MIT | `MCP.Debugger`: the registration of the debugger service (`AddDebuggerService`); it is also the only dependency of the container package |
+
 ## Running the tests
 
 The integration tests debug the sample targets `Examples\Example_x64\Example.exe` and `Examples\Example_x86\Example.exe` up to their entry point and a few instructions beyond it. They need no user interaction; a console window of the sample target may show up briefly.
@@ -217,5 +226,6 @@ All test projects use the same package versions; they are defined once in `Tests
 | `Microsoft.NET.Test.Sdk` | 18.12.0 | MIT | Test host and build integration of the test projects |
 | `NUnit.Analyzers` | 4.15.0 | MIT | Compile-time checks of the test code |
 | `ModelContextProtocol.Core` | 2.4.0 | Apache-2.0 | MCP client of the server integration tests (same version as the SDK used by `MCP.Server`); only in `MCP.Server.IntegrationTests` |
+| `Microsoft.Extensions.DependencyInjection` | 10.0.15 | MIT | Container the debugger integration tests take the debugger service from (same version as in `MCP.Server`, see [Packages](#packages)); only in `MCP.Debugger.IntegrationTests` |
 
 The packages these pull in (Microsoft test platform and `Microsoft.Extensions.*` packages) are licensed under MIT.
