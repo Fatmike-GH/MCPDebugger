@@ -1,0 +1,12 @@
+<Project>
+  <Import Project="../Directory.Build.props" />
+  <PropertyGroup>
+    <!-- The solution platform "x86" is the project platform "Win32" for a C++ project. Output, intermediate
+         and package folders use the solution's name, so that both platforms sit next to the other projects. -->
+    <BuildPlatformFolder>$(Platform)</BuildPlatformFolder>
+    <BuildPlatformFolder Condition="'$(Platform)' == 'Win32'">x86</BuildPlatformFolder>
+    <BuildRootFolder>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)..\build\$(Configuration)\$(BuildPlatformFolder)\'))</BuildRootFolder>
+    <BaseIntermediateOutputPath>$(BuildRootFolder)obj\MCP.Debugger.NativeTests\</BaseIntermediateOutputPath>
+    <MSBuildProjectExtensionsPath>$(BuildRootFolder)ext\MCP.Debugger.NativeTests\</MSBuildProjectExtensionsPath>
+  </PropertyGroup>
+</Project>

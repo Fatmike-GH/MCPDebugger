@@ -1,0 +1,137 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <!-- Production sources under test. They are compiled a second time here, as plain native code: the
+       classes live in the C++/CLI project, which offers no library a native test binary could link. -->
+  <ItemGroup>
+    <ClCompile Include="..\MCP.Debugger\Native\Debugger\Commands\Base\ICommand.cpp" />
+    <ClCompile Include="..\MCP.Debugger\Native\Debugger\Commands\DisassembleCommand.cpp" />
+    <ClCompile Include="..\MCP.Debugger\Native\Debugger\Commands\ReadMemoryCommand.cpp" />
+    <ClCompile Include="..\MCP.Debugger\Native\Debugger\Commands\StepIntoCommand.cpp" />
+    <ClCompile Include="..\MCP.Debugger\Native\Debugger\Commands\StepOverCommand.cpp" />
+    <ClCompile Include="..\MCP.Debugger\Native\Debugger\Commands\StopCommand.cpp" />
+    <ClCompile Include="..\MCP.Debugger\Native\Debugger\Commands\TryResolveStringCommand.cpp" />
+    <ClCompile Include="..\MCP.Debugger\Native\Debugger\Commands\WriteMemoryCommand.cpp" />
+    <ClCompile Include="..\MCP.Debugger\Native\ProcessExplorer\ModuleInfo.cpp" />
+    <ClCompile Include="..\MCP.Debugger\Native\ProcessExplorer\ProcessDataStore.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="Main.cpp" />
+    <ClCompile Include="Debugger\Commands\CommandTests.cpp" />
+    <ClCompile Include="Debugger\Commands\DisassembleCommandTests.cpp" />
+    <ClCompile Include="Debugger\Commands\ReadMemoryCommandTests.cpp" />
+    <ClCompile Include="Debugger\Commands\StepIntoCommandTests.cpp" />
+    <ClCompile Include="Debugger\Commands\StepOverCommandTests.cpp" />
+    <ClCompile Include="Debugger\Commands\StopCommandTests.cpp" />
+    <ClCompile Include="Debugger\Commands\TryResolveStringCommandTests.cpp" />
+    <ClCompile Include="Debugger\Commands\WriteMemoryCommandTests.cpp" />
+    <ClCompile Include="ProcessExplorer\ProcessDataStoreTests.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="Mocks\Debugger\Commands\Base\MockCommandContext.h" />
+    <ClInclude Include="TestHelpers\Futures.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="vcpkg.json" />
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <VCProjectVersion>18.0</VCProjectVersion>
+    <ProjectGuid>{67EA9270-AE01-4F38-BBC8-19FBFD757C97}</ProjectGuid>
+    <Keyword>Win32Proj</Keyword>
+    <RootNamespace>MCPDebuggerNativeTests</RootNamespace>
+    <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)'=='Debug'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v145</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)'=='Release'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v145</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <!-- Google Test comes from vcpkg (manifest vcpkg.json next to this file). The integration of the vcpkg copy
+       that ships with Visual Studio is imported here, so the build needs no machine-wide "vcpkg integrate". -->
+  <PropertyGroup Label="Vcpkg">
+    <VcpkgEnableManifest>true</VcpkgEnableManifest>
+    <VcpkgUseStatic>true</VcpkgUseStatic>
+    <VcpkgUseMD>true</VcpkgUseMD>
+    <VcpkgInstalledDir>$(BuildRootFolder)ext\MCP.Debugger.NativeTests\vcpkg_installed\</VcpkgInstalledDir>
+    <!-- vcpkg builds Google Test from source below its build-tree folder. The default sits deep inside the
+         install folder and exceeds the path length the compiler accepts; this one is short. -->
+    <VcpkgAdditionalInstallOptions>"--x-buildtrees-root=$(BuildRootFolder)obj\vcpkg" --clean-buildtrees-after-build</VcpkgAdditionalInstallOptions>
+    <!-- Static libraries only: there is no DLL to copy next to the test binary. -->
+    <VcpkgApplocalDeps>false</VcpkgApplocalDeps>
+    <ImportBundledVcpkg Condition="'$(VcpkgPropsImported)' != 'true'">true</ImportBundledVcpkg>
+  </PropertyGroup>
+  <Import Project="$(VsInstallRoot)\VC\vcpkg\scripts\buildsystems\msbuild\vcpkg.props" Condition="'$(ImportBundledVcpkg)' == 'true'" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="Shared">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup>
+    <OutDir>$(BuildRootFolder)MCP.Debugger.NativeTests\</OutDir>
+    <IntDir>$(BuildRootFolder)obj\MCP.Debugger.NativeTests\</IntDir>
+  </PropertyGroup>
+  <ItemDefinitionGroup>
+    <ClCompile>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <WarningLevel>Level3</WarningLevel>
+      <LanguageStandard>stdcpp20</LanguageStandard>
+      <AdditionalIncludeDirectories>$(ProjectDir);$(ProjectDir)..\MCP.Debugger;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ClCompile>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <ClCompile>
+      <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ClCompile>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ClCompile>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <ClCompile>
+      <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ClCompile>
+  </ItemDefinitionGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <Import Project="$(VsInstallRoot)\VC\vcpkg\scripts\buildsystems\msbuild\vcpkg.targets" Condition="'$(ImportBundledVcpkg)' == 'true'" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>

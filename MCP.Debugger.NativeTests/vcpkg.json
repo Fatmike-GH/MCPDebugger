@@ -1,0 +1,15 @@
+{
+  "name": "mcp-debugger-native-tests",
+  "version-string": "1.0.0",
+  "builtin-baseline": "cb2981c4e03d421fa03b9bb5044cd1986180e7e4",
+  "dependencies": [
+    "gtest"
+  ],
+  "overrides": [
+    {
+      "name": "gtest",
+      "version": "1.17.0",
+      "port-version": 2
+    }
+  ]
+}

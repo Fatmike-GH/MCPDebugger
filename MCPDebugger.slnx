@@ -24,6 +24,7 @@
       <Platform Solution="*|x64" Project="x64" />
       <Platform Solution="*|x86" Project="x86" />
     </Project>
+    <Project Path="MCP.Debugger.NativeTests/MCP.Debugger.NativeTests.vcxproj" Id="67ea9270-ae01-4f38-bbc8-19fbfd757c97" />
     <Project Path="MCP.Debugger.Tests/MCP.Debugger.Tests.csproj">
       <BuildDependency Project="MCP.Debugger.Types/MCP.Debugger.Types.csproj" />
       <Platform Solution="*|x64" Project="x64" />

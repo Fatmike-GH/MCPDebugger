@@ -1,0 +1,103 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Debugger">
+      <UniqueIdentifier>{f617a016-943a-4615-a842-cffd10975f0e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Debugger\Commands">
+      <UniqueIdentifier>{c51160c4-b47b-40c1-b8a1-0ad2c2a6ef94}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Mocks">
+      <UniqueIdentifier>{e524992c-dabf-416a-8e81-2718ff4d03b8}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Mocks\Debugger">
+      <UniqueIdentifier>{8e234ab5-a03f-4f59-9c2e-9b3d59707b2a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Mocks\Debugger\Commands">
+      <UniqueIdentifier>{d545cf21-25b6-41e1-a9fa-a27afd327833}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Mocks\Debugger\Commands\Base">
+      <UniqueIdentifier>{6d651caa-0d3a-4880-88b1-e67c588b5403}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ProcessExplorer">
+      <UniqueIdentifier>{6359d05a-28f6-42ca-9c85-209a88e1ab49}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="TestHelpers">
+      <UniqueIdentifier>{a1ddca8a-ed9f-4473-8bac-df3f28a95d2d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Production sources under test">
+      <UniqueIdentifier>{00efbe1a-c54e-412a-84a3-1dfa41ac8915}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\MCP.Debugger\Native\Debugger\Commands\Base\ICommand.cpp">
+      <Filter>Production sources under test</Filter>
+    </ClCompile>
+    <ClCompile Include="..\MCP.Debugger\Native\Debugger\Commands\DisassembleCommand.cpp">
+      <Filter>Production sources under test</Filter>
+    </ClCompile>
+    <ClCompile Include="..\MCP.Debugger\Native\Debugger\Commands\ReadMemoryCommand.cpp">
+      <Filter>Production sources under test</Filter>
+    </ClCompile>
+    <ClCompile Include="..\MCP.Debugger\Native\Debugger\Commands\StepIntoCommand.cpp">
+      <Filter>Production sources under test</Filter>
+    </ClCompile>
+    <ClCompile Include="..\MCP.Debugger\Native\Debugger\Commands\StepOverCommand.cpp">
+      <Filter>Production sources under test</Filter>
+    </ClCompile>
+    <ClCompile Include="..\MCP.Debugger\Native\Debugger\Commands\StopCommand.cpp">
+      <Filter>Production sources under test</Filter>
+    </ClCompile>
+    <ClCompile Include="..\MCP.Debugger\Native\Debugger\Commands\TryResolveStringCommand.cpp">
+      <Filter>Production sources under test</Filter>
+    </ClCompile>
+    <ClCompile Include="..\MCP.Debugger\Native\Debugger\Commands\WriteMemoryCommand.cpp">
+      <Filter>Production sources under test</Filter>
+    </ClCompile>
+    <ClCompile Include="..\MCP.Debugger\Native\ProcessExplorer\ModuleInfo.cpp">
+      <Filter>Production sources under test</Filter>
+    </ClCompile>
+    <ClCompile Include="..\MCP.Debugger\Native\ProcessExplorer\ProcessDataStore.cpp">
+      <Filter>Production sources under test</Filter>
+    </ClCompile>
+    <ClCompile Include="Main.cpp" />
+    <ClCompile Include="Debugger\Commands\CommandTests.cpp">
+      <Filter>Debugger\Commands</Filter>
+    </ClCompile>
+    <ClCompile Include="Debugger\Commands\DisassembleCommandTests.cpp">
+      <Filter>Debugger\Commands</Filter>
+    </ClCompile>
+    <ClCompile Include="Debugger\Commands\ReadMemoryCommandTests.cpp">
+      <Filter>Debugger\Commands</Filter>
+    </ClCompile>
+    <ClCompile Include="Debugger\Commands\StepIntoCommandTests.cpp">
+      <Filter>Debugger\Commands</Filter>
+    </ClCompile>
+    <ClCompile Include="Debugger\Commands\StepOverCommandTests.cpp">
+      <Filter>Debugger\Commands</Filter>
+    </ClCompile>
+    <ClCompile Include="Debugger\Commands\StopCommandTests.cpp">
+      <Filter>Debugger\Commands</Filter>
+    </ClCompile>
+    <ClCompile Include="Debugger\Commands\TryResolveStringCommandTests.cpp">
+      <Filter>Debugger\Commands</Filter>
+    </ClCompile>
+    <ClCompile Include="Debugger\Commands\WriteMemoryCommandTests.cpp">
+      <Filter>Debugger\Commands</Filter>
+    </ClCompile>
+    <ClCompile Include="ProcessExplorer\ProcessDataStoreTests.cpp">
+      <Filter>ProcessExplorer</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="Mocks\Debugger\Commands\Base\MockCommandContext.h">
+      <Filter>Mocks\Debugger\Commands\Base</Filter>
+    </ClInclude>
+    <ClInclude Include="TestHelpers\Futures.h">
+      <Filter>TestHelpers</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="vcpkg.json" />
+  </ItemGroup>
+</Project>

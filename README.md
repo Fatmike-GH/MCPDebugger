@@ -21,9 +21,11 @@ This guide provides a step-by-step process for building and integrating the **MC
 
 ### Step 1: Build the Solution
 Before configuring VS Code, you must compile the mcp server:
-1. Open `MCPDebugger.slnx` in Visual Studio 2026. Required workloads: **Desktop development with C++** including the **C++/CLI support for v145 build tools** component, and **.NET desktop development** (it installs the .NET 10 SDK the solution targets). Older Visual Studio versions do not have the v145 toolset and cannot build the solution.
+1. Open `MCPDebugger.slnx` in Visual Studio 2026. Required workloads: **Desktop development with C++** including the components **C++/CLI support for v145 build tools** and **vcpkg package manager**, and **.NET desktop development** (it installs the .NET 10 SDK the solution targets). Older Visual Studio versions do not have the v145 toolset and cannot build the solution.
 2. Build the solution
 3. Confirm that `MCP.Server.exe` exists in your `\build\Release\x86` or `\build\Release\x64` subfolder.
+
+> The first build of a configuration and platform needs access to GitHub: the native test project gets Google Test through vcpkg, and vcpkg reads its package registry from there whenever it installs into a fresh `build` folder. Later builds of the same configuration and platform work offline. vcpkg sends usage data to Microsoft unless the environment variable `VCPKG_DISABLE_METRICS` is set.
 
 > `MCP.Server.exe` needs the .NET 10 runtime in its own architecture: the x86 server needs the x86 runtime, the x64 server the x64 runtime.
 
@@ -169,10 +171,13 @@ The Visual Studio solution is organized into the following projects:
 - **MCP.Server**  
   The C# MCP server that exposes debugger functionality as MCP tools for external clients.
 
-Test projects (solution folder `Tests`, NUnit):
+Test projects (solution folder `Tests`; NUnit, except for the native tests):
 
 - **MCP.Debugger.IntegrationTests**  
   Integration tests of the debugger through its managed .NET interface, run against the sample targets in `Examples`.
+
+- **MCP.Debugger.NativeTests**  
+  Native unit tests of the C++ classes of `MCP.Debugger`, written with Google Test and gMock. The test binary compiles the sources of the classes it tests a second time, as plain native code, because the C++/CLI project offers no library a native binary could link.
 
 - **MCP.Server.IntegrationTests**  
   Integration tests of the MCP server: they start the built `MCP.Server.exe` and call its tools as an MCP client over stdio.
@@ -191,33 +196,50 @@ The executables wire their objects with a dependency-injection container: the se
 
 ## Running the tests
 
-The integration tests debug the sample targets `Examples\Example_x64\Example.exe` and `Examples\Example_x86\Example.exe` up to their entry point and a few instructions beyond it. They need no user interaction; a console window of the sample target may show up briefly.
+The solution has two kinds of tests: the NUnit tests of the C# test projects and the native Google Test tests of `MCP.Debugger.NativeTests`.
+
+The integration tests debug the sample targets `Examples\Example_x64\Example.exe` and `Examples\Example_x86\Example.exe` up to their entry point and a few instructions beyond it. They need no user interaction; a console window of the sample target may show up briefly. The native tests are unit tests: they start no process.
 
 1. Build the solution for the configuration and platform you want to test (see [Step 1: Build the Solution](#step-1-build-the-solution)). The tests always run against that build: the x64 tests debug the x64 sample target with the x64 debugger and server, the x86 tests the x86 ones. The .NET 10 runtime of the same architecture must be installed.
-2. Run the tests of that build from the repository root:
+2. Run the tests of that build, in Visual Studio or from the command line.
+
+### In Visual Studio
+
+Open the **Test Explorer** and run all tests. It lists and runs the NUnit tests and the native tests for the solution platform (x64 or x86) that is currently selected. The native tests need the Visual Studio component **Test Adapter for Google Test** (workload *Desktop development with C++*).
+
+### From the command line
+
+`RunTests.cmd` runs all tests of one build: first the NUnit test assemblies, then the native test binary. Call it from the repository root, in a command prompt or in PowerShell:
 
 ```
-dotnet test "build/<Configuration>/<Platform>/MCP.*Tests/MCP.*Tests.dll"
+.\RunTests.cmd <Debug|Release> <x64|x86>
 ```
 
 | Build | Command |
 | :--- | :--- |
-| **Debug x64** | `dotnet test "build/Debug/x64/MCP.*Tests/MCP.*Tests.dll"` |
-| **Debug x86** | `dotnet test "build/Debug/x86/MCP.*Tests/MCP.*Tests.dll"` |
-| **Release x64** | `dotnet test "build/Release/x64/MCP.*Tests/MCP.*Tests.dll"` |
-| **Release x86** | `dotnet test "build/Release/x86/MCP.*Tests/MCP.*Tests.dll"` |
+| **Debug x64** | `.\RunTests.cmd Debug x64` |
+| **Debug x86** | `.\RunTests.cmd Debug x86` |
+| **Release x64** | `.\RunTests.cmd Release x64` |
+| **Release x86** | `.\RunTests.cmd Release x86` |
 
-A run takes about 15 seconds.
+A run takes 15 to 20 seconds; the native tests account for a few milliseconds of it.
 
-- The command takes the built test assemblies, not the solution: `dotnet test MCPDebugger.slnx` does not work, because the `dotnet` command line cannot load the C++/CLI project of the solution.
-- **Exit code 0** means that all tests passed. The unit-test projects without tests are reported with the note that no test is available; they do not make the run fail.
-- **A non-zero exit code** means that at least one test failed, or that the check at the end of a run found an `Example.exe` or `MCP.Server.exe` process the tests left behind. In the second case all tests are listed as passed and the output contains `TearDown failed for test fixture ... RunFixture`.
+| Exit code | Meaning |
+| :--- | :--- |
+| **0** | All tests of both frameworks passed. |
+| **1** | At least one NUnit test or native test failed. |
+| **2** | Wrong arguments, or there is no build of that configuration and platform. |
+
+- The script builds nothing. It runs what the last build of that configuration and platform produced, so build first.
+- Both parts always run: a failing NUnit test does not keep the native tests from running, and the other way round.
+- The NUnit part is `dotnet test "build/<Configuration>/<Platform>/MCP.*Tests/MCP.*Tests.dll"`. It takes the built test assemblies, not the solution: `dotnet test MCPDebugger.slnx` does not work, because the `dotnet` command line cannot load the C++/CLI project of the solution. `dotnet test` cannot run the native test binary either; the script starts it directly.
+- The unit-test projects without tests are reported with the note that no test is available; they do not make the run fail.
+- Exit code 1 is also returned when the check at the end of the NUnit run found an `Example.exe` or `MCP.Server.exe` process the tests left behind. In that case all tests are listed as passed and the output contains `TearDown failed for test fixture ... RunFixture`.
 - Do not run the two integration-test assemblies in parallel: both debug the same sample target, and the check at the end of a run would report the processes of the other assembly.
-- In Visual Studio the tests are listed and run in the **Test Explorer**, for the solution platform (x64 or x86) that is currently selected.
 
 ### Test packages
 
-All test projects use the same package versions; they are defined once in `Tests.props`.
+All NUnit test projects use the same package versions; they are defined once in `Tests.props`.
 
 | Package | Version | License | Purpose |
 | :--- | :--- | :--- | :--- |
@@ -229,3 +251,11 @@ All test projects use the same package versions; they are defined once in `Tests
 | `Microsoft.Extensions.DependencyInjection` | 10.0.15 | MIT | Container the debugger integration tests take the debugger service from (same version as in `MCP.Server`, see [Packages](#packages)); only in `MCP.Debugger.IntegrationTests` |
 
 The packages these pull in (Microsoft test platform and `Microsoft.Extensions.*` packages) are licensed under MIT.
+
+The native tests use Google Test, which is not a NuGet package: vcpkg builds it from source during the build and links it statically into the test binary. The version is pinned in `MCP.Debugger.NativeTests/vcpkg.json` (registry baseline plus version override).
+
+| Package | Version | License | Purpose |
+| :--- | :--- | :--- | :--- |
+| `gtest` (vcpkg port: Google Test and gMock) | 1.17.0 | BSD-3-Clause | Test and mocking framework of the native tests; only in `MCP.Debugger.NativeTests` |
+
+The vcpkg helper ports used to build it (`vcpkg-cmake`, `vcpkg-cmake-config`) are licensed under MIT.
