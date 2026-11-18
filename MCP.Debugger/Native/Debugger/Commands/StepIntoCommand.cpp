@@ -8,7 +8,8 @@ namespace MCP::Native::Debugger::Commands
 {
   void StepIntoCommand::Execute(Base::ICommandContext* context)
   {
-    auto result = std::make_unique<Commands::CommandResult>(true);
+    // A step starts from a stop: while the debuggee runs there is no instruction to step from
+    auto result = std::make_unique<Commands::CommandResult>(context->IsDebuggeeStopped());
     SetResult(std::move(result));
   }
 }

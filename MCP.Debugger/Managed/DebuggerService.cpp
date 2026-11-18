@@ -73,9 +73,9 @@ namespace MCP::Debugger
     return _host->Debugger->IsRunning();
   }
 
-  void DebuggerService::Continue()
+  bool DebuggerService::Continue()
   {
-    _host->Debugger->Continue();
+    return NativeContinue(*_host->Debugger);
   }
 
   bool DebuggerService::StepInto()
@@ -428,6 +428,12 @@ namespace MCP::Debugger
   }
 
 #pragma unmanaged
+  bool NativeContinue(MCP::Native::Debugger::Interfaces::IDebugger& debugger)
+  {
+    MCP::Native::Debugger::Commands::CommandResult nresult = debugger.Continue();
+    return nresult.IsSuccessful();
+  }
+
   bool NativeStepInto(MCP::Native::Debugger::Interfaces::IDebugger& debugger)
   {
     MCP::Native::Debugger::Commands::CommandResult nresult = debugger.StepInto();

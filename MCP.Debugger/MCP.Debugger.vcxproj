@@ -37,6 +37,7 @@
     <ClCompile Include="Native\Debugger\Breakpoint.cpp" />
     <ClCompile Include="Native\Debugger\BreakpointManager.cpp" />
     <ClCompile Include="Native\Debugger\Commands\Base\ICommand.cpp" />
+    <ClCompile Include="Native\Debugger\Commands\ContinueCommand.cpp" />
     <ClCompile Include="Native\Debugger\Commands\DisassembleCommand.cpp" />
     <ClCompile Include="Native\Debugger\Commands\ReadMemoryCommand.cpp" />
     <ClCompile Include="Native\Debugger\Commands\RemoveBreakpointCommand.cpp" />
@@ -100,8 +101,8 @@
     <ClInclude Include="Native\Debugger\Commands\Base\ICommandContext.h" />
     <ClInclude Include="Native\Debugger\Commands\Base\ICommandResult.h" />
     <ClInclude Include="Native\Debugger\Commands\Base\CommandType.h" />
-    <ClInclude Include="Native\Debugger\Commands\Command.h" />
     <ClInclude Include="Native\Debugger\Commands\CommandResult.h" />
+    <ClInclude Include="Native\Debugger\Commands\ContinueCommand.h" />
     <ClInclude Include="Native\Debugger\Commands\DisassembleCommand.h" />
     <ClInclude Include="Native\Debugger\Commands\DisassembleResult.h" />
     <ClInclude Include="Native\Debugger\Commands\ReadMemoryCommand.h" />

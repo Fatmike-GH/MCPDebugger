@@ -63,6 +63,7 @@ namespace MCP::Native::Debugger
 
     // ICommandContext Implementation
     Interfaces::IBreakpointManager* GetBreakpointManager() override { return &_breakpointManager; }
+    bool IsDebuggeeStopped() override;
     void ExecuteClearCommandQueue() override;
     bool ExecuteReadMemory(DWORD_PTR va, size_t size, std::shared_ptr<std::vector<BYTE>>& outDataBuffer) override;
     bool ExecuteWriteMemory(DWORD_PTR va, const BYTE* data, size_t size) override;

@@ -15,7 +15,8 @@ namespace MCP.Debugger.IntegrationTests.TestHelpers
   /// <remarks>
   /// The service raises its events on its dispatcher thread, which swallows exceptions. The handlers of this
   /// class therefore only record that a stop happened; assertions belong into the test body.
-  /// A go command (continue, step) may only be issued while the debuggee is stopped.
+  /// A go command (continue, step) may only be issued while the debuggee is stopped: the debugger refuses it
+  /// otherwise, and the methods of this class that issue one then throw.
   /// </remarks>
   public sealed class DebugSession : IDisposable
   {
@@ -180,13 +181,14 @@ namespace MCP.Debugger.IntegrationTests.TestHelpers
 
     /// <summary>Continues from the system breakpoint and waits for the stop at the entry point.</summary>
     /// <returns>The thread context of the entry-point stop.</returns>
+    /// <exception cref="InvalidOperationException">The debugger refused the command.</exception>
     /// <exception cref="TimeoutException">The stop was not reported within <see cref="WaitTimeout"/>.</exception>
     public Task<CONTEXT> ContinueToEntryPointAsync()
     {
       return WaitForStopAsync(
         handler => _service.EntryPointBreakpoint += handler,
         handler => _service.EntryPointBreakpoint -= handler,
-        _service.Continue);
+        IssueContinue);
     }
 
     /// <summary>Executes one instruction, entering a call, and waits for the step stop.</summary>
@@ -224,6 +226,7 @@ namespace MCP.Debugger.IntegrationTests.TestHelpers
     /// <summary>Sets a breakpoint, continues and waits for the breakpoint stop.</summary>
     /// <param name="virtualAddress">Address of the instruction to stop at.</param>
     /// <returns>The thread context of the breakpoint stop.</returns>
+    /// <exception cref="InvalidOperationException">The debugger refused the command.</exception>
     /// <exception cref="TimeoutException">The stop was not reported within <see cref="WaitTimeout"/>.</exception>
     public Task<CONTEXT> ContinueToBreakpointAsync(nint virtualAddress)
     {
@@ -231,7 +234,7 @@ namespace MCP.Debugger.IntegrationTests.TestHelpers
       return WaitForStopAsync(
         handler => _service.Breakpoint += handler,
         handler => _service.Breakpoint -= handler,
-        _service.Continue);
+        IssueContinue);
     }
 
     /// <summary>
@@ -244,6 +247,7 @@ namespace MCP.Debugger.IntegrationTests.TestHelpers
     /// <see cref="IssueFollowedByBreakpoint"/> for when the debugger executes that set.
     /// </param>
     /// <returns>The thread context of the breakpoint stop.</returns>
+    /// <exception cref="InvalidOperationException">The debugger refused the command.</exception>
     /// <exception cref="TimeoutException">The stop was not reported within <see cref="WaitTimeout"/>.</exception>
     public Task<CONTEXT> ContinueToBreakpointAsync(nint virtualAddress, nint breakpointBehindCommand)
     {
@@ -251,7 +255,7 @@ namespace MCP.Debugger.IntegrationTests.TestHelpers
       return WaitForStopAsync(
         handler => _service.Breakpoint += handler,
         handler => _service.Breakpoint -= handler,
-        () => IssueFollowedByBreakpoint(_service.Continue, breakpointBehindCommand));
+        () => IssueFollowedByBreakpoint(IssueContinue, breakpointBehindCommand));
     }
 
     /// <summary>Waits until the debuggee process has ended.</summary>
@@ -368,6 +372,16 @@ namespace MCP.Debugger.IntegrationTests.TestHelpers
       if (breakpointBehindCommand.HasValue)
       {
         _service.SetBreakpoint(breakpointBehindCommand.Value);
+      }
+    }
+
+    /// <summary>Issues a continue command.</summary>
+    /// <exception cref="InvalidOperationException">The debugger refused the command.</exception>
+    private void IssueContinue()
+    {
+      if (!_service.Continue())
+      {
+        throw new InvalidOperationException("The debugger refused the continue command.");
       }
     }
 

@@ -20,6 +20,10 @@ namespace MCP.Server.Tests.McpTools.Execution
     /// <summary>Error text of a waiting operation without a running session.</summary>
     private const string NotStartedText = "Debugger has not been started yet.";
 
+    /// <summary>Error text of an operation that needs a stopped debuggee while the debuggee runs.</summary>
+    private const string DebuggeeRunningText =
+      "The debuggee is running. This command is only possible while it is stopped.";
+
     /// <summary>The address the breakpoint tests run to.</summary>
     private const nint BreakpointAddress = 0x401000;
 
@@ -35,7 +39,10 @@ namespace MCP.Server.Tests.McpTools.Execution
     /// </summary>
     private static readonly TimeSpan CompletionSafetyNet = TimeSpan.FromSeconds(30);
 
-    /// <summary>The debugger service; a session is running unless a test says otherwise.</summary>
+    /// <summary>
+    /// The debugger service; a session is running and the debuggee is stopped - the service accepts every
+    /// command that resumes it - unless a test says otherwise.
+    /// </summary>
     private Mock<IDebuggerService> _service;
 
     /// <summary>The wait for the time limit; it never ends unless a test says otherwise.</summary>
@@ -63,6 +70,10 @@ namespace MCP.Server.Tests.McpTools.Execution
 
       _service = new Mock<IDebuggerService>();
       _service.Setup(service => service.IsRunning()).Returns(true);
+      // Without these the mock would answer false, which is the service's answer for a debuggee that runs.
+      _service.Setup(service => service.Continue()).Returns(true);
+      _service.Setup(service => service.StepInto()).Returns(true);
+      _service.Setup(service => service.StepOver()).Returns(true);
       _service.SetupAdd(service => service.EntryPointBreakpoint += It.IsAny<EventHandler<BreakpointEventArgs>>())
               .Callback<EventHandler<BreakpointEventArgs>>(handler => _entryPointHandler = handler);
       _service.SetupAdd(service => service.Breakpoint += It.IsAny<EventHandler<BreakpointEventArgs>>())
@@ -154,6 +165,43 @@ namespace MCP.Server.Tests.McpTools.Execution
     }
 
     [Test]
+    public void Continue_DebuggeeStopped_ContinuesTheService()
+    {
+      // Act
+      _executionControl.Continue();
+
+      // Assert
+      _service.Verify(service => service.Continue(), Times.Once());
+    }
+
+    [Test]
+    public void Continue_DebuggeeRunning_ThrowsRunningText()
+    {
+      // Arrange
+      _service.Setup(service => service.Continue()).Returns(false);
+
+      // Act
+      McpException caught = Assert.Throws<McpException>(() => _executionControl.Continue());
+
+      // Assert
+      Assert.That(caught.Message, Is.EqualTo(DebuggeeRunningText));
+    }
+
+    [Test]
+    public void Continue_NotRunning_ThrowsNotStartedText()
+    {
+      // Arrange
+      _service.Setup(service => service.IsRunning()).Returns(false);
+
+      // Act
+      McpException caught = Assert.Throws<McpException>(() => _executionControl.Continue());
+
+      // Assert
+      Assert.That(caught.Message, Is.EqualTo(NotStartedText));
+      _service.Verify(service => service.Continue(), Times.Never());
+    }
+
+    [Test]
     public async Task ContinueToEntryPointAsync_AwaitedStopRaised_ReturnsItsContext()
     {
       // Arrange
@@ -184,6 +232,24 @@ namespace MCP.Server.Tests.McpTools.Execution
       McpException caught = await Assert.ThrowsAsync<McpException>(async () => await pending);
       Assert.That(caught.Message, Is.EqualTo("A timeout occurred before the entry point was reached."));
       _delay.Verify(delay => delay.WaitAsync(TimeLimit), Times.Once());
+      _service.VerifyRemove(service => service.EntryPointBreakpoint -= _entryPointHandler, Times.AtLeastOnce());
+    }
+
+    [Test]
+    public async Task ContinueToEntryPointAsync_DebuggeeRunning_ThrowsRunningTextWithoutWaiting()
+    {
+      // Arrange
+      _service.Setup(service => service.Continue()).Returns(false);
+
+      // Act
+      Task<CONTEXT> pending = _executionControl.ContinueToEntryPointAsync();
+
+      // Assert
+      Assert.That(pending.IsFaulted, Is.True, "The call must have failed without waiting.");
+      McpException caught = await Assert.ThrowsAsync<McpException>(async () => await pending);
+      Assert.That(caught.Message, Is.EqualTo(DebuggeeRunningText));
+      _delay.Verify(delay => delay.WaitAsync(It.IsAny<TimeSpan>()), Times.Never());
+      Assert.That(_entryPointHandler, Is.Not.Null);
       _service.VerifyRemove(service => service.EntryPointBreakpoint -= _entryPointHandler, Times.AtLeastOnce());
     }
 
@@ -276,6 +342,48 @@ namespace MCP.Server.Tests.McpTools.Execution
       Assert.That(pending.IsFaulted, Is.True, "The call must have failed without waiting.");
       McpException caught = await Assert.ThrowsAsync<McpException>(async () => await pending);
       Assert.That(caught.Message, Is.EqualTo("A timeout occurred before the specified breakpoint was reached."));
+      _delay.Verify(delay => delay.WaitAsync(TimeLimit), Times.Once());
+      _service.VerifyRemove(service => service.Breakpoint -= _breakpointHandler, Times.AtLeastOnce());
+      _service.Verify(service => service.RemoveBreakpoint(BreakpointAddress), Times.AtLeastOnce());
+    }
+
+    [Test]
+    public async Task ContinueToBreakpointAsync_DebuggeeRunningAndStopRaised_ReturnsItsContext()
+    {
+      // Arrange
+      // A debuggee that runs already reaches the breakpoint without being resumed.
+      _service.Setup(service => service.Continue()).Returns(false);
+      CONTEXT stop = TestContexts.AtInstructionPointer(BreakpointAddress);
+      stop.EFlags = StopFlags;
+
+      // Act
+      Task<CONTEXT> pending = _executionControl.ContinueToBreakpointAsync(BreakpointAddress);
+      bool isWaiting = !pending.IsCompleted;
+      RaiseBreakpointStop(stop);
+      CONTEXT context = await Completed(pending);
+
+      // Assert
+      Assert.That(isWaiting, Is.True, "The refused continue must not end the wait.");
+      Assert.That(context.EFlags, Is.EqualTo(StopFlags));
+      _service.Verify(service => service.SetBreakpoint(BreakpointAddress), Times.Once());
+      _service.VerifyRemove(service => service.Breakpoint -= _breakpointHandler, Times.AtLeastOnce());
+      _service.Verify(service => service.RemoveBreakpoint(BreakpointAddress), Times.AtLeastOnce());
+    }
+
+    [Test]
+    public async Task ContinueToBreakpointAsync_DebuggeeRunningAndDelayElapsed_ThrowsItsTimeoutText()
+    {
+      // Arrange
+      _service.Setup(service => service.Continue()).Returns(false);
+      LetTheTimeLimitRunOut();
+
+      // Act
+      Task<CONTEXT> pending = _executionControl.ContinueToBreakpointAsync(BreakpointAddress);
+
+      // Assert
+      McpException caught = await Assert.ThrowsAsync<McpException>(async () => await pending);
+      Assert.That(caught.Message, Is.EqualTo("A timeout occurred before the specified breakpoint was reached."));
+      _service.Verify(service => service.SetBreakpoint(BreakpointAddress), Times.Once());
       _delay.Verify(delay => delay.WaitAsync(TimeLimit), Times.Once());
       _service.VerifyRemove(service => service.Breakpoint -= _breakpointHandler, Times.AtLeastOnce());
       _service.Verify(service => service.RemoveBreakpoint(BreakpointAddress), Times.AtLeastOnce());
@@ -387,6 +495,24 @@ namespace MCP.Server.Tests.McpTools.Execution
     }
 
     [Test]
+    public async Task StepIntoAsync_DebuggeeRunning_ThrowsRunningTextWithoutWaiting()
+    {
+      // Arrange
+      _service.Setup(service => service.StepInto()).Returns(false);
+
+      // Act
+      Task<CONTEXT> pending = _executionControl.StepIntoAsync();
+
+      // Assert
+      Assert.That(pending.IsFaulted, Is.True, "The call must have failed without waiting.");
+      McpException caught = await Assert.ThrowsAsync<McpException>(async () => await pending);
+      Assert.That(caught.Message, Is.EqualTo(DebuggeeRunningText));
+      _delay.Verify(delay => delay.WaitAsync(It.IsAny<TimeSpan>()), Times.Never());
+      Assert.That(_singleStepHandler, Is.Not.Null);
+      _service.VerifyRemove(service => service.SingleStep -= _singleStepHandler, Times.AtLeastOnce());
+    }
+
+    [Test]
     public async Task StepIntoAsync_CommandThrows_UnsubscribesHandler()
     {
       // Arrange
@@ -449,6 +575,24 @@ namespace MCP.Server.Tests.McpTools.Execution
       McpException caught = await Assert.ThrowsAsync<McpException>(async () => await pending);
       Assert.That(caught.Message, Is.EqualTo("A timeout occurred before step-over finished."));
       _delay.Verify(delay => delay.WaitAsync(TimeLimit), Times.Once());
+      _service.VerifyRemove(service => service.SingleStep -= _singleStepHandler, Times.AtLeastOnce());
+    }
+
+    [Test]
+    public async Task StepOverAsync_DebuggeeRunning_ThrowsRunningTextWithoutWaiting()
+    {
+      // Arrange
+      _service.Setup(service => service.StepOver()).Returns(false);
+
+      // Act
+      Task<CONTEXT> pending = _executionControl.StepOverAsync();
+
+      // Assert
+      Assert.That(pending.IsFaulted, Is.True, "The call must have failed without waiting.");
+      McpException caught = await Assert.ThrowsAsync<McpException>(async () => await pending);
+      Assert.That(caught.Message, Is.EqualTo(DebuggeeRunningText));
+      _delay.Verify(delay => delay.WaitAsync(It.IsAny<TimeSpan>()), Times.Never());
+      Assert.That(_singleStepHandler, Is.Not.Null);
       _service.VerifyRemove(service => service.SingleStep -= _singleStepHandler, Times.AtLeastOnce());
     }
 

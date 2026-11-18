@@ -9,12 +9,20 @@ namespace MCP.Server.McpTools.Execution
 {
   /// <summary>
   /// Execution control on top of the debugger service: every waiting operation subscribes to its stop event,
-  /// issues its command and waits for the stop or for the time limit, whichever comes first.
+  /// issues its command and waits for the stop or for the time limit, whichever comes first. A command the
+  /// debugger refuses because the debuggee runs already ends the operation at once with an error - except
+  /// where a running debuggee is what the operation can start from.
   /// </summary>
   public class ExecutionControl : IExecutionControl
   {
     /// <summary>Time limit of a waiting operation.</summary>
     private static readonly TimeSpan DefaultTimeout = TimeSpan.FromSeconds(50);
+
+    /// <summary>
+    /// Error text of a command that needs a stopped debuggee and was refused because the debuggee runs.
+    /// </summary>
+    private const string DebuggeeRunningMessage =
+      "The debuggee is running. This command is only possible while it is stopped.";
 
     /// <summary>The debugger that is driven. Owned by the composition root, not by this class.</summary>
     private readonly IDebuggerService _debuggerService;
@@ -46,6 +54,15 @@ namespace MCP.Server.McpTools.Execution
     }
 
     /// <inheritdoc/>
+    public void Continue()
+    {
+      EnsureRunning();
+
+      if (!_debuggerService.Continue())
+        throw new McpException(DebuggeeRunningMessage);
+    }
+
+    /// <inheritdoc/>
     public Task<CONTEXT> ContinueToEntryPointAsync()
     {
       return RunAndWaitAsync(subscribe: h => _debuggerService.EntryPointBreakpoint += h,
@@ -71,7 +88,13 @@ namespace MCP.Server.McpTools.Execution
                                _debuggerService.Breakpoint -= h;
                                _debuggerService.RemoveBreakpoint(va);
                              },
-                             start: _debuggerService.Continue,
+                             // A debuggee that runs already reaches the breakpoint without being resumed, so
+                             // a refused continue is no failure here
+                             start: () =>
+                             {
+                               _debuggerService.Continue();
+                               return true;
+                             },
                              predicate: ctx => GetInstructionPointer(ctx) == va,
                              timeoutMessage: "A timeout occurred before the specified breakpoint was reached.");
     }
@@ -97,15 +120,17 @@ namespace MCP.Server.McpTools.Execution
     }
 
     /// <summary>Issues a step command and waits for the single-step stop it leads to.</summary>
-    /// <param name="stepAction">Issues the step command; its result is ignored.</param>
+    /// <param name="stepAction">Issues the step command; false when the debugger refuses it.</param>
     /// <param name="timeoutMessage">Error text when the stop does not arrive in time.</param>
     /// <returns>The thread context of the stop after the step.</returns>
-    /// <exception cref="McpException">No session is running, or the stop did not arrive in time.</exception>
+    /// <exception cref="McpException">
+    /// No session is running, the debuggee is not stopped, or the stop did not arrive in time.
+    /// </exception>
     private async Task<CONTEXT> RunSingleStepAsync(Func<bool> stepAction, string timeoutMessage)
     {
       return await RunAndWaitAsync(subscribe: h => _debuggerService.SingleStep += h,
                                    unsubscribe: h => _debuggerService.SingleStep -= h,
-                                   start: () => _ = stepAction(), // ignore bool intentionally
+                                   start: stepAction,
                                    predicate: _ => true,
                                    timeoutMessage: timeoutMessage
       );
@@ -113,18 +138,24 @@ namespace MCP.Server.McpTools.Execution
 
     /// <summary>
     /// Subscribes to a stop event, issues the command that lets the debuggee run and waits for the first stop
-    /// the predicate accepts. The handler is unsubscribed again on every path.
+    /// the predicate accepts. When the command is refused the wait does not begin. The handler is unsubscribed
+    /// again on every path.
     /// </summary>
     /// <param name="subscribe">Adds the handler to the stop event to wait for.</param>
     /// <param name="unsubscribe">Removes the handler from that event; may be called more than once.</param>
-    /// <param name="start">Issues the command that lets the debuggee run.</param>
+    /// <param name="start">
+    /// Issues the command that lets the debuggee run; false when the debugger refuses it because the debuggee
+    /// is not stopped.
+    /// </param>
     /// <param name="predicate">Decides from the thread context of a stop whether it is the awaited one.</param>
     /// <param name="timeoutMessage">Error text when no accepted stop arrives in time.</param>
     /// <returns>The thread context of the accepted stop.</returns>
-    /// <exception cref="McpException">No session is running, or no accepted stop arrived in time.</exception>
+    /// <exception cref="McpException">
+    /// No session is running, the command was refused, or no accepted stop arrived in time.
+    /// </exception>
     private async Task<CONTEXT> RunAndWaitAsync(Action<EventHandler<BreakpointEventArgs>> subscribe,
                                                 Action<EventHandler<BreakpointEventArgs>> unsubscribe,
-                                                Action start,
+                                                Func<bool> start,
                                                 Func<CONTEXT, bool> predicate,
                                                 string timeoutMessage)
     {
@@ -147,7 +178,8 @@ namespace MCP.Server.McpTools.Execution
 
       try
       {
-        start();
+        if (!start())
+          throw new McpException(DebuggeeRunningMessage);
 
         var completed = await Task.WhenAny(tcs.Task, _delay.WaitAsync(DefaultTimeout));
         if (completed != tcs.Task)

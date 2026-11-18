@@ -8,7 +8,7 @@
 #include ".\Interfaces\IBreakpointManager.h"
 #include ".\Interfaces\IDebuggeeBreakIn.h"
 #include ".\Commands\Base\CommandType.h"
-#include ".\Commands\Command.h"
+#include ".\Commands\ContinueCommand.h"
 #include ".\Commands\DisassembleCommand.h"
 #include ".\Commands\ReadMemoryCommand.h"
 #include ".\Commands\RemoveBreakpointCommand.h"
@@ -109,7 +109,7 @@ namespace MCP::Native::Debugger
 
   Commands::CommandResult DebuggerCommandQueue::Continue()
   {
-    auto command = std::make_unique<Commands::Command>(MCP::Native::Debugger::Commands::Base::CommandType::CMD_CONTINUE);
+    auto command = std::make_unique<Commands::ContinueCommand>();
     auto future = command->GetFuture();
 
     PostCommand(std::move(command));
@@ -323,6 +323,14 @@ namespace MCP::Native::Debugger
     // Executes the logic previously in the CMD_STOP switch case.
     // Assumes the lock is held by ExecutePendingCommands/ExecuteAllPendingCommands.
     std::queue<Commands::Base::CommandPtr>().swap(_queue);
+  }
+
+  bool DebuggerCommandQueue::IsDebuggeeStopped()
+  {
+    // Asked by a command while it executes, so this thread already holds the queue mutex: the flag is read
+    // directly, locking again would deadlock. It is set for the whole processing of a stop and cleared before
+    // commands are executed between two debug events
+    return _paused;
   }
 
   bool DebuggerCommandQueue::ExecuteReadMemory(DWORD_PTR address, size_t size, std::shared_ptr<std::vector<BYTE>>& outDataBuffer)

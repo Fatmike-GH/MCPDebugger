@@ -22,6 +22,7 @@
        classes live in the C++/CLI project, which offers no library a native test binary could link. -->
   <ItemGroup>
     <ClCompile Include="..\MCP.Debugger\Native\Debugger\Commands\Base\ICommand.cpp" />
+    <ClCompile Include="..\MCP.Debugger\Native\Debugger\Commands\ContinueCommand.cpp" />
     <ClCompile Include="..\MCP.Debugger\Native\Debugger\Commands\DisassembleCommand.cpp" />
     <ClCompile Include="..\MCP.Debugger\Native\Debugger\Commands\ReadMemoryCommand.cpp" />
     <ClCompile Include="..\MCP.Debugger\Native\Debugger\Commands\RemoveBreakpointCommand.cpp" />
@@ -48,7 +49,7 @@
     <ClCompile Include="Debugger\BreakpointManagerTests.cpp" />
     <ClCompile Include="Debugger\DebuggerCommandQueueTests.cpp" />
     <ClCompile Include="Debugger\DebuggerTests.cpp" />
-    <ClCompile Include="Debugger\Commands\CommandTests.cpp" />
+    <ClCompile Include="Debugger\Commands\ContinueCommandTests.cpp" />
     <ClCompile Include="Debugger\Commands\DisassembleCommandTests.cpp" />
     <ClCompile Include="Debugger\Commands\ReadMemoryCommandTests.cpp" />
     <ClCompile Include="Debugger\Commands\RemoveBreakpointCommandTests.cpp" />

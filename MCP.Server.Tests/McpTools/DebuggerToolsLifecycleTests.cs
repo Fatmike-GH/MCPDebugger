@@ -206,7 +206,7 @@ namespace MCP.Server.Tests.McpTools
     }
 
     [Test]
-    public async Task Debugger_Continue_ReadySession_ContinuesTheService()
+    public async Task Debugger_Continue_ReadySession_ContinuesThroughTheExecutionControl()
     {
       // Arrange
       await _harness.ReachEntryPointAsync();
@@ -215,15 +215,30 @@ namespace MCP.Server.Tests.McpTools
       _harness.Tools.Debugger_Continue();
 
       // Assert
-      _harness.Service.Verify(service => service.Continue(), Times.Once());
+      _harness.ExecutionControl.Verify(control => control.Continue(), Times.Once());
     }
 
     [Test]
-    public async Task Debugger_Continue_ServiceThrows_ThrowsInternalErrorText()
+    public async Task Debugger_Continue_ExecutionControlRefuses_ThrowsTheSameException()
     {
       // Arrange
       await _harness.ReachEntryPointAsync();
-      _harness.Service.Setup(service => service.Continue()).Throws(new InvalidOperationException(FailureMessage));
+      var refusal = new McpException("The debuggee is running.");
+      _harness.ExecutionControl.Setup(control => control.Continue()).Throws(refusal);
+
+      // Act
+      McpException caught = Assert.Throws<McpException>(() => _harness.Tools.Debugger_Continue());
+
+      // Assert
+      Assert.That(caught, Is.SameAs(refusal));
+    }
+
+    [Test]
+    public async Task Debugger_Continue_ExecutionControlThrows_ThrowsInternalErrorText()
+    {
+      // Arrange
+      await _harness.ReachEntryPointAsync();
+      _harness.ExecutionControl.Setup(control => control.Continue()).Throws(new InvalidOperationException(FailureMessage));
 
       // Act
       McpException caught = Assert.Throws<McpException>(() => _harness.Tools.Debugger_Continue());

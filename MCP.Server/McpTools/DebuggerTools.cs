@@ -98,20 +98,25 @@ namespace MCP.Server.McpTools
       });
     }
 
+    /// <summary>Lets the stopped debuggee run on. Does not wait for its next stop.</summary>
+    /// <exception cref="McpException">
+    /// The session has not reached the entry point yet, or the debuggee is not stopped - it runs already.
+    /// </exception>
     [McpServerTool(Name = "Debugger_Continue"), Description("Continues to run the debuggee if it is currently waiting on a breakpoint.")]
     public void Debugger_Continue()
     {
       Execute(() =>
       {
         ThrowIfNotReady();
-        _debuggerService.Continue();
+        _executionControl.Continue();
       });
     }
 
     /// <summary>Runs the debuggee from the system breakpoint to its entry point. Allowed once per session.</summary>
     /// <returns>The thread context of the entry-point stop.</returns>
     /// <exception cref="McpException">
-    /// No session is running, the entry point was already reached, or the stop did not arrive in time.
+    /// No session is running, the entry point was already reached, the debuggee is not stopped, or the stop did
+    /// not arrive in time.
     /// </exception>
     [McpServerTool(Name = "Debugger_ContinueToEntryPoint"), Description("Continues to run the debuggee from system breakpoint to the entry point of the debuggee. Returns current context.")]
     public async Task<BreakpointResult> Debugger_ContinueToEntryPoint()
@@ -174,7 +179,8 @@ namespace MCP.Server.McpTools
     /// <summary>Executes one instruction, entering a call.</summary>
     /// <returns>The thread context of the stop after the step.</returns>
     /// <exception cref="McpException">
-    /// The session has not reached the entry point yet, or the stop did not arrive in time.
+    /// The session has not reached the entry point yet, the debuggee is not stopped - it runs already - or the
+    /// stop did not arrive in time.
     /// </exception>
     [McpServerTool(Name = "Debugger_StepInto"), Description("Steps from the current instruction to the next instruction. If the current instruction is a call it will step into this call.")]
     public async Task<BreakpointResult> Debugger_StepInto()
@@ -191,7 +197,8 @@ namespace MCP.Server.McpTools
     /// <summary>Executes one instruction, running through a call.</summary>
     /// <returns>The thread context of the stop after the step.</returns>
     /// <exception cref="McpException">
-    /// The session has not reached the entry point yet, or the stop did not arrive in time.
+    /// The session has not reached the entry point yet, the debuggee is not stopped - it runs already - or the
+    /// stop did not arrive in time.
     /// </exception>
     [McpServerTool(Name = "Debugger_StepOver"), Description("Steps from the current instruction to the next instruction. If the current instruction is a call it will step over the call to the instruction behind it.")]
     public async Task<BreakpointResult> Debugger_StepOver()

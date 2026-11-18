@@ -1,3 +1,5 @@
+using System.Diagnostics;
+using System.Globalization;
 using System.Text.Json;
 using MCP.Server.IntegrationTests.TestHelpers;
 using ModelContextProtocol.Protocol;
@@ -7,8 +9,9 @@ namespace MCP.Server.IntegrationTests.McpTools
   /// <summary>
   /// Debugging sessions through the tools of the server. Every test owns its server process because a
   /// session changes the state of the server. The tests stay within the first instructions behind the entry
-  /// point, long before the sample target waits for console input. Addresses are never fixed values: they
-  /// are taken from the results of the server.
+  /// point, long before the sample target waits for console input - except the one about tools called while
+  /// the debuggee runs, which lets it run free. Addresses are never fixed values: they are taken from the
+  /// results of the server.
   /// </summary>
   public class DebuggerToolsSessionTests
   {
@@ -22,6 +25,20 @@ namespace MCP.Server.IntegrationTests.McpTools
 
     /// <summary>Number of bytes disassembled at the entry point; holds at least two instructions.</summary>
     private const int DisassemblyLength = 32;
+
+    /// <summary>
+    /// Error text of a tool that needs a stopped debuggee, called while the debuggee runs; the tool name goes
+    /// into the placeholder.
+    /// </summary>
+    private const string DebuggeeRunningErrorFormat =
+      "An error occurred invoking '{0}': The debuggee is running. This command is only possible while it is stopped.";
+
+    /// <summary>
+    /// Upper bound for the answer of a tool that is refused because the debuggee runs. The refusal needs one
+    /// round trip to the debugger (some milliseconds); the bound tells it from a tool that waits for a stop
+    /// until its own time limit of 50 seconds.
+    /// </summary>
+    private static readonly TimeSpan RefusalTimeLimit = TimeSpan.FromSeconds(10);
 
     /// <summary>A call of a tool without parameters.</summary>
     private static Dictionary<string, object> NoArguments => new Dictionary<string, object>();
@@ -91,6 +108,49 @@ namespace MCP.Server.IntegrationTests.McpTools
       // Assert
       Assert.That(stop.IsError, Is.Not.True);
       Assert.That(stop.Content, Is.Empty);
+    }
+
+    [Test, CancelAfter(ServerSession.TimeoutMilliseconds)]
+    public async Task GoTools_WhileTheDebuggeeRuns_ReturnRunningErrorAtOnce(CancellationToken cancellationToken)
+    {
+      // Arrange
+      await using ServerSession server = await ServerSession.StartAsync(cancellationToken);
+      await StartSampleTargetAsync(server, cancellationToken);
+      Success(await server.CallAsync(ToolNames.ContinueToEntryPoint, NoArguments, cancellationToken));
+
+      // Act: resume from the entry point; no breakpoint is set, so nothing stops the debuggee again
+      CallToolResult resumed = await server.CallAsync(ToolNames.Continue, NoArguments, cancellationToken);
+
+      // Assert
+      Assert.That(resumed.IsError, Is.Not.True, () => ServerSession.Text(resumed));
+
+      // Act: a step while the debuggee runs
+      var stepWatch = Stopwatch.StartNew();
+      CallToolResult step = await server.CallAsync(ToolNames.StepInto, NoArguments, cancellationToken);
+      stepWatch.Stop();
+
+      // Assert
+      Assert.That(step.IsError, Is.True);
+      Assert.That(ServerSession.Text(step), Is.EqualTo(string.Format(CultureInfo.InvariantCulture, DebuggeeRunningErrorFormat, ToolNames.StepInto)));
+      Assert.That(stepWatch.Elapsed, Is.LessThan(RefusalTimeLimit));
+
+      // Act: a continue while the debuggee runs
+      var continueWatch = Stopwatch.StartNew();
+      CallToolResult resumedAgain = await server.CallAsync(ToolNames.Continue, NoArguments, cancellationToken);
+      continueWatch.Stop();
+
+      // Assert
+      Assert.That(resumedAgain.IsError, Is.True);
+      Assert.That(ServerSession.Text(resumedAgain), Is.EqualTo(string.Format(CultureInfo.InvariantCulture, DebuggeeRunningErrorFormat, ToolNames.Continue)));
+      Assert.That(continueWatch.Elapsed, Is.LessThan(RefusalTimeLimit));
+
+      // Act: stop
+      CallToolResult stop = await server.CallAsync(ToolNames.Stop, NoArguments, cancellationToken);
+
+      // Assert
+      // A session whose debuggee had ended meanwhile would refuse the stop: the errors above came from a
+      // debuggee that ran.
+      Assert.That(stop.IsError, Is.Not.True, () => ServerSession.Text(stop));
     }
 
     [Test, CancelAfter(ServerSession.TimeoutMilliseconds)]

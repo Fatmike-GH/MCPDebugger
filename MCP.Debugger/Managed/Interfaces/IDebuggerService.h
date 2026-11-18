@@ -81,23 +81,33 @@ namespace MCP::Debugger
     bool IsRunning();
 
     /// <summary>
-    /// Queued. Lets the stopped debuggee run on. The next stop is reported through an event. Does nothing when no
-    /// session is running.
+    /// Queued. Lets the stopped debuggee run on. The next stop is reported through an event. Has no effect when
+    /// no session is running or the debuggee is not stopped.
     /// </summary>
-    void Continue();
+    /// <returns>
+    /// True when the debuggee was resumed from a stop. False when no session is running or the debuggee is not
+    /// stopped - it runs already.
+    /// </returns>
+    bool Continue();
 
     /// <summary>
     /// Queued. Executes one instruction and enters a call. The stop after the step is reported through
-    /// <see cref="SingleStep"/>.
+    /// <see cref="SingleStep"/>. Has no effect when no session is running or the debuggee is not stopped.
     /// </summary>
-    /// <returns>False when no session is running or the step could not be started.</returns>
+    /// <returns>
+    /// True when the step was started from a stop. False when no session is running or the debuggee is not
+    /// stopped - it runs, so there is no instruction to step from.
+    /// </returns>
     bool StepInto();
 
     /// <summary>
     /// Queued. Executes one instruction and runs through a call. The stop after the step is reported through
-    /// <see cref="SingleStep"/>.
+    /// <see cref="SingleStep"/>. Has no effect when no session is running or the debuggee is not stopped.
     /// </summary>
-    /// <returns>False when no session is running or the step could not be started.</returns>
+    /// <returns>
+    /// True when the step was started from a stop. False when no session is running or the debuggee is not
+    /// stopped - it runs, so there is no instruction to step from.
+    /// </returns>
     bool StepOver();
 
     /// <summary>

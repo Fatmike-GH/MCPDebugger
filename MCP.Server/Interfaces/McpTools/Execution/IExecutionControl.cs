@@ -15,6 +15,12 @@ namespace MCP.Server.Interfaces.McpTools.Execution
   /// not arrive within a fixed time limit. Its subscription is removed again on every path.
   /// </para>
   /// <para>
+  /// Running debuggee. A debuggee can only be resumed or stepped from a stop. The members that need one fail
+  /// at once, without waiting, when the debugger refuses their command because the debuggee runs already.
+  /// <see cref="ContinueToBreakpointAsync"/> is the way back to a stop from a running debuggee and does not
+  /// fail then.
+  /// </para>
+  /// <para>
   /// Threading. Every member may be called from any thread. Only one waiting call may be in progress at a time;
   /// this is not checked. The awaited stop is handled on the thread the debugger service raises its events on;
   /// the returned task completes on a thread-pool thread.
@@ -27,16 +33,24 @@ namespace MCP.Server.Interfaces.McpTools.Execution
     /// <returns>The address of the next instruction to execute.</returns>
     nint GetInstructionPointer(CONTEXT context);
 
+    /// <summary>Lets the stopped debuggee run on without waiting for its next stop.</summary>
+    /// <exception cref="McpException">
+    /// No session is running, or the debuggee is not stopped. Both are thrown by the call itself.
+    /// </exception>
+    void Continue();
+
     /// <summary>Continues the debuggee and waits until it stopped at its entry point.</summary>
     /// <returns>The thread context of the entry-point stop.</returns>
     /// <exception cref="McpException">
-    /// No session is running, or the stop did not arrive in time. Both are reported through the returned task.
+    /// No session is running, the debuggee is not stopped, or the stop did not arrive in time. All are reported
+    /// through the returned task.
     /// </exception>
     Task<CONTEXT> ContinueToEntryPointAsync();
 
     /// <summary>
     /// Sets a temporary breakpoint, continues the debuggee and waits until it stopped there. Stops at other
-    /// addresses are ignored. The breakpoint is removed again, also when the wait fails.
+    /// addresses are ignored. The breakpoint is removed again, also when the wait fails. A debuggee that runs
+    /// already is not an error: the breakpoint is set and the wait begins without resuming anything.
     /// </summary>
     /// <param name="va">Absolute virtual address of the instruction to stop at.</param>
     /// <returns>The thread context of the breakpoint stop.</returns>
@@ -49,14 +63,16 @@ namespace MCP.Server.Interfaces.McpTools.Execution
     /// <summary>Executes one instruction, entering a call, and waits for the stop after it.</summary>
     /// <returns>The thread context of the stop after the step.</returns>
     /// <exception cref="McpException">
-    /// No session is running, or the stop did not arrive in time. Both are reported through the returned task.
+    /// No session is running, the debuggee is not stopped, or the stop did not arrive in time. All are reported
+    /// through the returned task.
     /// </exception>
     Task<CONTEXT> StepIntoAsync();
 
     /// <summary>Executes one instruction, running through a call, and waits for the stop after it.</summary>
     /// <returns>The thread context of the stop after the step.</returns>
     /// <exception cref="McpException">
-    /// No session is running, or the stop did not arrive in time. Both are reported through the returned task.
+    /// No session is running, the debuggee is not stopped, or the stop did not arrive in time. All are reported
+    /// through the returned task.
     /// </exception>
     Task<CONTEXT> StepOverAsync();
 

@@ -349,4 +349,121 @@ namespace MCP::Native::Tests::Debugger
       ProcessingEndCase{ "StepOver", CommandType::CMD_STEP_OVER, [](IDebuggerCommandQueue& queue) { queue.StepOver(); } },
       ProcessingEndCase{ "Stop", CommandType::CMD_STOP, [](IDebuggerCommandQueue& queue) { queue.Stop(); } }),
     [](const ::testing::TestParamInfo<ProcessingEndCase>& info) { return std::string(info.param.Name); });
+
+  /// <summary>
+  /// One command that resumes the debuggee: its type and how a client posts it and learns whether the debugger
+  /// accepted it.
+  /// </summary>
+  struct ResumingCommandCase
+  {
+    const char* Name;
+    CommandType Type;
+    bool (*Post)(IDebuggerCommandQueue& queue);
+  };
+
+  /// <summary>Prints the case by its name; without it Google Test would dump the bytes of the struct.</summary>
+  void PrintTo(const ResumingCommandCase& resumingCommandCase, std::ostream* output)
+  {
+    *output << resumingCommandCase.Name;
+  }
+
+  /// <summary>
+  /// What the three resuming commands report to their callers. A debuggee can only be resumed from a stop, so a
+  /// command is accepted when the debug thread executes it while it processes a stop, and refused when it
+  /// executes it between two debug events of a running debuggee. What counts is where the command is executed,
+  /// not when it was posted.
+  /// </summary>
+  class DebuggerCommandQueueResumingCommandTests : public DebuggerCommandQueueTests,
+                                                   public ::testing::WithParamInterface<ResumingCommandCase>
+  {
+  };
+
+  TEST_P(DebuggerCommandQueueResumingCommandTests, AResumingCommandExecutedWhileTheDebuggeeRunsIsRefusedAndTheCommandBehindItIsExecuted)
+  {
+    // Arrange
+    ExpectBreakInRequests(2);
+    ExpectBreakpointSetAt(0x10);
+    auto resuming = RunOnOtherThread([this] { return GetParam().Post(_queue); });
+    _queued.WaitForCount(1, "the resuming command to be queued");
+    auto behind = RunOnOtherThread([this] { return _queue.SetBreakpoint(0x10).IsSuccessful(); });
+    _queued.WaitForCount(2, "the command behind it to be queued");
+
+    // Act
+    _queue.ProcessCommandsAsync();
+
+    // Assert
+    EXPECT_FALSE(WaitForResult(resuming, "the caller of the resuming command to be released"));
+    EXPECT_TRUE(WaitForResult(behind, "the caller of the command behind it to be released"));
+    EXPECT_EQ(1, _executed.Count());
+  }
+
+  TEST_P(DebuggerCommandQueueResumingCommandTests, AResumingCommandQueuedBeforeTheProcessingOfAStopBeginsIsAccepted)
+  {
+    // Arrange
+    // The client posts while the debug thread has not begun to process the stop yet: to the queue the debuggee
+    // still runs, so it asks for a break-in. The command is executed by the processing of the stop all the same.
+    ExpectBreakInRequests(1);
+    auto resuming = RunOnOtherThread([this] { return GetParam().Post(_queue); });
+    _queued.WaitForCount(1, "the resuming command to be queued");
+
+    // Act
+    CommandType ended = _queue.ProcessCommandsSync();
+
+    // Assert
+    EXPECT_EQ(GetParam().Type, ended);
+    EXPECT_TRUE(WaitForResult(resuming, "the caller of the resuming command to be released"));
+  }
+
+  TEST_P(DebuggerCommandQueueResumingCommandTests, AResumingCommandPostedWhileTheDebugThreadIsPausedIsAccepted)
+  {
+    // Arrange
+    // Only the command that brings the debug thread to its pause is posted while it is not paused.
+    ExpectBreakInRequests(1);
+    ExpectBreakpointSetAt(0x10);
+    auto first = RunOnOtherThread([this] { return _queue.SetBreakpoint(0x10).IsSuccessful(); });
+    _queued.WaitForCount(1, "the first command to be queued");
+    auto processing = RunOnOtherThread([this] { return _queue.ProcessCommandsSync(); });
+    _executed.WaitForCount(1, "the debug thread to execute the queued command");
+
+    // Act
+    auto resuming = RunOnOtherThread([this] { return GetParam().Post(_queue); });
+    CommandType ended = WaitForResult(processing, "the resuming command to end the processing");
+
+    // Assert
+    EXPECT_EQ(GetParam().Type, ended);
+    EXPECT_TRUE(WaitForResult(resuming, "the caller of the resuming command to be released"));
+    EXPECT_TRUE(WaitForResult(first, "the first caller to be released"));
+  }
+
+  TEST_P(DebuggerCommandQueueResumingCommandTests, ASecondResumingCommandBehindTheOneThatEndedTheStopIsRefused)
+  {
+    // Arrange
+    ExpectBreakInRequests(2);
+    auto first = RunOnOtherThread([this] { return GetParam().Post(_queue); });
+    _queued.WaitForCount(1, "the first resuming command to be queued");
+    auto second = RunOnOtherThread([this] { return GetParam().Post(_queue); });
+    _queued.WaitForCount(2, "the second resuming command to be queued");
+
+    // Act: the processing of the stop, which the first command ends
+    CommandType ended = _queue.ProcessCommandsSync();
+
+    // Assert
+    EXPECT_EQ(GetParam().Type, ended);
+    EXPECT_TRUE(WaitForResult(first, "the caller of the first resuming command to be released"));
+
+    // Act: the processing after the debuggee was resumed
+    _queue.ProcessCommandsAsync();
+
+    // Assert
+    EXPECT_FALSE(WaitForResult(second, "the caller of the second resuming command to be released"));
+  }
+
+  INSTANTIATE_TEST_SUITE_P(
+    ResumingCommands,
+    DebuggerCommandQueueResumingCommandTests,
+    ::testing::Values(
+      ResumingCommandCase{ "Continue", CommandType::CMD_CONTINUE, [](IDebuggerCommandQueue& queue) { return queue.Continue().IsSuccessful(); } },
+      ResumingCommandCase{ "StepInto", CommandType::CMD_STEP_INTO, [](IDebuggerCommandQueue& queue) { return queue.StepInto().IsSuccessful(); } },
+      ResumingCommandCase{ "StepOver", CommandType::CMD_STEP_OVER, [](IDebuggerCommandQueue& queue) { return queue.StepOver().IsSuccessful(); } }),
+    [](const ::testing::TestParamInfo<ResumingCommandCase>& info) { return std::string(info.param.Name); });
 }

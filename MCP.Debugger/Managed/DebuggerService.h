@@ -21,6 +21,7 @@ namespace MCP::Debugger
 namespace MCP::Debugger
 {
   // Native helpers
+  bool NativeContinue(MCP::Native::Debugger::Interfaces::IDebugger& debugger);
   bool NativeStepInto(MCP::Native::Debugger::Interfaces::IDebugger& debugger);
   bool NativeStepOver(MCP::Native::Debugger::Interfaces::IDebugger& debugger);
 }
@@ -60,7 +61,7 @@ namespace MCP::Debugger
     virtual bool Start(String^ path, String^% error, System::UInt32% processId, System::UInt32% threadid, System::IntPtr% imageBase, System::IntPtr% entryPoint, MCP::Debugger::Types::Interop::CONTEXT% context);
     virtual void Stop();
     virtual bool IsRunning();
-    virtual void Continue();
+    virtual bool Continue();
     virtual bool StepInto();
     virtual bool StepOver();
     virtual void SetBreakpoint(System::IntPtr va);

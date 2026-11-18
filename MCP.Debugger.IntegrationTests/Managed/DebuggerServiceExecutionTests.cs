@@ -9,7 +9,8 @@ namespace MCP.Debugger.IntegrationTests.Managed
   /// Execution control through <see cref="DebuggerService"/>: continue, step into, step over, breakpoint, and
   /// what a breakpoint leaves in the debuggee's memory once it was hit, removed or set at the current stop.
   /// Every test owns its session because each one moves the debuggee. The tests stay within the first
-  /// instructions behind the entry point, long before the sample target waits for console input. Addresses
+  /// instructions behind the entry point, long before the sample target waits for console input - except the
+  /// one about commands sent while the debuggee runs, which lets it run free. Addresses
   /// are never fixed values: they are taken from what the session reports and from the disassembly.
   /// The cases that set a breakpoint right after a go command do not control when the debugger executes the
   /// set - before it resumed the debuggee, while the debuggee runs or at the stop the command leads to. They
@@ -99,6 +100,38 @@ namespace MCP.Debugger.IntegrationTests.Managed
 
       // Assert
       Assert.That(DebugSession.InstructionPointer(stop), Is.EqualTo(second.VirtualAdress));
+    }
+
+    [Test]
+    public async Task GoCommands_WhileTheDebuggeeRuns_AreRefusedAndLeaveItRunning()
+    {
+      // Arrange
+      using var session = new DebugSession();
+      await session.StartAtEntryPointAsync();
+
+      // Act: resume from the stop at the entry point; no breakpoint is set, so nothing stops the debuggee again
+      bool resumed = session.Service.Continue();
+
+      // Assert
+      Assert.That(resumed, Is.True);
+
+      // Act: the commands that need a stop, while the debuggee runs
+      bool steppedInto = session.Service.StepInto();
+      bool steppedOver = session.Service.StepOver();
+      bool resumedAgain = session.Service.Continue();
+      bool isRunning = session.Service.IsRunning();
+      byte[] entryPointByte = session.Service.ReadMemory(session.EntryPoint, 1);
+
+      // Assert
+      Assert.That(steppedInto, Is.False);
+      Assert.That(steppedOver, Is.False);
+      Assert.That(resumedAgain, Is.False);
+      // The service answers false for a session that has ended as well. Only a session that still runs serves
+      // a memory read, so these two tell a refused command from a debuggee that is gone.
+      Assert.That(isRunning, Is.True);
+      Assert.That(entryPointByte, Is.Not.Null.And.Length.EqualTo(1));
+      Assert.That(session.SingleStepCount, Is.Zero);
+      Assert.That(session.BreakpointCount, Is.Zero);
     }
 
     [Test]

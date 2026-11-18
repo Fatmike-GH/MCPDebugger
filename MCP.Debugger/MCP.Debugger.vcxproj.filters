@@ -195,6 +195,9 @@
     <ClCompile Include="Native\Debugger\Commands\StepIntoCommand.cpp">
       <Filter>Native\Debugger\Commands</Filter>
     </ClCompile>
+    <ClCompile Include="Native\Debugger\Commands\ContinueCommand.cpp">
+      <Filter>Native\Debugger\Commands</Filter>
+    </ClCompile>
     <ClCompile Include="Native\Disassembler\Disassembler.cpp">
       <Filter>Native\Disassembler</Filter>
     </ClCompile>
@@ -470,7 +473,7 @@
     <ClInclude Include="Native\Debugger\Commands\WriteMemoryCommand.h">
       <Filter>Native\Debugger\Commands</Filter>
     </ClInclude>
-    <ClInclude Include="Native\Debugger\Commands\Command.h">
+    <ClInclude Include="Native\Debugger\Commands\ContinueCommand.h">
       <Filter>Native\Debugger\Commands</Filter>
     </ClInclude>
     <ClInclude Include="Managed\UiDispatcher.h">
