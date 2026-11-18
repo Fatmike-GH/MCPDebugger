@@ -107,7 +107,7 @@ namespace MCP::Native::Debugger::DebugEventHandler
 
   DWORD ExceptionEventHandler::HandleSingleStepException(EXCEPTION_DEBUG_INFO& exception, ProcessInfo& processInfo, ThreadInfo& threadInfo)
   {
-    // Just stepped one instruction off a stop address that has a breakpoint, to be able to write it afterwards
+    // The single step every go command starts with has ended: the debuggee has left the stop address
     if (_stepOffPending)
     {
       return HandleStepOffBreakpoint(exception, processInfo, threadInfo);
@@ -214,27 +214,14 @@ namespace MCP::Native::Debugger::DebugEventHandler
       }
     }
 
-    // Asked now and not at the stop: breakpoints may have been set and removed while the debuggee was stopped
-    if (_breakpointManager->HasBreakpoint(stopAddress))
-    {
-      // The instruction at the stop address has to run before its breakpoint instruction is written:
-      // execute it with one single step; afterwards HandleStepOffBreakpoint acts on the go command
-      _breakpointManager->SetTrapFlag(threadInfo.info.hThread, true);
-      _stepOffPending = true;
-      _postBreakpointAction = command;
-      return DBG_CONTINUE;
-    }
-
-    // No breakpoint at the stop address: nothing has to be written once the debuggee has left it
-    _breakpointManager->ReleaseHeldBreakpoint();
-
-    bool isSingleStep = command == MCP::Native::Debugger::Commands::Base::CommandType::CMD_STEP_INTO
-      || (command == MCP::Native::Debugger::Commands::Base::CommandType::CMD_STEP_OVER && _stepOverBreakpointAddress == 0);
-    if (isSingleStep)
-    {
-      _breakpointManager->SetTrapFlag(threadInfo.info.hThread, true);
-    }
-
+    // The instruction at the stop address has to run before a breakpoint instruction may be written there.
+    // That also goes for a breakpoint that is set only after this go command, while the thread still stands
+    // at the address - so the hold on the address cannot end here, and it does not matter whether a
+    // breakpoint is set there right now. Every go command executes the instruction with one single step;
+    // afterwards HandleStepOffBreakpoint releases the address and acts on the go command
+    _breakpointManager->SetTrapFlag(threadInfo.info.hThread, true);
+    _stepOffPending = true;
+    _postBreakpointAction = command;
     return DBG_CONTINUE;
   }
 

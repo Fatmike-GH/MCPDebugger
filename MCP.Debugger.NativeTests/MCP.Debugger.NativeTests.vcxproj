@@ -34,6 +34,7 @@
     <ClCompile Include="..\MCP.Debugger\Native\Debugger\BreakpointManager.cpp" />
     <ClCompile Include="..\MCP.Debugger\Native\Debugger\DebugEventHandler\DebugEventHandler.cpp" />
     <ClCompile Include="..\MCP.Debugger\Native\Debugger\DebugEventHandler\DebugEventStorage.cpp" />
+    <ClCompile Include="..\MCP.Debugger\Native\Debugger\DebugEventHandler\ExceptionEventHandler.cpp" />
     <ClCompile Include="..\MCP.Debugger\Native\Debugger\Debugger.cpp" />
     <ClCompile Include="..\MCP.Debugger\Native\Debugger\DebuggerCommandQueue.cpp" />
     <ClCompile Include="..\MCP.Debugger\Native\Disassembler\SymbolResolver.cpp" />
@@ -58,6 +59,7 @@
     <ClCompile Include="Debugger\Commands\TryResolveStringCommandTests.cpp" />
     <ClCompile Include="Debugger\Commands\WriteMemoryCommandTests.cpp" />
     <ClCompile Include="Debugger\DebugEventHandler\DebugEventHandlerTests.cpp" />
+    <ClCompile Include="Debugger\DebugEventHandler\ExceptionEventHandlerTests.cpp" />
     <ClCompile Include="Disassembler\SymbolResolverTests.cpp" />
     <ClCompile Include="PEFile\ExecutableValidatorTests.cpp" />
     <ClCompile Include="ProcessExplorer\ProcessDataStoreTests.cpp" />
@@ -69,6 +71,7 @@
     <ClInclude Include="Mocks\Debugger\Interfaces\MockBreakpointFactory.h" />
     <ClInclude Include="Mocks\Debugger\Interfaces\MockBreakpointManager.h" />
     <ClInclude Include="Mocks\Debugger\Interfaces\MockDebuggeeBreakIn.h" />
+    <ClInclude Include="Mocks\Debugger\Interfaces\MockDebuggerCommandQueue.h" />
     <ClInclude Include="Mocks\Debugger\Interfaces\MockDebuggerEventHandler.h" />
     <ClInclude Include="Mocks\Debugger\Interfaces\MockDebuggerSession.h" />
     <ClInclude Include="Mocks\Debugger\Interfaces\MockDebuggerSessionFactory.h" />

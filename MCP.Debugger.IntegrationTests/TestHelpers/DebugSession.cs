@@ -190,27 +190,35 @@ namespace MCP.Debugger.IntegrationTests.TestHelpers
     }
 
     /// <summary>Executes one instruction, entering a call, and waits for the step stop.</summary>
+    /// <param name="breakpointBehindCommand">
+    /// Address of a breakpoint to set right after the step command was issued, before the wait for the stop;
+    /// null sets none. See <see cref="IssueFollowedByBreakpoint"/> for when the debugger executes that set.
+    /// </param>
     /// <returns>The thread context of the step stop.</returns>
     /// <exception cref="InvalidOperationException">The debugger refused the command.</exception>
     /// <exception cref="TimeoutException">The stop was not reported within <see cref="WaitTimeout"/>.</exception>
-    public Task<CONTEXT> StepIntoAsync()
+    public Task<CONTEXT> StepIntoAsync(nint? breakpointBehindCommand = null)
     {
       return WaitForStopAsync(
         handler => _service.SingleStep += handler,
         handler => _service.SingleStep -= handler,
-        IssueStepInto);
+        () => IssueFollowedByBreakpoint(IssueStepInto, breakpointBehindCommand));
     }
 
     /// <summary>Executes one instruction, running through a call, and waits for the step stop.</summary>
+    /// <param name="breakpointBehindCommand">
+    /// Address of a breakpoint to set right after the step command was issued, before the wait for the stop;
+    /// null sets none. See <see cref="IssueFollowedByBreakpoint"/> for when the debugger executes that set.
+    /// </param>
     /// <returns>The thread context of the step stop.</returns>
     /// <exception cref="InvalidOperationException">The debugger refused the command.</exception>
     /// <exception cref="TimeoutException">The stop was not reported within <see cref="WaitTimeout"/>.</exception>
-    public Task<CONTEXT> StepOverAsync()
+    public Task<CONTEXT> StepOverAsync(nint? breakpointBehindCommand = null)
     {
       return WaitForStopAsync(
         handler => _service.SingleStep += handler,
         handler => _service.SingleStep -= handler,
-        IssueStepOver);
+        () => IssueFollowedByBreakpoint(IssueStepOver, breakpointBehindCommand));
     }
 
     /// <summary>Sets a breakpoint, continues and waits for the breakpoint stop.</summary>
@@ -224,6 +232,26 @@ namespace MCP.Debugger.IntegrationTests.TestHelpers
         handler => _service.Breakpoint += handler,
         handler => _service.Breakpoint -= handler,
         _service.Continue);
+    }
+
+    /// <summary>
+    /// Sets a breakpoint, continues, sets a second breakpoint right after the continue command was issued and
+    /// waits for the next breakpoint stop.
+    /// </summary>
+    /// <param name="virtualAddress">Address of the instruction to stop at.</param>
+    /// <param name="breakpointBehindCommand">
+    /// Address of the breakpoint to set behind the continue command. See
+    /// <see cref="IssueFollowedByBreakpoint"/> for when the debugger executes that set.
+    /// </param>
+    /// <returns>The thread context of the breakpoint stop.</returns>
+    /// <exception cref="TimeoutException">The stop was not reported within <see cref="WaitTimeout"/>.</exception>
+    public Task<CONTEXT> ContinueToBreakpointAsync(nint virtualAddress, nint breakpointBehindCommand)
+    {
+      _service.SetBreakpoint(virtualAddress);
+      return WaitForStopAsync(
+        handler => _service.Breakpoint += handler,
+        handler => _service.Breakpoint -= handler,
+        () => IssueFollowedByBreakpoint(_service.Continue, breakpointBehindCommand));
     }
 
     /// <summary>Waits until the debuggee process has ended.</summary>
@@ -323,6 +351,23 @@ namespace MCP.Debugger.IntegrationTests.TestHelpers
       finally
       {
         unsubscribe(handler);
+      }
+    }
+
+    /// <summary>
+    /// Issues a go command and, when an address is given, sets a breakpoint there right behind it. Both calls
+    /// return once the debugger executed them, so the set is executed after the go command - but whether
+    /// before or after the debuggee was resumed, or only at the stop the go command leads to, is a matter of
+    /// timing the caller does not control.
+    /// </summary>
+    /// <param name="issueCommand">Issues the go command.</param>
+    /// <param name="breakpointBehindCommand">Address of the breakpoint to set; null sets none.</param>
+    private void IssueFollowedByBreakpoint(Action issueCommand, nint? breakpointBehindCommand)
+    {
+      issueCommand();
+      if (breakpointBehindCommand.HasValue)
+      {
+        _service.SetBreakpoint(breakpointBehindCommand.Value);
       }
     }
 

@@ -11,6 +11,9 @@ namespace MCP.Debugger.IntegrationTests.Managed
   /// Every test owns its session because each one moves the debuggee. The tests stay within the first
   /// instructions behind the entry point, long before the sample target waits for console input. Addresses
   /// are never fixed values: they are taken from what the session reports and from the disassembly.
+  /// The cases that set a breakpoint right after a go command do not control when the debugger executes the
+  /// set - before it resumed the debuggee, while the debuggee runs or at the stop the command leads to. They
+  /// state what holds in each of these orders.
   /// </summary>
   public class DebuggerServiceExecutionTests
   {
@@ -246,6 +249,65 @@ namespace MCP.Debugger.IntegrationTests.Managed
 
       // Act
       CONTEXT stop = await session.ContinueToBreakpointAsync(next);
+
+      // Assert
+      Assert.That(DebugSession.InstructionPointer(stop), Is.EqualTo(next));
+      Assert.That(session.BreakpointCount, Is.EqualTo(1));
+    }
+
+    [Test]
+    public async Task StepInto_WithBreakpointSetAtStopAddressRightAfterTheCommand_StepsOnce()
+    {
+      // Arrange
+      using var session = new DebugSession();
+      await session.StartAtEntryPointAsync();
+      Instruction second = ReadEntrySequence(session)[1];
+      CONTEXT stepStop = await session.StepOverAsync();
+      Assert.That(DebugSession.InstructionPointer(stepStop), Is.EqualTo(second.VirtualAdress), "A step over the first instruction at the entry point does not end at the second one.");
+
+      // Act: step into, then at once set a breakpoint at the address the debuggee is resumed from
+      CONTEXT stop = await session.StepIntoAsync(breakpointBehindCommand: second.VirtualAdress);
+
+      // Assert
+      Assert.That(DebugSession.InstructionPointer(stop), Is.EqualTo(AddressAfterStepInto(second)));
+      Assert.That(session.SingleStepCount, Is.EqualTo(2));
+      Assert.That(session.BreakpointCount, Is.Zero);
+      Assert.That(ReadByte(session, second.VirtualAdress), Is.EqualTo(BreakpointOpcode));
+    }
+
+    [Test]
+    public async Task StepOver_WithBreakpointSetAtStopAddressRightAfterTheCommand_StepsOnce()
+    {
+      // Arrange
+      using var session = new DebugSession();
+      await session.StartAtEntryPointAsync();
+      Instruction second = ReadEntrySequence(session)[1];
+      CONTEXT stepStop = await session.StepOverAsync();
+      Assert.That(DebugSession.InstructionPointer(stepStop), Is.EqualTo(second.VirtualAdress), "A step over the first instruction at the entry point does not end at the second one.");
+
+      // Act: step over, then at once set a breakpoint at the address the debuggee is resumed from
+      CONTEXT stop = await session.StepOverAsync(breakpointBehindCommand: second.VirtualAdress);
+
+      // Assert
+      Assert.That(DebugSession.InstructionPointer(stop), Is.EqualTo(AddressAfterStepOver(second)));
+      Assert.That(session.SingleStepCount, Is.EqualTo(2));
+      Assert.That(session.BreakpointCount, Is.Zero);
+      Assert.That(ReadByte(session, second.VirtualAdress), Is.EqualTo(BreakpointOpcode));
+    }
+
+    [Test]
+    public async Task Continue_WithBreakpointSetAtStopAddressRightAfterTheCommand_StopsAtTheNextBreakpoint()
+    {
+      // Arrange
+      using var session = new DebugSession();
+      await session.StartAtEntryPointAsync();
+      Instruction second = ReadEntrySequence(session)[1];
+      nint next = AddressAfterStepOver(second);
+      CONTEXT stepStop = await session.StepOverAsync();
+      Assert.That(DebugSession.InstructionPointer(stepStop), Is.EqualTo(second.VirtualAdress), "A step over the first instruction at the entry point does not end at the second one.");
+
+      // Act: continue, then at once set a breakpoint at the address the debuggee is resumed from
+      CONTEXT stop = await session.ContinueToBreakpointAsync(next, breakpointBehindCommand: second.VirtualAdress);
 
       // Assert
       Assert.That(DebugSession.InstructionPointer(stop), Is.EqualTo(next));

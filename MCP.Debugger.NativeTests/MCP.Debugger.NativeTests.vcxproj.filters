@@ -126,6 +126,9 @@
     <ClCompile Include="..\MCP.Debugger\Native\Disassembler\SymbolResolver.cpp">
       <Filter>Production sources under test</Filter>
     </ClCompile>
+    <ClCompile Include="..\MCP.Debugger\Native\Debugger\DebugEventHandler\ExceptionEventHandler.cpp">
+      <Filter>Production sources under test</Filter>
+    </ClCompile>
     <ClCompile Include="Main.cpp" />
     <ClCompile Include="Debugger\Commands\CommandTests.cpp">
       <Filter>Debugger\Commands</Filter>
@@ -173,6 +176,9 @@
       <Filter>PEFile</Filter>
     </ClCompile>
     <ClCompile Include="Debugger\DebugEventHandler\DebugEventHandlerTests.cpp">
+      <Filter>Debugger\DebugEventHandler</Filter>
+    </ClCompile>
+    <ClCompile Include="Debugger\DebugEventHandler\ExceptionEventHandlerTests.cpp">
       <Filter>Debugger\DebugEventHandler</Filter>
     </ClCompile>
     <ClCompile Include="Disassembler\SymbolResolverTests.cpp">
@@ -223,6 +229,9 @@
       <Filter>Mocks\Debugger\Interfaces</Filter>
     </ClInclude>
     <ClInclude Include="Mocks\Debugger\Interfaces\MockDebuggeeBreakIn.h">
+      <Filter>Mocks\Debugger\Interfaces</Filter>
+    </ClInclude>
+    <ClInclude Include="Mocks\Debugger\Interfaces\MockDebuggerCommandQueue.h">
       <Filter>Mocks\Debugger\Interfaces</Filter>
     </ClInclude>
     <ClInclude Include="Mocks\Disassembler\Interfaces\MockDisassembler.h">

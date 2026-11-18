@@ -63,7 +63,9 @@ namespace MCP::Native::Debugger::DebugEventHandler
 
     /// <summary>
     /// Waits for the go command of a stop that was reported and resumes the debuggee from the stop address,
-    /// which is the exception address. The breakpoint manager must hold that address.
+    /// which is the exception address. The breakpoint manager must hold that address; it stays held until the
+    /// instruction there has run, which every go command does with one single step (HandleStepOffBreakpoint
+    /// handles its end).
     /// </summary>
     DWORD ResumeFromStop(EXCEPTION_DEBUG_INFO& exception, ProcessInfo& processInfo, ThreadInfo& threadInfo);
 
@@ -80,7 +82,7 @@ namespace MCP::Native::Debugger::DebugEventHandler
     MCP::Native::Disassembler::Interfaces::IDisassembler* _disassembler;
 
     bool _systemBreakpoint;
-    bool _stepOffPending; // True while the debuggee executes the one instruction at a stop address that has a breakpoint
+    bool _stepOffPending; // True while the debuggee executes the one instruction at the stop address a go command resumed it from
     MCP::Native::Debugger::Commands::Base::CommandType _postBreakpointAction; // The go command to act on once that instruction ran
     DWORD_PTR _ntdllDbgBreakPointAddress; // Required to detect DebugBreakProcess
     DWORD_PTR _stepOverBreakpointAddress = 0; // 0 means no active step-over
