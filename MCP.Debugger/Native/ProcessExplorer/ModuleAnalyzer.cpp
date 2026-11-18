@@ -1,23 +1,33 @@
 #include "ModuleAnalyzer.h"
 #include "ModuleInfo.h"
+#include ".\Interfaces\IPEImage.h"
+#include ".\Interfaces\IPEImageFactory.h"
 #include <psapi.h>
+#include <utility>
 
 namespace MCP::Native::ProcessExplorer
 {
+  ModuleAnalyzer::ModuleAnalyzer(std::unique_ptr<Interfaces::IPEImageFactory> peImageFactory)
+    : _peImageFactory(std::move(peImageFactory))
+  {
+  }
+
+  ModuleAnalyzer::~ModuleAnalyzer() = default;
+
   ModuleInfoPtr ModuleAnalyzer::AnalyzeModule(HANDLE hProcess, HANDLE hFile, void* baseAddress)
   {
     if (hProcess == nullptr || baseAddress == nullptr) return nullptr;
 
-    PEImage peImage(hProcess, (DWORD_PTR)baseAddress);
-    if (!peImage.IsValid())
+    std::unique_ptr<Interfaces::IPEImage> peImage = _peImageFactory->Open(hProcess, (DWORD_PTR)baseAddress);
+    if (!peImage->IsValid())
     {
       return nullptr;
     }
 
-    return CreateModuleInfo(peImage, hProcess, hFile, baseAddress);
+    return CreateModuleInfo(*peImage, hProcess, hFile, baseAddress);
   }
 
-  ModuleInfoPtr ModuleAnalyzer::CreateModuleInfo(PEImage& peImage, HANDLE hProcess, HANDLE hFile, void* baseAddress)
+  ModuleInfoPtr ModuleAnalyzer::CreateModuleInfo(const Interfaces::IPEImage& peImage, HANDLE hProcess, HANDLE hFile, void* baseAddress)
   {
     std::wstring path = GetPathFromHandle(hFile);
 

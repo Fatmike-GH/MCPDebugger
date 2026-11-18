@@ -1,22 +1,33 @@
 #include "ProcessExplorer.h"
-#include "ModuleAnalyzer.h"
 #include "..\Debugger\DebugEventHandler\ProcessInfo.h"
 #include "..\Debugger\DebugEventHandler\ThreadInfo.h"
 #include "..\Debugger\DebugEventHandler\DllInfo.h"
+#include ".\Interfaces\IModuleAnalyzer.h"
+#include ".\Interfaces\IProcessDataStore.h"
 #include ".\Interfaces\IProcessExplorerListener.h"
 
 #include <Psapi.h>
+#include <utility>
 #include <vector>
 #include <string>
 
 namespace MCP::Native::ProcessExplorer
 {
+  ProcessExplorer::ProcessExplorer(std::unique_ptr<Interfaces::IProcessDataStore> store,
+                                   std::unique_ptr<Interfaces::IModuleAnalyzer> moduleAnalyzer)
+    : _store(std::move(store)),
+      _moduleAnalyzer(std::move(moduleAnalyzer))
+  {
+  }
+
+  ProcessExplorer::~ProcessExplorer() = default;
+
   void ProcessExplorer::OnProcessCreated(std::shared_ptr<MCP::Native::Debugger::DebugEventHandler::ProcessInfo> info)
   {
-    _store.AddProcess(info->ProcessId, info->info.hProcess);
+    _store->AddProcess(info->ProcessId, info->info.hProcess);
 
-    ModuleInfoPtr moduleInfo = ModuleAnalyzer::AnalyzeModule(info->info.hProcess, info->info.hFile, info->info.lpBaseOfImage);
-    _store.AddModule(info->ProcessId, moduleInfo);
+    ModuleInfoPtr moduleInfo = _moduleAnalyzer->AnalyzeModule(info->info.hProcess, info->info.hFile, info->info.lpBaseOfImage);
+    _store->AddModule(info->ProcessId, moduleInfo);
 
     NotifyProcessAdded(info->ProcessId);
     NotifyModuleLoaded(info->ProcessId, moduleInfo);
@@ -24,7 +35,7 @@ namespace MCP::Native::ProcessExplorer
 
   void ProcessExplorer::OnProcessExited(DWORD processId)
   {
-    _store.RemoveProcess(processId);
+    _store->RemoveProcess(processId);
     NotifyProcessRemoved(processId);
   }
 
@@ -33,18 +44,18 @@ namespace MCP::Native::ProcessExplorer
 
   void ProcessExplorer::OnDllLoaded(std::shared_ptr<MCP::Native::Debugger::DebugEventHandler::DllInfo> info)
   {
-    HANDLE hProcess = _store.GetProcessHandle(info->ProcessId);
+    HANDLE hProcess = _store->GetProcessHandle(info->ProcessId);
     if (hProcess == nullptr) return;
 
-    ModuleInfoPtr moduleInfo = ModuleAnalyzer::AnalyzeModule(hProcess, info->Info.hFile, info->Info.lpBaseOfDll);
-    _store.AddModule(info->ProcessId, moduleInfo);
+    ModuleInfoPtr moduleInfo = _moduleAnalyzer->AnalyzeModule(hProcess, info->Info.hFile, info->Info.lpBaseOfDll);
+    _store->AddModule(info->ProcessId, moduleInfo);
 
     NotifyModuleLoaded(info->ProcessId, moduleInfo);
   }
 
   void ProcessExplorer::OnDllUnloaded(DWORD processId, void* baseOfDll)
   {
-    _store.RemoveModule(processId, baseOfDll);
+    _store->RemoveModule(processId, baseOfDll);
     NotifyModuleUnloaded(processId, baseOfDll);
   }
 
@@ -65,23 +76,23 @@ namespace MCP::Native::ProcessExplorer
 
   bool ProcessExplorer::GetModules(DWORD processId, std::vector<ModuleInfoPtr>& modules)
   {
-    return _store.GetModules(processId, modules);
+    return _store->GetModules(processId, modules);
   }
 
   bool ProcessExplorer::GetModule(DWORD processId, HMODULE moduleHandle, ModuleInfoPtr& outModuleInfo)
   {
-    return _store.GetModule(processId, moduleHandle, outModuleInfo);
+    return _store->GetModule(processId, moduleHandle, outModuleInfo);
   }
 
   bool ProcessExplorer::GetModuleByVA(DWORD processId, DWORD_PTR va, ModuleInfoPtr& outModuleInfo)
   {
-    return _store.GetModuleByVA(processId, va, outModuleInfo);
+    return _store->GetModuleByVA(processId, va, outModuleInfo);
   }
 
   bool ProcessExplorer::GetFunctionByVA(DWORD processId, DWORD_PTR va, ModuleExport& outExport)
   {
     ModuleInfoPtr modInfo;
-    if (!_store.GetModuleByVA(processId, va, modInfo))
+    if (!_store->GetModuleByVA(processId, va, modInfo))
     {
       return false;
     }
@@ -91,7 +102,7 @@ namespace MCP::Native::ProcessExplorer
   HMODULE ProcessExplorer::GetRemoteModuleHandle(DWORD processId, const wchar_t* moduleName)
   {
     ModuleInfoPtr modInfo;
-    if (_store.GetModuleByName(processId, moduleName, modInfo))
+    if (_store->GetModuleByName(processId, moduleName, modInfo))
     {
       return (HMODULE)modInfo->GetBaseAddress();
     }
@@ -102,7 +113,7 @@ namespace MCP::Native::ProcessExplorer
   FARPROC ProcessExplorer::GetRemoteProcAddress(DWORD processId, HMODULE hModule, LPCSTR lpProcName)
   {
     ModuleInfoPtr modInfo;
-    if (!_store.GetModule(processId, hModule, modInfo))
+    if (!_store->GetModule(processId, hModule, modInfo))
     {
       return nullptr;
     }

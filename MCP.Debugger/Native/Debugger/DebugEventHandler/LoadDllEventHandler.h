@@ -1,9 +1,9 @@
 #pragma once
 #include ".\Interfaces\IDebugEventHandler.h"
 
-namespace MCP::Native::Debugger::DebugEventHandler
+namespace MCP::Native::Debugger::DebugEventHandler::Interfaces
 {
-  class DebugEventStorage;
+  class IDebugEventStorage;
 }
 
 namespace MCP::Native::Debugger::DebugEventHandler
@@ -11,12 +11,13 @@ namespace MCP::Native::Debugger::DebugEventHandler
   class LoadDllEventHandler : public MCP::Native::Debugger::DebugEventHandler::Interfaces::IDebugEventHandler
   {
   public:
-    LoadDllEventHandler(DebugEventStorage* debugEventStorage);
+    /// <summary>The storage is borrowed and must outlive the handler.</summary>
+    explicit LoadDllEventHandler(Interfaces::IDebugEventStorage& debugEventStorage);
     ~LoadDllEventHandler();
 
     MCP::Native::Debugger::DebugEventHandler::HandleResult HandleEvent(DEBUG_EVENT& debugEvent) override;
 
   private:
-    DebugEventStorage* _debugEventStorage;
+    Interfaces::IDebugEventStorage* _debugEventStorage;
   };
 }

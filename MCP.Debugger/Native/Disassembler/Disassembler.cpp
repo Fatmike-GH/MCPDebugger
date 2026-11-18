@@ -1,12 +1,13 @@
 #define ZYDIS_STATIC_BUILD
 #include "Disassembler.h"
+#include ".\Interfaces\ISymbolResolver.h"
 #include <cstdio> // For sprintf_s
 
 namespace MCP::Native::Disassembler
 {
-  Disassembler::Disassembler(MCP::Native::ProcessExplorer::ProcessExplorer* processExplorer)
+  Disassembler::Disassembler(Interfaces::ISymbolResolver& symbolResolver)
+    : _symbolResolver(symbolResolver)
   {
-    _processExplorer = processExplorer;
   }
 
   Disassembler::~Disassembler()
@@ -33,8 +34,6 @@ namespace MCP::Native::Disassembler
     BYTE* currentBufferPtr = buffer.data();
     DWORD_PTR currentRuntimeAddr = startAddress;
 
-    SymbolResolver resolver(_processExplorer);
-
     while (remainingLength > 0)
     {
       ZydisDisassembledInstruction instructionInfo;
@@ -42,7 +41,7 @@ namespace MCP::Native::Disassembler
 
       std::string finalDisasm = instructionInfo.text;
 
-      AppendOperandSymbols(instructionInfo, resolver, processHandle, processId, finalDisasm);
+      AppendOperandSymbols(instructionInfo, _symbolResolver, processHandle, processId, finalDisasm);
 
       Instruction instruction;
       instruction.VA = currentRuntimeAddr;
@@ -70,10 +69,9 @@ namespace MCP::Native::Disassembler
     ZydisDisassembledInstruction instructionInfo;
     GetInstruction(buffer, bytesRead, address, instructionInfo);
 
-    SymbolResolver resolver(_processExplorer);
     std::string finalDisasm = instructionInfo.text;
 
-    AppendOperandSymbols(instructionInfo, resolver, processHandle, processId, finalDisasm);
+    AppendOperandSymbols(instructionInfo, _symbolResolver, processHandle, processId, finalDisasm);
 
     outInstruction.VA = address;
     outInstruction.InstructionLength = instructionInfo.info.length;
@@ -81,7 +79,7 @@ namespace MCP::Native::Disassembler
   }
 
   void Disassembler::AppendOperandSymbols(const ZydisDisassembledInstruction& info,
-                                          SymbolResolver& symbolResolver,
+                                          Interfaces::ISymbolResolver& symbolResolver,
                                           HANDLE processHandle,
                                           DWORD processId,
                                           std::string& disasmText)

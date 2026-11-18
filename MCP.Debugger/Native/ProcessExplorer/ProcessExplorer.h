@@ -6,14 +6,14 @@
 #include <list>
 #include <mutex>
 #include <memory>
-#include "PEImage.h"
-#include "ProcessDataStore.h" 
 #include "ModuleInfo.h"
 #include ".\Interfaces\IProcessExplorer.h"
 #include "..\Debugger\DebugEventHandler\Interfaces\IDebugEventStorageListener.h"
 
 namespace MCP::Native::ProcessExplorer::Interfaces
 {
+  class IModuleAnalyzer;
+  class IProcessDataStore;
   class IProcessExplorerListener;
 }
 
@@ -23,6 +23,19 @@ namespace MCP::Native::ProcessExplorer
                           public MCP::Native::Debugger::DebugEventHandler::Interfaces::IDebugEventStorageListener
   {
   public:
+    /// <summary>
+    /// Takes ownership of the table it records processes and modules in and of the analyzer it describes
+    /// newly loaded modules with.
+    /// </summary>
+    ProcessExplorer(std::unique_ptr<Interfaces::IProcessDataStore> store,
+                    std::unique_ptr<Interfaces::IModuleAnalyzer> moduleAnalyzer);
+    ~ProcessExplorer() override;
+
+    ProcessExplorer(const ProcessExplorer&) = delete;
+    ProcessExplorer& operator=(const ProcessExplorer&) = delete;
+    ProcessExplorer(ProcessExplorer&&) = delete;
+    ProcessExplorer& operator=(ProcessExplorer&&) = delete;
+
     void OnProcessCreated(std::shared_ptr<MCP::Native::Debugger::DebugEventHandler::ProcessInfo> info);
     void OnProcessExited(DWORD processId);
     void OnThreadCreated(std::shared_ptr<MCP::Native::Debugger::DebugEventHandler::ThreadInfo> info);
@@ -50,7 +63,8 @@ namespace MCP::Native::ProcessExplorer
     std::list<Interfaces::IProcessExplorerListener*> GetListeners();
 
   private:
-    ProcessDataStore _store;
+    std::unique_ptr<Interfaces::IProcessDataStore> _store;
+    std::unique_ptr<Interfaces::IModuleAnalyzer> _moduleAnalyzer;
     std::mutex _listenerMutex;
     std::list<Interfaces::IProcessExplorerListener*> _listeners;
   };

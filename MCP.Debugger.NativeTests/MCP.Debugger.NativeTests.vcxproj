@@ -32,9 +32,11 @@
     <ClCompile Include="..\MCP.Debugger\Native\Debugger\Commands\TryResolveStringCommand.cpp" />
     <ClCompile Include="..\MCP.Debugger\Native\Debugger\Commands\WriteMemoryCommand.cpp" />
     <ClCompile Include="..\MCP.Debugger\Native\Debugger\BreakpointManager.cpp" />
+    <ClCompile Include="..\MCP.Debugger\Native\Debugger\DebugEventHandler\DebugEventHandler.cpp" />
     <ClCompile Include="..\MCP.Debugger\Native\Debugger\DebugEventHandler\DebugEventStorage.cpp" />
     <ClCompile Include="..\MCP.Debugger\Native\Debugger\Debugger.cpp" />
     <ClCompile Include="..\MCP.Debugger\Native\Debugger\DebuggerCommandQueue.cpp" />
+    <ClCompile Include="..\MCP.Debugger\Native\Disassembler\SymbolResolver.cpp" />
     <ClCompile Include="..\MCP.Debugger\Native\PEFile\ExecutableValidator.cpp" />
     <ClCompile Include="..\MCP.Debugger\Native\ProcessExplorer\ModuleInfo.cpp" />
     <ClCompile Include="..\MCP.Debugger\Native\ProcessExplorer\ProcessDataStore.cpp" />
@@ -55,11 +57,14 @@
     <ClCompile Include="Debugger\Commands\StopCommandTests.cpp" />
     <ClCompile Include="Debugger\Commands\TryResolveStringCommandTests.cpp" />
     <ClCompile Include="Debugger\Commands\WriteMemoryCommandTests.cpp" />
+    <ClCompile Include="Debugger\DebugEventHandler\DebugEventHandlerTests.cpp" />
+    <ClCompile Include="Disassembler\SymbolResolverTests.cpp" />
     <ClCompile Include="PEFile\ExecutableValidatorTests.cpp" />
     <ClCompile Include="ProcessExplorer\ProcessDataStoreTests.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Mocks\Debugger\Commands\Base\MockCommandContext.h" />
+    <ClInclude Include="Mocks\Debugger\DebugEventHandler\Interfaces\MockDebugEventHandler.h" />
     <ClInclude Include="Mocks\Debugger\Interfaces\MockBreakpoint.h" />
     <ClInclude Include="Mocks\Debugger\Interfaces\MockBreakpointFactory.h" />
     <ClInclude Include="Mocks\Debugger\Interfaces\MockBreakpointManager.h" />

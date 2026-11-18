@@ -6,22 +6,23 @@
 #include "ModuleSection.h"
 #include "ModuleExport.h"
 #include "ModuleImport.h"
+#include ".\Interfaces\IPEImage.h"
 
 namespace MCP::Native::ProcessExplorer
 {
-  class PEImage
+  class PEImage : public Interfaces::IPEImage
   {
   public:
     PEImage(HANDLE processHandle, DWORD_PTR imageBase);
-    ~PEImage() = default;
+    ~PEImage() override = default;
 
-    bool IsValid() const { return _valid; }
+    bool IsValid() const override { return _valid; }
     DWORD_PTR GetImageBase() const { return _imageBase; }
-    DWORD GetSizeOfImage() const { return _sizeOfImage; }
+    DWORD GetSizeOfImage() const override { return _sizeOfImage; }
 
-    const std::vector<ModuleSection>& GetSections() const { return _sections; }
-    const std::vector<ModuleExport>& GetExports() const { return _exports; }
-    const std::vector<ModuleImport>& GetImports() const { return _imports; }
+    const std::vector<ModuleSection>& GetSections() const override { return _sections; }
+    const std::vector<ModuleExport>& GetExports() const override { return _exports; }
+    const std::vector<ModuleImport>& GetImports() const override { return _imports; }
 
     const IMAGE_DOS_HEADER& GetDosHeader() const { return _dosHeader; }
     const IMAGE_NT_HEADERS& GetNtHeaders() const { return _ntHeaders; }

@@ -1,30 +1,30 @@
 #include <Windows.h>
 #include "ExceptionEventHandler.h"
+#include ".\Interfaces\IDebugEventStorage.h"
 #include "..\..\Threading\EventWaiter.h"
 #include "..\Interfaces\IDebuggerEventHandler.h"
 #include "..\Interfaces\BreakpointEventArgs.h"
-#include "..\BreakpointManager.h"
+#include "..\Interfaces\IBreakpointManager.h"
 #include "..\Interfaces\IBreakpoint.h"
-#include "..\DebuggerCommandQueue.h"
-#include "..\DebuggerThread.h"
-#include "..\..\Disassembler\Disassembler.h"
+#include "..\Interfaces\IDebuggerCommandQueue.h"
+#include "..\..\Disassembler\Interfaces\IDisassembler.h"
 
 namespace MCP::Native::Debugger::DebugEventHandler
 {
-  ExceptionEventHandler::ExceptionEventHandler(DebugEventStorage* debugEventStorage,
-                                               MCP::Native::ProcessExplorer::ProcessExplorer* processExplorer,
-                                               MCP::Native::Debugger::BreakpointManager* breakpointManager,
-                                               MCP::Native::Debugger::Interfaces::IDebuggerEventHandler* eventHandler,
-                                               MCP::Native::Threading::EventWaiter* startupWaiter,
-                                               MCP::Native::Debugger::DebuggerCommandQueue* commandQueue)
+  ExceptionEventHandler::ExceptionEventHandler(Interfaces::IDebugEventStorage& debugEventStorage,
+                                               MCP::Native::Debugger::Interfaces::IBreakpointManager& breakpointManager,
+                                               MCP::Native::Debugger::Interfaces::IDebuggerEventHandler& eventHandler,
+                                               MCP::Native::Threading::EventWaiter& startupWaiter,
+                                               MCP::Native::Debugger::Interfaces::IDebuggerCommandQueue& commandQueue,
+                                               MCP::Native::Disassembler::Interfaces::IDisassembler& disassembler)
   {
-    _processExplorer = processExplorer;
-    _debugEventStorage = debugEventStorage;
-    _breakpointManager = breakpointManager;
-    _eventHandler = eventHandler;
-    _startupWaiter = startupWaiter;
-    _commandQueue = commandQueue;
-    
+    _debugEventStorage = &debugEventStorage;
+    _breakpointManager = &breakpointManager;
+    _eventHandler = &eventHandler;
+    _startupWaiter = &startupWaiter;
+    _commandQueue = &commandQueue;
+    _disassembler = &disassembler;
+
     _systemBreakpoint = true;
     _lastBreakpoint = nullptr;
     _postBreakpointAction = MCP::Native::Debugger::Commands::Base::CommandType::CMD_NONE;
@@ -303,8 +303,7 @@ namespace MCP::Native::Debugger::DebugEventHandler
 
   bool ExceptionEventHandler::IsCallInstruction(HANDLE processHandle, DWORD_PTR currentIp, size_t& instrLen)
   {
-    MCP::Native::Disassembler::Disassembler disassembler(_processExplorer);
-    return disassembler.IsCallInstruction(processHandle, currentIp, instrLen);
+    return _disassembler->IsCallInstruction(processHandle, currentIp, instrLen);
   }
 
   std::shared_ptr<MCP::Native::Debugger::Interfaces::BreakpointEventArgs> ExceptionEventHandler::CreateBreakpointEventArgs(EXCEPTION_DEBUG_INFO& exception, ProcessInfo& processInfo, ThreadInfo& threadInfo)

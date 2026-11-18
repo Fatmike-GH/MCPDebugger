@@ -7,8 +7,20 @@
     <Filter Include="Debugger\Commands">
       <UniqueIdentifier>{c51160c4-b47b-40c1-b8a1-0ad2c2a6ef94}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Debugger\DebugEventHandler">
+      <UniqueIdentifier>{0221e1f7-67bd-4cf5-93c2-724d8cdbbbf9}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Disassembler">
+      <UniqueIdentifier>{5237c852-ddea-4ce9-bf1e-38a9d9d38e58}</UniqueIdentifier>
+    </Filter>
     <Filter Include="Mocks">
       <UniqueIdentifier>{e524992c-dabf-416a-8e81-2718ff4d03b8}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Mocks\Debugger\DebugEventHandler">
+      <UniqueIdentifier>{3be25ce2-3a93-409a-b0f4-54df74232754}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Mocks\Debugger\DebugEventHandler\Interfaces">
+      <UniqueIdentifier>{72d41a71-3744-4d94-9b89-63c913110c69}</UniqueIdentifier>
     </Filter>
     <Filter Include="Mocks\Debugger">
       <UniqueIdentifier>{8e234ab5-a03f-4f59-9c2e-9b3d59707b2a}</UniqueIdentifier>
@@ -108,6 +120,12 @@
     <ClCompile Include="..\MCP.Debugger\Native\Threading\EventWaiter.cpp">
       <Filter>Production sources under test</Filter>
     </ClCompile>
+    <ClCompile Include="..\MCP.Debugger\Native\Debugger\DebugEventHandler\DebugEventHandler.cpp">
+      <Filter>Production sources under test</Filter>
+    </ClCompile>
+    <ClCompile Include="..\MCP.Debugger\Native\Disassembler\SymbolResolver.cpp">
+      <Filter>Production sources under test</Filter>
+    </ClCompile>
     <ClCompile Include="Main.cpp" />
     <ClCompile Include="Debugger\Commands\CommandTests.cpp">
       <Filter>Debugger\Commands</Filter>
@@ -153,6 +171,12 @@
     </ClCompile>
     <ClCompile Include="PEFile\ExecutableValidatorTests.cpp">
       <Filter>PEFile</Filter>
+    </ClCompile>
+    <ClCompile Include="Debugger\DebugEventHandler\DebugEventHandlerTests.cpp">
+      <Filter>Debugger\DebugEventHandler</Filter>
+    </ClCompile>
+    <ClCompile Include="Disassembler\SymbolResolverTests.cpp">
+      <Filter>Disassembler</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -206,6 +230,9 @@
     </ClInclude>
     <ClInclude Include="Mocks\Disassembler\Interfaces\MockSymbolResolver.h">
       <Filter>Mocks\Disassembler\Interfaces</Filter>
+    </ClInclude>
+    <ClInclude Include="Mocks\Debugger\DebugEventHandler\Interfaces\MockDebugEventHandler.h">
+      <Filter>Mocks\Debugger\DebugEventHandler\Interfaces</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

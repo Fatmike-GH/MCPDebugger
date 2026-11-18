@@ -1,14 +1,14 @@
 #include "LoadDllEventHandler.h"
-#include "DebugEventStorage.h"
+#include ".\Interfaces\IDebugEventStorage.h"
 #include <psapi.h>
 #include <filesystem>
 #include <string>
 
 namespace MCP::Native::Debugger::DebugEventHandler
 {
-  LoadDllEventHandler::LoadDllEventHandler(DebugEventStorage* debugEventStorage)
+  LoadDllEventHandler::LoadDllEventHandler(Interfaces::IDebugEventStorage& debugEventStorage)
   {
-    _debugEventStorage = debugEventStorage;
+    _debugEventStorage = &debugEventStorage;
   }
 
   LoadDllEventHandler::~LoadDllEventHandler()

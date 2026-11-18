@@ -2,9 +2,9 @@
 #include ".\Interfaces\IDebugEventHandler.h"
 #include <memory>
 
-namespace MCP::Native::Debugger::DebugEventHandler
+namespace MCP::Native::Debugger::DebugEventHandler::Interfaces
 {
-  class DebugEventStorage;
+  class IDebugEventStorage;
 }
 
 namespace MCP::Native::Debugger::Interfaces
@@ -19,7 +19,8 @@ namespace MCP::Native::Debugger::DebugEventHandler
   class ExitProcessEventHandler : public MCP::Native::Debugger::DebugEventHandler::Interfaces::IDebugEventHandler
   {
   public:
-    ExitProcessEventHandler(DebugEventStorage* debugEventStorage, MCP::Native::Debugger::Interfaces::IDebuggerEventHandler* eventHandler);
+    /// <summary>The storage and the client's event handler are borrowed and must outlive the handler.</summary>
+    ExitProcessEventHandler(Interfaces::IDebugEventStorage& debugEventStorage, MCP::Native::Debugger::Interfaces::IDebuggerEventHandler& eventHandler);
     ~ExitProcessEventHandler();
 
     MCP::Native::Debugger::DebugEventHandler::HandleResult HandleEvent(DEBUG_EVENT& debugEvent) override;
@@ -29,7 +30,7 @@ namespace MCP::Native::Debugger::DebugEventHandler
     std::shared_ptr<MCP::Native::Debugger::Interfaces::ExitProcessEventArgs> CreateExitProcessEventArgs(DEBUG_EVENT& debugEvent);
 
   private:
-    DebugEventStorage* _debugEventStorage;
+    Interfaces::IDebugEventStorage* _debugEventStorage;
     MCP::Native::Debugger::Interfaces::IDebuggerEventHandler* _eventHandler;
   };
 }

@@ -228,7 +228,7 @@ Open the **Test Explorer** and run all tests. It lists and runs the NUnit tests 
 | **Release x64** | `.\RunTests.cmd Release x64` |
 | **Release x86** | `.\RunTests.cmd Release x86` |
 
-A run takes 15 to 20 seconds; the native tests account for a few milliseconds of it.
+A run takes 10 to 20 seconds; the native tests account for less than a tenth of a second of it.
 
 | Exit code | Meaning |
 | :--- | :--- |

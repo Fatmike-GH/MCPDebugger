@@ -18,9 +18,9 @@ namespace MCP::Native::Debugger::Interfaces
   class IDebuggeeBreakIn;
 }
 
-namespace MCP::Native::Debugger::DebugEventHandler
+namespace MCP::Native::Debugger::DebugEventHandler::Interfaces
 {
-  class DebugEventStorage;
+  class IDebugEventStorage;
 }
 
 namespace MCP::Native::Disassembler::Interfaces
@@ -36,7 +36,7 @@ namespace MCP::Native::Debugger
   {
   public:
     /// <summary>All collaborators are borrowed and must outlive the queue.</summary>
-    DebuggerCommandQueue(MCP::Native::Debugger::DebugEventHandler::DebugEventStorage& debugEventStorage,
+    DebuggerCommandQueue(MCP::Native::Debugger::DebugEventHandler::Interfaces::IDebugEventStorage& debugEventStorage,
                          Interfaces::IBreakpointManager& breakpointManager,
                          MCP::Native::Disassembler::Interfaces::IDisassembler& disassembler,
                          MCP::Native::Disassembler::Interfaces::ISymbolResolver& symbolResolver,
@@ -86,7 +86,7 @@ namespace MCP::Native::Debugger
     HANDLE GetCurrentDebuggeeThread();    
 
   private:
-    MCP::Native::Debugger::DebugEventHandler::DebugEventStorage& _debugEventStorage;
+    MCP::Native::Debugger::DebugEventHandler::Interfaces::IDebugEventStorage& _debugEventStorage;
     Interfaces::IBreakpointManager& _breakpointManager;
     MCP::Native::Disassembler::Interfaces::IDisassembler& _disassembler;
     MCP::Native::Disassembler::Interfaces::ISymbolResolver& _symbolResolver;

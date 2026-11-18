@@ -1,24 +1,29 @@
 #pragma once
 #include <memory>
 #include ".\Interfaces\IDebugEventHandler.h"
-#include "DebugEventStorage.h"
 #include "ProcessInfo.h"
 #include "ThreadInfo.h"
 #include "DllInfo.h"
 #include "..\Commands\Base\CommandType.h"
 
-namespace MCP::Native::Debugger
-{
-  class BreakpointManager;
-  class DebuggerCommandQueue;
-}
-
 namespace MCP::Native::Debugger::Interfaces
 {
   class IBreakpoint;
+  class IBreakpointManager;
+  class IDebuggerCommandQueue;
   class IDebuggerEventHandler;
   struct BreakpointEventArgs;
   struct ExitProcessEventArgs;
+}
+
+namespace MCP::Native::Debugger::DebugEventHandler::Interfaces
+{
+  class IDebugEventStorage;
+}
+
+namespace MCP::Native::Disassembler::Interfaces
+{
+  class IDisassembler;
 }
 
 namespace MCP::Native::Threading
@@ -26,22 +31,21 @@ namespace MCP::Native::Threading
   class EventWaiter;
 }
 
-namespace MCP::Native::ProcessExplorer
-{
-  class ProcessExplorer;
-}
-
 namespace MCP::Native::Debugger::DebugEventHandler
 {
   class ExceptionEventHandler : public MCP::Native::Debugger::DebugEventHandler::Interfaces::IDebugEventHandler
   {
   public:
-    ExceptionEventHandler(DebugEventStorage* debugEventStorage,
-                          MCP::Native::ProcessExplorer::ProcessExplorer* processExplorer,
-                          MCP::Native::Debugger::BreakpointManager* breakpointManager,
-                          MCP::Native::Debugger::Interfaces::IDebuggerEventHandler* eventHandler,
-                          MCP::Native::Threading::EventWaiter* startupWaiter,
-                          MCP::Native::Debugger::DebuggerCommandQueue* commandQueue);
+    /// <summary>
+    /// All collaborators are borrowed and must outlive the handler. The waiter is released when the debuggee
+    /// reached its initial breakpoint.
+    /// </summary>
+    ExceptionEventHandler(Interfaces::IDebugEventStorage& debugEventStorage,
+                          MCP::Native::Debugger::Interfaces::IBreakpointManager& breakpointManager,
+                          MCP::Native::Debugger::Interfaces::IDebuggerEventHandler& eventHandler,
+                          MCP::Native::Threading::EventWaiter& startupWaiter,
+                          MCP::Native::Debugger::Interfaces::IDebuggerCommandQueue& commandQueue,
+                          MCP::Native::Disassembler::Interfaces::IDisassembler& disassembler);
 
     ~ExceptionEventHandler();
 
@@ -63,12 +67,12 @@ namespace MCP::Native::Debugger::DebugEventHandler
     std::shared_ptr<MCP::Native::Debugger::Interfaces::BreakpointEventArgs> CreateBreakpointEventArgs(EXCEPTION_DEBUG_INFO& exception, ProcessInfo& processInfo, ThreadInfo& threadInfo);
 
   private:
-    DebugEventStorage* _debugEventStorage;
-    MCP::Native::ProcessExplorer::ProcessExplorer* _processExplorer;
-    MCP::Native::Debugger::BreakpointManager* _breakpointManager;
+    Interfaces::IDebugEventStorage* _debugEventStorage;
+    MCP::Native::Debugger::Interfaces::IBreakpointManager* _breakpointManager;
     MCP::Native::Debugger::Interfaces::IDebuggerEventHandler* _eventHandler;
     MCP::Native::Threading::EventWaiter* _startupWaiter;
-    MCP::Native::Debugger::DebuggerCommandQueue* _commandQueue;
+    MCP::Native::Debugger::Interfaces::IDebuggerCommandQueue* _commandQueue;
+    MCP::Native::Disassembler::Interfaces::IDisassembler* _disassembler;
 
     bool _systemBreakpoint;
     MCP::Native::Debugger::Interfaces::IBreakpoint* _lastBreakpoint; // Required to enable the user breakpoint again

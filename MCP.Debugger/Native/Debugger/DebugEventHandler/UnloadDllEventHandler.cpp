@@ -1,11 +1,11 @@
 #include "UnloadDllEventHandler.h"
-#include "DebugEventStorage.h"
+#include ".\Interfaces\IDebugEventStorage.h"
 
 namespace MCP::Native::Debugger::DebugEventHandler
 {
-  UnloadDllEventHandler::UnloadDllEventHandler(DebugEventStorage* debugEventStorage)
+  UnloadDllEventHandler::UnloadDllEventHandler(Interfaces::IDebugEventStorage& debugEventStorage)
   {
-    _debugEventStorage = debugEventStorage;
+    _debugEventStorage = &debugEventStorage;
   }
 
   UnloadDllEventHandler::~UnloadDllEventHandler()

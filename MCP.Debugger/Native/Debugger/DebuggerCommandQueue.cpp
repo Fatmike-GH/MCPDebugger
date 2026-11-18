@@ -18,7 +18,7 @@
 #include ".\Commands\StopCommand.h"
 #include ".\Commands\TryResolveStringCommand.h"
 #include ".\Commands\WriteMemoryCommand.h"
-#include ".\DebugEventHandler\DebugEventStorage.h"
+#include ".\DebugEventHandler\Interfaces\IDebugEventStorage.h"
 #include ".\DebugEventHandler\ProcessInfo.h"
 #include ".\DebugEventHandler\ThreadInfo.h"
 #include "..\Disassembler\Interfaces\IDisassembler.h"
@@ -27,7 +27,7 @@
 
 namespace MCP::Native::Debugger
 {
-  DebuggerCommandQueue::DebuggerCommandQueue(MCP::Native::Debugger::DebugEventHandler::DebugEventStorage& debugEventStorage,
+  DebuggerCommandQueue::DebuggerCommandQueue(MCP::Native::Debugger::DebugEventHandler::Interfaces::IDebugEventStorage& debugEventStorage,
                                              Interfaces::IBreakpointManager& breakpointManager,
                                              MCP::Native::Disassembler::Interfaces::IDisassembler& disassembler,
                                              MCP::Native::Disassembler::Interfaces::ISymbolResolver& symbolResolver,

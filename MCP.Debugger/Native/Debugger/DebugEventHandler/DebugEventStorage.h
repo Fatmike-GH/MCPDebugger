@@ -3,6 +3,7 @@
 #include <mutex>
 #include <list>
 #include <map>
+#include ".\Interfaces\IDebugEventStorage.h"
 
 namespace MCP::Native::Debugger::DebugEventHandler
 {
@@ -18,11 +19,11 @@ namespace MCP::Native::Debugger::DebugEventHandler::Interfaces
 
 namespace MCP::Native::Debugger::DebugEventHandler
 {
-  class DebugEventStorage
+  class DebugEventStorage : public Interfaces::IDebugEventStorage
   {
   public:
     DebugEventStorage() = default;
-    ~DebugEventStorage() = default;
+    ~DebugEventStorage() override = default;
 
     DebugEventStorage(const DebugEventStorage&) = delete;
     DebugEventStorage& operator=(const DebugEventStorage&) = delete;
@@ -32,20 +33,20 @@ namespace MCP::Native::Debugger::DebugEventHandler
     void AddDebugEvent(const DEBUG_EVENT& debugEvent);
     void RetrieveDebugEvents(std::list<DEBUG_EVENT>& outEvents);
 
-    void AddProcess(DWORD processId, const CREATE_PROCESS_DEBUG_INFO& info);
-    void RemoveProcess(DWORD processId);
+    void AddProcess(DWORD processId, const CREATE_PROCESS_DEBUG_INFO& info) override;
+    void RemoveProcess(DWORD processId) override;
 
-    void AddThread(DWORD processId, DWORD threadId, const CREATE_THREAD_DEBUG_INFO& info);
-    void RemoveThread(DWORD threadId);
+    void AddThread(DWORD processId, DWORD threadId, const CREATE_THREAD_DEBUG_INFO& info) override;
+    void RemoveThread(DWORD threadId) override;
 
-    void AddDll(DWORD processId, const LOAD_DLL_DEBUG_INFO& info);
-    void RemoveDll(DWORD processId, void* baseOfDll);
+    void AddDll(DWORD processId, const LOAD_DLL_DEBUG_INFO& info) override;
+    void RemoveDll(DWORD processId, void* baseOfDll) override;
 
     void GetProcesses(std::map<DWORD, std::shared_ptr<ProcessInfo>>& outMap);
     void GetThreads(std::map<DWORD, std::shared_ptr<ThreadInfo>>& outMap);
     void GetDlls(std::list<std::shared_ptr<DllInfo>>& outList);
-    bool GetProcessById(DWORD processId, ProcessInfo& outInfo);
-    bool GetThreadById(DWORD threadId, ThreadInfo& outInfo);
+    bool GetProcessById(DWORD processId, ProcessInfo& outInfo) override;
+    bool GetThreadById(DWORD threadId, ThreadInfo& outInfo) override;
     void GetThreadsByProcessId(DWORD processId, std::list<ThreadInfo>& outThreads);
     void GetDllsByProcessId(DWORD processId, std::list<DllInfo>& outDlls);
 

@@ -1,11 +1,11 @@
 #include "ExitThreadEventHandler.h"
-#include "DebugEventStorage.h"
+#include ".\Interfaces\IDebugEventStorage.h"
 
 namespace MCP::Native::Debugger::DebugEventHandler
 {
-  ExitThreadEventHandler::ExitThreadEventHandler(DebugEventStorage* debugEventStorage)
+  ExitThreadEventHandler::ExitThreadEventHandler(Interfaces::IDebugEventStorage& debugEventStorage)
   {
-    _debugEventStorage = debugEventStorage;
+    _debugEventStorage = &debugEventStorage;
   }
 
   ExitThreadEventHandler::~ExitThreadEventHandler()

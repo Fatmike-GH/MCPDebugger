@@ -33,6 +33,7 @@
     <ClCompile Include="Native\Composition\DebugThreadServicesFactory.cpp" />
     <ClCompile Include="Native\Composition\NativeComposition.cpp" />
     <ClCompile Include="Native\Composition\PEFileFactory.cpp" />
+    <ClCompile Include="Native\Composition\PEImageFactory.cpp" />
     <ClCompile Include="Native\Debugger\Breakpoint.cpp" />
     <ClCompile Include="Native\Debugger\BreakpointManager.cpp" />
     <ClCompile Include="Native\Debugger\Commands\Base\ICommand.cpp" />
@@ -92,6 +93,7 @@
     <ClInclude Include="Native\Composition\DebugThreadServicesFactory.h" />
     <ClInclude Include="Native\Composition\NativeComposition.h" />
     <ClInclude Include="Native\Composition\PEFileFactory.h" />
+    <ClInclude Include="Native\Composition\PEImageFactory.h" />
     <ClInclude Include="Native\Debugger\Breakpoint.h" />
     <ClInclude Include="Native\Debugger\BreakpointManager.h" />
     <ClInclude Include="Native\Debugger\Commands\Base\ICommand.h" />
@@ -125,7 +127,9 @@
     <ClInclude Include="Native\Debugger\DebugEventHandler\ExitProcessEventHandler.h" />
     <ClInclude Include="Native\Debugger\DebugEventHandler\ExitThreadEventHandler.h" />
     <ClInclude Include="Native\Debugger\DebugEventHandler\HandleResult.h" />
+    <ClInclude Include="Native\Debugger\DebugEventHandler\Interfaces\IDebugEventDispatcher.h" />
     <ClInclude Include="Native\Debugger\DebugEventHandler\Interfaces\IDebugEventHandler.h" />
+    <ClInclude Include="Native\Debugger\DebugEventHandler\Interfaces\IDebugEventStorage.h" />
     <ClInclude Include="Native\Debugger\DebugEventHandler\LoadDllEventHandler.h" />
     <ClInclude Include="Native\Debugger\DebugEventHandler\OutputDebugStringEventHandler.h" />
     <ClInclude Include="Native\Debugger\DebugEventHandler\UnloadDllEventHandler.h" />
@@ -157,6 +161,10 @@
     <ClInclude Include="Native\PEFile\Interfaces\IPEFile.h" />
     <ClInclude Include="Native\PEFile\Interfaces\IPEFileFactory.h" />
     <ClInclude Include="Native\PEFile\PEFile.h" />
+    <ClInclude Include="Native\ProcessExplorer\Interfaces\IModuleAnalyzer.h" />
+    <ClInclude Include="Native\ProcessExplorer\Interfaces\IPEImage.h" />
+    <ClInclude Include="Native\ProcessExplorer\Interfaces\IPEImageFactory.h" />
+    <ClInclude Include="Native\ProcessExplorer\Interfaces\IProcessDataStore.h" />
     <ClInclude Include="Native\ProcessExplorer\Interfaces\IProcessExplorer.h" />
     <ClInclude Include="Native\ProcessExplorer\Interfaces\IProcessExplorerListener.h" />
     <ClInclude Include="Native\ProcessExplorer\ModuleAnalyzer.h" />

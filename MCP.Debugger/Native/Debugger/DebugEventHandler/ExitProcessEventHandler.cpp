@@ -1,15 +1,15 @@
 #include "ExitProcessEventHandler.h"
-#include "DebugEventStorage.h"
+#include ".\Interfaces\IDebugEventStorage.h"
 #include "..\Interfaces\IDebuggerEventHandler.h"
 #include "..\Interfaces\ExitProcessEventArgs.h"
 #include <memory>
 
 namespace MCP::Native::Debugger::DebugEventHandler
 {
-  ExitProcessEventHandler::ExitProcessEventHandler(DebugEventStorage* debugEventStorage, MCP::Native::Debugger::Interfaces::IDebuggerEventHandler* eventHandler)
+  ExitProcessEventHandler::ExitProcessEventHandler(Interfaces::IDebugEventStorage& debugEventStorage, MCP::Native::Debugger::Interfaces::IDebuggerEventHandler& eventHandler)
   {
-    _eventHandler = eventHandler;
-    _debugEventStorage = debugEventStorage;
+    _eventHandler = &eventHandler;
+    _debugEventStorage = &debugEventStorage;
   }
 
   ExitProcessEventHandler::~ExitProcessEventHandler()
@@ -27,11 +27,8 @@ namespace MCP::Native::Debugger::DebugEventHandler
 
   void ExitProcessEventHandler::NotifyEventHandler(DEBUG_EVENT& debugEvent)
   {
-    if (_eventHandler != nullptr)
-    {
-      auto args = CreateExitProcessEventArgs(debugEvent);
-      _eventHandler->OnExitProcess(args);
-    }
+    auto args = CreateExitProcessEventArgs(debugEvent);
+    _eventHandler->OnExitProcess(args);
   }
 
   std::shared_ptr<MCP::Native::Debugger::Interfaces::ExitProcessEventArgs> ExitProcessEventHandler::CreateExitProcessEventArgs(DEBUG_EVENT& debugEvent)

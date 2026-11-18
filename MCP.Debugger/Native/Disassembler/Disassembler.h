@@ -4,13 +4,12 @@
 #include <memory>
 #include <string>
 #include "Instruction.h"
-#include "SymbolResolver.h"
 #include ".\Interfaces\IDisassembler.h"
 #include "..\Zydis\include\Zydis.h"
 
-namespace MCP::Native::ProcessExplorer
+namespace MCP::Native::Disassembler::Interfaces
 {
-  class ProcessExplorer;
+  class ISymbolResolver;
 }
 
 namespace MCP::Native::Disassembler
@@ -18,7 +17,11 @@ namespace MCP::Native::Disassembler
   class Disassembler : public Interfaces::IDisassembler
   {
   public:
-    Disassembler(MCP::Native::ProcessExplorer::ProcessExplorer* processExplorer);
+    /// <summary>
+    /// The resolver is borrowed and must outlive the disassembler; it names the addresses the operands of
+    /// an instruction refer to.
+    /// </summary>
+    explicit Disassembler(Interfaces::ISymbolResolver& symbolResolver);
     ~Disassembler() override;
 
     void Disassemble(HANDLE processHandle,
@@ -38,12 +41,12 @@ namespace MCP::Native::Disassembler
     void GetInstruction(BYTE* address, SSIZE_T length, DWORD_PTR runtimeAddress, ZydisDisassembledInstruction& instructionInfo);
 
     void AppendOperandSymbols(const ZydisDisassembledInstruction& info,
-                              SymbolResolver& resolver,
+                              Interfaces::ISymbolResolver& resolver,
                               HANDLE processHandle,
                               DWORD processId,
                               std::string& disasmText);
 
   private:
-    MCP::Native::ProcessExplorer::ProcessExplorer* _processExplorer;
+    Interfaces::ISymbolResolver& _symbolResolver;
   };
 }

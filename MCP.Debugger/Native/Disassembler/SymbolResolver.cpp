@@ -32,15 +32,13 @@ namespace MCP::Native::Disassembler
     return {};
   }
 
-  SymbolResolver::SymbolResolver(MCP::Native::ProcessExplorer::ProcessExplorer* explorer)
+  SymbolResolver::SymbolResolver(MCP::Native::ProcessExplorer::Interfaces::IProcessExplorer& explorer)
     : _processExplorer(explorer)
   {
   }
 
   std::string SymbolResolver::Resolve(HANDLE hProcess, DWORD processId, DWORD_PTR address)
   {
-    if (!_processExplorer) return "";
-
     // Export
     std::string result = TryResolveExport(processId, address);
     if (!result.empty()) return "<" + result + ">";
@@ -64,7 +62,7 @@ namespace MCP::Native::Disassembler
   std::string SymbolResolver::TryResolveExport(DWORD processId, DWORD_PTR address)
   {
     MCP::Native::ProcessExplorer::ModuleExport exportInfo;
-    if (_processExplorer->GetFunctionByVA(processId, address, exportInfo))
+    if (_processExplorer.GetFunctionByVA(processId, address, exportInfo))
     {
       return exportInfo.Name;
     }

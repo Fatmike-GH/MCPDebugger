@@ -75,6 +75,9 @@
     <ClCompile Include="Native\Composition\PEFileFactory.cpp">
       <Filter>Native\Composition</Filter>
     </ClCompile>
+    <ClCompile Include="Native\Composition\PEImageFactory.cpp">
+      <Filter>Native\Composition</Filter>
+    </ClCompile>
     <ClCompile Include="Native\Composition\BreakpointFactory.cpp">
       <Filter>Native\Composition</Filter>
     </ClCompile>
@@ -239,6 +242,9 @@
     <ClInclude Include="Native\Composition\PEFileFactory.h">
       <Filter>Native\Composition</Filter>
     </ClInclude>
+    <ClInclude Include="Native\Composition\PEImageFactory.h">
+      <Filter>Native\Composition</Filter>
+    </ClInclude>
     <ClInclude Include="Native\Composition\BreakpointFactory.h">
       <Filter>Native\Composition</Filter>
     </ClInclude>
@@ -305,6 +311,18 @@
     <ClInclude Include="Native\ProcessExplorer\Interfaces\IProcessExplorer.h">
       <Filter>Native\ProcessExplorer\Interfaces</Filter>
     </ClInclude>
+    <ClInclude Include="Native\ProcessExplorer\Interfaces\IModuleAnalyzer.h">
+      <Filter>Native\ProcessExplorer\Interfaces</Filter>
+    </ClInclude>
+    <ClInclude Include="Native\ProcessExplorer\Interfaces\IPEImage.h">
+      <Filter>Native\ProcessExplorer\Interfaces</Filter>
+    </ClInclude>
+    <ClInclude Include="Native\ProcessExplorer\Interfaces\IPEImageFactory.h">
+      <Filter>Native\ProcessExplorer\Interfaces</Filter>
+    </ClInclude>
+    <ClInclude Include="Native\ProcessExplorer\Interfaces\IProcessDataStore.h">
+      <Filter>Native\ProcessExplorer\Interfaces</Filter>
+    </ClInclude>
     <ClInclude Include="Managed\DebuggerService.h">
       <Filter>Managed</Filter>
     </ClInclude>
@@ -366,6 +384,12 @@
       <Filter>Native\Debugger\DebugEventHandler</Filter>
     </ClInclude>
     <ClInclude Include="Native\Debugger\DebugEventHandler\Interfaces\IDebugEventHandler.h">
+      <Filter>Native\Debugger\DebugEventHandler\Interfaces</Filter>
+    </ClInclude>
+    <ClInclude Include="Native\Debugger\DebugEventHandler\Interfaces\IDebugEventDispatcher.h">
+      <Filter>Native\Debugger\DebugEventHandler\Interfaces</Filter>
+    </ClInclude>
+    <ClInclude Include="Native\Debugger\DebugEventHandler\Interfaces\IDebugEventStorage.h">
       <Filter>Native\Debugger\DebugEventHandler\Interfaces</Filter>
     </ClInclude>
     <ClInclude Include="Native\Debugger\DebugEventHandler\HandleResult.h">

@@ -1,11 +1,11 @@
 #include "CreateThreadEventHandler.h"
-#include "DebugEventStorage.h"
+#include ".\Interfaces\IDebugEventStorage.h"
 
 namespace MCP::Native::Debugger::DebugEventHandler
 {
-  CreateThreadEventHandler::CreateThreadEventHandler(DebugEventStorage* debugEventStorage)
+  CreateThreadEventHandler::CreateThreadEventHandler(Interfaces::IDebugEventStorage& debugEventStorage)
   {
-    _debugEventStorage = debugEventStorage;
+    _debugEventStorage = &debugEventStorage;
   }
 
   CreateThreadEventHandler::~CreateThreadEventHandler()
