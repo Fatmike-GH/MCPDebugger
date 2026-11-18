@@ -359,15 +359,14 @@ namespace MCP.Debugger.IntegrationTests.Managed
     }
 
     /// <summary>
-    /// Disassembles the first instructions at the entry point. The last entry of a disassembly is left out:
-    /// the range may end inside an instruction, and what is reported for the cut-off rest is not reliable.
+    /// Disassembles the first instructions at the entry point. An instruction the end of the range cuts off
+    /// is not part of a disassembly, so every entry is a complete instruction.
     /// </summary>
     /// <param name="session">A session that stands at the entry point.</param>
     /// <returns>The complete instructions of the range, in address order.</returns>
     private static IReadOnlyList<Instruction> ReadEntrySequence(DebugSession session)
     {
-      List<Instruction> instructions = session.Service.Disassemble(session.EntryPoint, EntrySequenceLength).ToList();
-      return instructions.Take(instructions.Count - 1).ToList();
+      return session.Service.Disassemble(session.EntryPoint, EntrySequenceLength).ToList();
     }
 
     /// <summary>Finds the first call instruction of a disassembly.</summary>

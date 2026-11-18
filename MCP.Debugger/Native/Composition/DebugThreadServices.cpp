@@ -6,17 +6,20 @@
 #include "..\Debugger\Interfaces\IDebuggerCommandQueue.h"
 #include "..\Disassembler\Interfaces\IDisassembler.h"
 #include "..\Disassembler\Interfaces\ISymbolResolver.h"
+#include "..\Platform\Interfaces\IProcessMemory.h"
 
 namespace MCP::Native::Composition
 {
   DebugThreadServices::DebugThreadServices(std::unique_ptr<MCP::Native::Debugger::Interfaces::IBreakpointManager> breakpointManager,
                                            std::unique_ptr<MCP::Native::Disassembler::Interfaces::ISymbolResolver> symbolResolver,
+                                           std::unique_ptr<MCP::Native::Platform::Interfaces::IProcessMemory> processMemory,
                                            std::unique_ptr<MCP::Native::Disassembler::Interfaces::IDisassembler> disassembler,
                                            std::unique_ptr<MCP::Native::Debugger::Interfaces::IDebuggeeBreakIn> debuggeeBreakIn,
                                            std::unique_ptr<MCP::Native::Debugger::Interfaces::IDebuggerCommandQueue> commandQueue,
                                            std::unique_ptr<MCP::Native::Debugger::DebugEventHandler::Interfaces::IDebugEventDispatcher> debugEventDispatcher)
     : _breakpointManager(std::move(breakpointManager)),
       _symbolResolver(std::move(symbolResolver)),
+      _processMemory(std::move(processMemory)),
       _disassembler(std::move(disassembler)),
       _debuggeeBreakIn(std::move(debuggeeBreakIn)),
       _commandQueue(std::move(commandQueue)),

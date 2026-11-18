@@ -1,5 +1,7 @@
+using System.Reflection;
 using System.Text.Json;
 using MCP.Debugger.Types.Disassembler;
+using MCP.Server.McpTools;
 using MCP.Server.McpTools.Results;
 using MCP.Server.Tests.TestHelpers;
 using ModelContextProtocol;
@@ -126,6 +128,19 @@ namespace MCP.Server.Tests.McpTools
 
       // Assert
       Assert.That(caught.Message, Is.EqualTo(InternalErrorPrefix + FailureMessage));
+    }
+
+    [Test]
+    public void Debugger_Disassemble_Description_TellsClientsAboutDataBytesAndTheCutOffEnd()
+    {
+      // Act: the description is what a client reads about the tool. The attribute is named in full because
+      // the test framework has an attribute of the same name.
+      string description = typeof(DebuggerTools).GetMethod(nameof(DebuggerTools.Debugger_Disassemble))
+                                                .GetCustomAttribute<System.ComponentModel.DescriptionAttribute>().Description;
+
+      // Assert
+      Assert.That(description, Does.Contain("'db 0x..', one byte per entry"));
+      Assert.That(description, Does.Contain("cut off by the end of the range is not returned"));
     }
 
     [Test]

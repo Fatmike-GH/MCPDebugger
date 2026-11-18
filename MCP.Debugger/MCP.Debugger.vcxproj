@@ -66,6 +66,7 @@
     <ClCompile Include="Native\Disassembler\SymbolResolver.cpp" />
     <ClCompile Include="Native\PEFile\ExecutableValidator.cpp" />
     <ClCompile Include="Native\PEFile\PEFile.cpp" />
+    <ClCompile Include="Native\Platform\ProcessMemory.cpp" />
     <ClCompile Include="Native\ProcessExplorer\ModuleAnalyzer.cpp" />
     <ClCompile Include="Native\ProcessExplorer\ModuleInfo.cpp" />
     <ClCompile Include="Native\ProcessExplorer\PEImage.cpp" />
@@ -162,6 +163,8 @@
     <ClInclude Include="Native\PEFile\Interfaces\IPEFile.h" />
     <ClInclude Include="Native\PEFile\Interfaces\IPEFileFactory.h" />
     <ClInclude Include="Native\PEFile\PEFile.h" />
+    <ClInclude Include="Native\Platform\Interfaces\IProcessMemory.h" />
+    <ClInclude Include="Native\Platform\ProcessMemory.h" />
     <ClInclude Include="Native\ProcessExplorer\Interfaces\IModuleAnalyzer.h" />
     <ClInclude Include="Native\ProcessExplorer\Interfaces\IPEImage.h" />
     <ClInclude Include="Native\ProcessExplorer\Interfaces\IPEImageFactory.h" />

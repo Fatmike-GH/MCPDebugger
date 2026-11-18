@@ -46,6 +46,12 @@
     <Filter Include="Mocks\PEFile\Interfaces">
       <UniqueIdentifier>{43026994-9d24-415c-9104-a22897a5cf00}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Mocks\Platform">
+      <UniqueIdentifier>{9696b822-c984-41e6-a728-86ec2cdbfc36}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Mocks\Platform\Interfaces">
+      <UniqueIdentifier>{34577589-a904-41fd-ba3a-723d11e54bd5}</UniqueIdentifier>
+    </Filter>
     <Filter Include="Mocks\ProcessExplorer">
       <UniqueIdentifier>{ac8a17e8-bbdc-496b-b495-f9c1049f326f}</UniqueIdentifier>
     </Filter>
@@ -129,6 +135,9 @@
     <ClCompile Include="..\MCP.Debugger\Native\Disassembler\SymbolResolver.cpp">
       <Filter>Production sources under test</Filter>
     </ClCompile>
+    <ClCompile Include="..\MCP.Debugger\Native\Disassembler\Disassembler.cpp">
+      <Filter>Production sources under test</Filter>
+    </ClCompile>
     <ClCompile Include="..\MCP.Debugger\Native\Debugger\DebugEventHandler\ExceptionEventHandler.cpp">
       <Filter>Production sources under test</Filter>
     </ClCompile>
@@ -185,6 +194,9 @@
       <Filter>Debugger\DebugEventHandler</Filter>
     </ClCompile>
     <ClCompile Include="Disassembler\SymbolResolverTests.cpp">
+      <Filter>Disassembler</Filter>
+    </ClCompile>
+    <ClCompile Include="Disassembler\DisassemblerTests.cpp">
       <Filter>Disassembler</Filter>
     </ClCompile>
   </ItemGroup>
@@ -245,6 +257,9 @@
     </ClInclude>
     <ClInclude Include="Mocks\Debugger\DebugEventHandler\Interfaces\MockDebugEventHandler.h">
       <Filter>Mocks\Debugger\DebugEventHandler\Interfaces</Filter>
+    </ClInclude>
+    <ClInclude Include="Mocks\Platform\Interfaces\MockProcessMemory.h">
+      <Filter>Mocks\Platform\Interfaces</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

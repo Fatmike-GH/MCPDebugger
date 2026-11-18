@@ -212,7 +212,7 @@ namespace MCP.Server.McpTools
       });
     }
 
-    [McpServerTool(Name = "Debugger_Disassemble"), Description("Disassembles memory of the debuggee process and returns the disassembly including symbols.")]
+    [McpServerTool(Name = "Debugger_Disassemble"), Description("Disassembles memory of the debuggee process and returns the disassembly including symbols. Bytes that are no valid instruction are returned as 'db 0x..', one byte per entry. An instruction that is cut off by the end of the range is not returned.")]
     public DisassemblerResult Debugger_Disassemble([Description("Absolute virtual address of the memory. Must be aligned with an actual instruction, otherwise the disassembly will be corrupted!")] ulong va,
                                                    [Description("Length of memory to be disassembled in bytes.")] uint length)
     {

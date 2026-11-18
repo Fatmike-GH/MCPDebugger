@@ -55,8 +55,17 @@
     <Filter Include="Native\PEFile\Interfaces">
       <UniqueIdentifier>{fcc02410-a21c-44b4-84ca-2d113f0050f6}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Native\Platform">
+      <UniqueIdentifier>{1afdcc86-af9b-47b2-9545-b1793584a7a5}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Native\Platform\Interfaces">
+      <UniqueIdentifier>{a578440e-ca39-4553-a662-4ae2a3b0a6b3}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="Native\Platform\ProcessMemory.cpp">
+      <Filter>Native\Platform</Filter>
+    </ClCompile>
     <ClCompile Include="Managed\DebuggerEventRelay.cpp">
       <Filter>Managed</Filter>
     </ClCompile>
@@ -283,6 +292,12 @@
     </ClInclude>
     <ClInclude Include="Native\Disassembler\Interfaces\IDisassembler.h">
       <Filter>Native\Disassembler\Interfaces</Filter>
+    </ClInclude>
+    <ClInclude Include="Native\Platform\Interfaces\IProcessMemory.h">
+      <Filter>Native\Platform\Interfaces</Filter>
+    </ClInclude>
+    <ClInclude Include="Native\Platform\ProcessMemory.h">
+      <Filter>Native\Platform</Filter>
     </ClInclude>
     <ClInclude Include="Native\Disassembler\Interfaces\ISymbolResolver.h">
       <Filter>Native\Disassembler\Interfaces</Filter>

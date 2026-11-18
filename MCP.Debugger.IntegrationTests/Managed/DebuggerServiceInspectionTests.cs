@@ -15,6 +15,12 @@ namespace MCP.Debugger.IntegrationTests.Managed
     /// <summary>Number of bytes disassembled at the entry point.</summary>
     private const uint DisassemblyLength = 32;
 
+    /// <summary>
+    /// Longest range disassembled at the entry point by the test that lets a range end at every byte. Both
+    /// sample targets have instructions of several bytes within it, so some of the ranges end inside one.
+    /// </summary>
+    private const int LongestEntryRange = 64;
+
     /// <summary>Size of a memory page; memory behind the last page of an image is not readable.</summary>
     private const uint PageSize = 0x1000;
 
@@ -65,6 +71,43 @@ namespace MCP.Debugger.IntegrationTests.Managed
         Assert.That(instructions[index].VirtualAdress, Is.EqualTo(previous.VirtualAdress + (nint)previous.InstructionLength),
           $"Instruction {index} does not start where instruction {index - 1} ends.");
       }
+    }
+
+    [Test]
+    public void Disassemble_RangesEndingAtEveryByteBehindTheEntryPoint_ReturnOnlyCompleteInstructions()
+    {
+      // Act
+      var results = Enumerable.Range(1, LongestEntryRange)
+        .Select(length => (Length: length, Instructions: _session.Service.Disassemble(_session.EntryPoint, (uint)length).ToList()))
+        .ToList();
+
+      // Assert
+      int rangesEndingInsideAnInstruction = 0;
+      foreach (var (length, instructions) in results)
+      {
+        nint nextAddress = _session.EntryPoint;
+        foreach (Instruction instruction in instructions)
+        {
+          Assert.That(instruction.VirtualAdress, Is.EqualTo(nextAddress),
+            $"Range of {length} bytes: an entry does not start where the entry in front of it ends.");
+          Assert.That(instruction.Disassembly, Is.Not.Empty, $"Range of {length} bytes: the entry at 0x{nextAddress:X} has no text.");
+          Assert.That(instruction.InstructionLength, Is.Positive, $"Range of {length} bytes: the entry at 0x{nextAddress:X} has no length.");
+          nextAddress += (nint)instruction.InstructionLength;
+        }
+
+        nint rangeEnd = _session.EntryPoint + length;
+        Assert.That(nextAddress, Is.LessThanOrEqualTo(rangeEnd), $"Range of {length} bytes: the last entry reaches beyond the range.");
+        // Only a range with entries counts: an empty result is also what a failed call returns, and it would
+        // not show that the complete instructions in front of the cut-off one are kept.
+        if (instructions.Count > 0 && nextAddress < rangeEnd)
+        {
+          rangesEndingInsideAnInstruction++;
+        }
+      }
+
+      Assert.That(results[^1].Instructions, Is.Not.Empty, $"The range of {LongestEntryRange} bytes returned no instruction.");
+      // Without such a range the test would not have met the case it is about.
+      Assert.That(rangesEndingInsideAnInstruction, Is.Positive, "No range with instructions ended inside an instruction.");
     }
 
     [Test]

@@ -12,16 +12,23 @@ namespace MCP::Native::Disassembler::Interfaces
   class ISymbolResolver;
 }
 
+namespace MCP::Native::Platform::Interfaces
+{
+  class IProcessMemory;
+}
+
 namespace MCP::Native::Disassembler
 {
   class Disassembler : public Interfaces::IDisassembler
   {
   public:
     /// <summary>
-    /// The resolver is borrowed and must outlive the disassembler; it names the addresses the operands of
-    /// an instruction refer to.
+    /// Both collaborators are borrowed and must outlive the disassembler. The resolver names the addresses
+    /// the operands of an instruction refer to; the machine code to decode is read through the process
+    /// memory.
     /// </summary>
-    explicit Disassembler(Interfaces::ISymbolResolver& symbolResolver);
+    Disassembler(Interfaces::ISymbolResolver& symbolResolver,
+                 MCP::Native::Platform::Interfaces::IProcessMemory& processMemory);
     ~Disassembler() override;
 
     void Disassemble(HANDLE processHandle,
@@ -30,15 +37,27 @@ namespace MCP::Native::Disassembler
                      SSIZE_T length,
                      std::shared_ptr<std::vector<Instruction>>& outInstructions) override;
 
-    void Disassemble(HANDLE processHandle,
-                     DWORD processId,
-                     DWORD_PTR address,
-                     Instruction& outInstruction);
-
     bool IsCallInstruction(HANDLE processHandle, DWORD_PTR address, size_t& instructionLength) override;
 
   private:
-    void GetInstruction(BYTE* address, SSIZE_T length, DWORD_PTR runtimeAddress, ZydisDisassembledInstruction& instructionInfo);
+    /// <summary>
+    /// What decoding the bytes at one position gave.
+    /// </summary>
+    enum class DecodeOutcome
+    {
+      /// <summary>The bytes begin with a complete instruction.</summary>
+      Decoded,
+      /// <summary>The bytes end inside an instruction: they may be the beginning of a valid one.</summary>
+      CutOff,
+      /// <summary>The bytes are no instruction, however many bytes would follow.</summary>
+      Undecodable
+    };
+
+    /// <summary>
+    /// Decodes one instruction from the bytes, which are located at the runtime address in the debuggee. The
+    /// instruction is filled in - and may be read - only when the outcome is Decoded.
+    /// </summary>
+    static DecodeOutcome Decode(const BYTE* bytes, size_t size, DWORD_PTR runtimeAddress, ZydisDisassembledInstruction& instruction);
 
     void AppendOperandSymbols(const ZydisDisassembledInstruction& info,
                               Interfaces::ISymbolResolver& resolver,
@@ -48,5 +67,6 @@ namespace MCP::Native::Disassembler
 
   private:
     Interfaces::ISymbolResolver& _symbolResolver;
+    MCP::Native::Platform::Interfaces::IProcessMemory& _processMemory;
   };
 }

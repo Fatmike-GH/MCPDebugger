@@ -20,6 +20,7 @@
 #include "..\Debugger\Interfaces\IDebuggerEventHandler.h"
 #include "..\Disassembler\Disassembler.h"
 #include "..\Disassembler\SymbolResolver.h"
+#include "..\Platform\ProcessMemory.h"
 #include "..\ProcessExplorer\Interfaces\IProcessExplorer.h"
 #include "..\Threading\EventWaiter.h"
 
@@ -41,7 +42,8 @@ namespace MCP::Native::Composition
     auto breakpointManager = std::make_unique<MCP::Native::Debugger::BreakpointManager>(
       processHandle, std::make_unique<BreakpointFactory>(processHandle));
     auto symbolResolver = std::make_unique<MCP::Native::Disassembler::SymbolResolver>(_processExplorer);
-    auto disassembler = std::make_unique<MCP::Native::Disassembler::Disassembler>(*symbolResolver);
+    auto processMemory = std::make_unique<MCP::Native::Platform::ProcessMemory>();
+    auto disassembler = std::make_unique<MCP::Native::Disassembler::Disassembler>(*symbolResolver, *processMemory);
     auto debuggeeBreakIn = std::make_unique<MCP::Native::Debugger::DebuggeeBreakIn>();
     auto commandQueue = std::make_unique<MCP::Native::Debugger::DebuggerCommandQueue>(
       _debugEventStorage, *breakpointManager, *disassembler, *symbolResolver, *debuggeeBreakIn);
@@ -49,6 +51,7 @@ namespace MCP::Native::Composition
 
     return std::make_unique<DebugThreadServices>(std::move(breakpointManager),
                                                  std::move(symbolResolver),
+                                                 std::move(processMemory),
                                                  std::move(disassembler),
                                                  std::move(debuggeeBreakIn),
                                                  std::move(commandQueue),
