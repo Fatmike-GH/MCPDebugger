@@ -1,19 +1,20 @@
 #pragma once
 #include <Windows.h>
+#include ".\Interfaces\IBreakpoint.h"
 
 namespace MCP::Native::Debugger
 {
-  class Breakpoint
+  class Breakpoint : public Interfaces::IBreakpoint
   {
   public:
     Breakpoint(HANDLE process, DWORD_PTR va);
-    ~Breakpoint();
+    ~Breakpoint() override;
 
-    DWORD_PTR GetVa() { return _va; }
+    DWORD_PTR GetVa() const override { return _va; }
 
-    void Enable();
-    void Disable();
-    bool IsEnabled() { return _enabled; }
+    void Enable() override;
+    void Disable() override;
+    bool IsEnabled() const override { return _enabled; }
 
   private:
     HANDLE _process;

@@ -1,5 +1,6 @@
 #include "DebuggerSessionFactory.h"
 #include "DebuggerSession.h"
+#include "DebugThreadServicesFactory.h"
 #include "..\Debugger\DebuggerThread.h"
 #include "..\Debugger\DebugEventHandler\DebugEventStorage.h"
 #include "..\Debugger\Interfaces\IDebuggerEventHandler.h"
@@ -12,7 +13,8 @@ namespace MCP::Native::Composition
   {
     auto processExplorer = std::make_unique<MCP::Native::ProcessExplorer::ProcessExplorer>();
     auto debugEventStorage = std::make_unique<MCP::Native::Debugger::DebugEventHandler::DebugEventStorage>();
-    auto debuggerThread = std::make_unique<MCP::Native::Debugger::DebuggerThread>(processExplorer.get(), debugEventStorage.get(), &eventHandler);
+    auto servicesFactory = std::make_unique<DebugThreadServicesFactory>(processExplorer.get(), debugEventStorage.get(), eventHandler);
+    auto debuggerThread = std::make_unique<MCP::Native::Debugger::DebuggerThread>(std::move(servicesFactory));
 
     // The explorer builds its module bookkeeping from what the storage records about processes and DLLs.
     debugEventStorage->AddListener(processExplorer.get());

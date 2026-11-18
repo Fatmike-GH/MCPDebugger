@@ -22,6 +22,12 @@
     <Filter Include="Mocks\Debugger\Interfaces">
       <UniqueIdentifier>{317af918-f235-42f9-8756-ee0a3ba0dec6}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Mocks\Disassembler">
+      <UniqueIdentifier>{7bd83491-e4d4-4448-8150-e03d6aa62621}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Mocks\Disassembler\Interfaces">
+      <UniqueIdentifier>{5da8e96d-5f40-45ab-b07f-2aa1b708b56f}</UniqueIdentifier>
+    </Filter>
     <Filter Include="Mocks\PEFile">
       <UniqueIdentifier>{8d41dc43-6407-4914-9dd7-4231df32d21f}</UniqueIdentifier>
     </Filter>
@@ -84,6 +90,24 @@
     <ClCompile Include="..\MCP.Debugger\Native\ProcessExplorer\ProcessDataStore.cpp">
       <Filter>Production sources under test</Filter>
     </ClCompile>
+    <ClCompile Include="..\MCP.Debugger\Native\Debugger\BreakpointManager.cpp">
+      <Filter>Production sources under test</Filter>
+    </ClCompile>
+    <ClCompile Include="..\MCP.Debugger\Native\Debugger\Commands\RemoveBreakpointCommand.cpp">
+      <Filter>Production sources under test</Filter>
+    </ClCompile>
+    <ClCompile Include="..\MCP.Debugger\Native\Debugger\Commands\SetBreakpointCommand.cpp">
+      <Filter>Production sources under test</Filter>
+    </ClCompile>
+    <ClCompile Include="..\MCP.Debugger\Native\Debugger\DebugEventHandler\DebugEventStorage.cpp">
+      <Filter>Production sources under test</Filter>
+    </ClCompile>
+    <ClCompile Include="..\MCP.Debugger\Native\Debugger\DebuggerCommandQueue.cpp">
+      <Filter>Production sources under test</Filter>
+    </ClCompile>
+    <ClCompile Include="..\MCP.Debugger\Native\Threading\EventWaiter.cpp">
+      <Filter>Production sources under test</Filter>
+    </ClCompile>
     <ClCompile Include="Main.cpp" />
     <ClCompile Include="Debugger\Commands\CommandTests.cpp">
       <Filter>Debugger\Commands</Filter>
@@ -114,6 +138,18 @@
     </ClCompile>
     <ClCompile Include="Debugger\DebuggerTests.cpp">
       <Filter>Debugger</Filter>
+    </ClCompile>
+    <ClCompile Include="Debugger\BreakpointManagerTests.cpp">
+      <Filter>Debugger</Filter>
+    </ClCompile>
+    <ClCompile Include="Debugger\DebuggerCommandQueueTests.cpp">
+      <Filter>Debugger</Filter>
+    </ClCompile>
+    <ClCompile Include="Debugger\Commands\RemoveBreakpointCommandTests.cpp">
+      <Filter>Debugger\Commands</Filter>
+    </ClCompile>
+    <ClCompile Include="Debugger\Commands\SetBreakpointCommandTests.cpp">
+      <Filter>Debugger\Commands</Filter>
     </ClCompile>
     <ClCompile Include="PEFile\ExecutableValidatorTests.cpp">
       <Filter>PEFile</Filter>
@@ -149,6 +185,27 @@
     </ClInclude>
     <ClInclude Include="TestHelpers\Futures.h">
       <Filter>TestHelpers</Filter>
+    </ClInclude>
+    <ClInclude Include="TestHelpers\CrossThread.h">
+      <Filter>TestHelpers</Filter>
+    </ClInclude>
+    <ClInclude Include="Mocks\Debugger\Interfaces\MockBreakpoint.h">
+      <Filter>Mocks\Debugger\Interfaces</Filter>
+    </ClInclude>
+    <ClInclude Include="Mocks\Debugger\Interfaces\MockBreakpointFactory.h">
+      <Filter>Mocks\Debugger\Interfaces</Filter>
+    </ClInclude>
+    <ClInclude Include="Mocks\Debugger\Interfaces\MockBreakpointManager.h">
+      <Filter>Mocks\Debugger\Interfaces</Filter>
+    </ClInclude>
+    <ClInclude Include="Mocks\Debugger\Interfaces\MockDebuggeeBreakIn.h">
+      <Filter>Mocks\Debugger\Interfaces</Filter>
+    </ClInclude>
+    <ClInclude Include="Mocks\Disassembler\Interfaces\MockDisassembler.h">
+      <Filter>Mocks\Disassembler\Interfaces</Filter>
+    </ClInclude>
+    <ClInclude Include="Mocks\Disassembler\Interfaces\MockSymbolResolver.h">
+      <Filter>Mocks\Disassembler\Interfaces</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

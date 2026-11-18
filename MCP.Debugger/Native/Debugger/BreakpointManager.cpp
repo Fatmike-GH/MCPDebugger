@@ -1,9 +1,10 @@
 #include "BreakpointManager.h"
-#include "Breakpoint.h"
+#include <utility>
 
 namespace MCP::Native::Debugger
 {
-  BreakpointManager::BreakpointManager(HANDLE processHandle)
+  BreakpointManager::BreakpointManager(HANDLE processHandle, std::unique_ptr<Interfaces::IBreakpointFactory> breakpointFactory)
+    : _breakpointFactory(std::move(breakpointFactory))
   {
     _processHandle = processHandle;
     _memoryBreakPointActive = false;
@@ -35,14 +36,14 @@ namespace MCP::Native::Debugger
 
   bool BreakpointManager::SetBreakpoint(DWORD_PTR address)
   {
-    Breakpoint* existing = GetBreakpoint(address);
+    Interfaces::IBreakpoint* existing = GetBreakpoint(address);
     if (existing != nullptr)
     {
       existing->Enable();
     }
     else
     {
-      auto breakpoint = std::make_unique<Breakpoint>(_processHandle, address);
+      auto breakpoint = _breakpointFactory->Create(address);
       breakpoint->Enable();
       _breakpoints[address] = std::move(breakpoint);
     }
@@ -59,7 +60,7 @@ namespace MCP::Native::Debugger
     return true;
   }
 
-  Breakpoint* BreakpointManager::GetBreakpoint(DWORD_PTR address)
+  Interfaces::IBreakpoint* BreakpointManager::GetBreakpoint(DWORD_PTR address)
   {
     auto iter = _breakpoints.find(address);
     if (iter == _breakpoints.end()) return nullptr;

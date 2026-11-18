@@ -3,17 +3,18 @@
 #include <windows.h>
 #include <string>
 #include <vector>
+#include ".\Interfaces\ISymbolResolver.h"
 #include "..\ProcessExplorer\ProcessExplorer.h"
 
 namespace MCP::Native::Disassembler
 {
-  class SymbolResolver
+  class SymbolResolver : public Interfaces::ISymbolResolver
   {
   public:
     SymbolResolver(MCP::Native::ProcessExplorer::ProcessExplorer* explorer);
 
-    std::string Resolve(HANDLE hProcess, DWORD processId, DWORD_PTR address);
-    std::string ResolveString(HANDLE hProcess, DWORD_PTR address);
+    std::string Resolve(HANDLE hProcess, DWORD processId, DWORD_PTR address) override;
+    std::string ResolveString(HANDLE hProcess, DWORD_PTR address) override;
 
   private:
     std::string TryResolveExport(DWORD processId, DWORD_PTR address);

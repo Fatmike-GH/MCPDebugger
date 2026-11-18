@@ -10,7 +10,7 @@ namespace MCP::Native::Tests::Mocks::Debugger::Commands::Base
   class MockCommandContext : public MCP::Native::Debugger::Commands::Base::ICommandContext
   {
   public:
-    MOCK_METHOD(MCP::Native::Debugger::BreakpointManager*, GetBreakpointManager, (), (override));
+    MOCK_METHOD(MCP::Native::Debugger::Interfaces::IBreakpointManager*, GetBreakpointManager, (), (override));
     MOCK_METHOD(void, ExecuteClearCommandQueue, (), (override));
     MOCK_METHOD(bool, ExecuteReadMemory, (DWORD_PTR address, size_t size, std::shared_ptr<std::vector<BYTE>>& outDataBuffer), (override));
     MOCK_METHOD(bool, ExecuteWriteMemory, (DWORD_PTR address, const BYTE* data, size_t size), (override));

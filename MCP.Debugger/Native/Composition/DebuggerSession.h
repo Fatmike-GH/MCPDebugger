@@ -28,8 +28,8 @@ namespace MCP::Native::Composition
   {
   public:
     /// <summary>
-    /// Takes ownership of the three parts. The thread must have been created with pointers to this explorer
-    /// and this storage: it uses them until it is destroyed.
+    /// Takes ownership of the three parts. The thread must have been created with a factory that borrows this
+    /// explorer and this storage: what the thread creates through it uses them until the thread is destroyed.
     /// </summary>
     DebuggerSession(std::unique_ptr<MCP::Native::ProcessExplorer::ProcessExplorer> processExplorer,
                     std::unique_ptr<MCP::Native::Debugger::DebugEventHandler::DebugEventStorage> debugEventStorage,

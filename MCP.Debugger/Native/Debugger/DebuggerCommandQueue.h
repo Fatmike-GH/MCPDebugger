@@ -10,10 +10,12 @@
 #include ".\Commands\DisassembleResult.h"
 #include ".\Commands\TryResolveStringResult.h"
 #include "..\Threading\EventWaiter.h"
+#include ".\Interfaces\IDebuggerCommandQueue.h"
 
-namespace MCP::Native::Debugger
+namespace MCP::Native::Debugger::Interfaces
 {
-  class BreakpointManager;
+  class IBreakpointManager;
+  class IDebuggeeBreakIn;
 }
 
 namespace MCP::Native::Debugger::DebugEventHandler
@@ -21,46 +23,46 @@ namespace MCP::Native::Debugger::DebugEventHandler
   class DebugEventStorage;
 }
 
-namespace MCP::Native::Disassembler
+namespace MCP::Native::Disassembler::Interfaces
 {
-  class Disassembler;
-}
-
-namespace MCP::Native::ProcessExplorer
-{
-  class ProcessExplorer;
+  class IDisassembler;
+  class ISymbolResolver;
 }
 
 namespace MCP::Native::Debugger
 {
-  class DebuggerCommandQueue : public MCP::Native::Debugger::Commands::Base::ICommandContext
+  class DebuggerCommandQueue : public Interfaces::IDebuggerCommandQueue,
+                               public MCP::Native::Debugger::Commands::Base::ICommandContext
   {
   public:
-    DebuggerCommandQueue(MCP::Native::ProcessExplorer::ProcessExplorer* processExplorer,
-                         MCP::Native::Debugger::DebugEventHandler::DebugEventStorage* debugEventStorage,
-                         BreakpointManager* breakpointManager);
-    ~DebuggerCommandQueue() = default;
+    /// <summary>All collaborators are borrowed and must outlive the queue.</summary>
+    DebuggerCommandQueue(MCP::Native::Debugger::DebugEventHandler::DebugEventStorage& debugEventStorage,
+                         Interfaces::IBreakpointManager& breakpointManager,
+                         MCP::Native::Disassembler::Interfaces::IDisassembler& disassembler,
+                         MCP::Native::Disassembler::Interfaces::ISymbolResolver& symbolResolver,
+                         Interfaces::IDebuggeeBreakIn& debuggeeBreakIn);
+    ~DebuggerCommandQueue() override = default;
 
-    void SetCurrentContext(DWORD processId, DWORD threadId);
+    void SetCurrentContext(DWORD processId, DWORD threadId) override;
 
     // Public synchronous memory wrappers (create command, post, wait, unwrap result)
-    Commands::CommandResult Stop();
-    Commands::CommandResult Continue();
-    Commands::CommandResult StepInto();
-    Commands::CommandResult StepOver();
-    Commands::CommandResult SetBreakpoint(DWORD_PTR va);
-    Commands::CommandResult RemoveBreakpoint(DWORD_PTR va);
-    Commands::ReadMemoryResult ReadMemory(DWORD_PTR va, size_t size);
-    Commands::CommandResult WriteMemory(DWORD_PTR va, const BYTE* data, size_t size);
-    Commands::DisassembleResult Disassemble(DWORD_PTR va, size_t length);
-    Commands::TryResolveStringResult TryResolveString(DWORD_PTR va);
+    Commands::CommandResult Stop() override;
+    Commands::CommandResult Continue() override;
+    Commands::CommandResult StepInto() override;
+    Commands::CommandResult StepOver() override;
+    Commands::CommandResult SetBreakpoint(DWORD_PTR va) override;
+    Commands::CommandResult RemoveBreakpoint(DWORD_PTR va) override;
+    Commands::ReadMemoryResult ReadMemory(DWORD_PTR va, size_t size) override;
+    Commands::CommandResult WriteMemory(DWORD_PTR va, const BYTE* data, size_t size) override;
+    Commands::DisassembleResult Disassemble(DWORD_PTR va, size_t length) override;
+    Commands::TryResolveStringResult TryResolveString(DWORD_PTR va) override;
 
     // Debugger thread control flow
-    Commands::Base::CommandType ProcessCommandsSync();
-    void ProcessCommandsAsync();
+    Commands::Base::CommandType ProcessCommandsSync() override;
+    void ProcessCommandsAsync() override;
 
     // ICommandContext Implementation
-    BreakpointManager* GetBreakpointManager() override { return _breakpointManager; }
+    Interfaces::IBreakpointManager* GetBreakpointManager() override { return &_breakpointManager; }
     void ExecuteClearCommandQueue() override;
     bool ExecuteReadMemory(DWORD_PTR va, size_t size, std::shared_ptr<std::vector<BYTE>>& outDataBuffer) override;
     bool ExecuteWriteMemory(DWORD_PTR va, const BYTE* data, size_t size) override;
@@ -84,9 +86,11 @@ namespace MCP::Native::Debugger
     HANDLE GetCurrentDebuggeeThread();    
 
   private:
-    MCP::Native::ProcessExplorer::ProcessExplorer* _processExplorer = nullptr;
-    MCP::Native::Debugger::DebugEventHandler::DebugEventStorage* _debugEventStorage = nullptr;
-    BreakpointManager* _breakpointManager = nullptr;
+    MCP::Native::Debugger::DebugEventHandler::DebugEventStorage& _debugEventStorage;
+    Interfaces::IBreakpointManager& _breakpointManager;
+    MCP::Native::Disassembler::Interfaces::IDisassembler& _disassembler;
+    MCP::Native::Disassembler::Interfaces::ISymbolResolver& _symbolResolver;
+    Interfaces::IDebuggeeBreakIn& _debuggeeBreakIn;
 
     std::queue<Commands::Base::CommandPtr> _queue;
     std::mutex _mutex;

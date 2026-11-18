@@ -4,8 +4,9 @@
 #include <thread>
 #include <atomic>
 #include <memory>
-#include "BreakpointManager.h"
 #include ".\Interfaces\IDebuggerThread.h"
+#include ".\Interfaces\IDebugThreadServices.h"
+#include ".\Interfaces\IDebugThreadServicesFactory.h"
 #include ".\Commands\Base\ICommand.h"
 #include ".\Commands\CommandResult.h"
 #include ".\Commands\DisassembleResult.h"
@@ -16,33 +17,14 @@
 
 namespace MCP::Native::Debugger
 {
-  class DebuggerCommandQueue;
-}
-
-namespace MCP::Native::Debugger::Interfaces
-{
-  class IDebuggerEventHandler;
-}
-
-namespace MCP::Native::Debugger::DebugEventHandler
-{
-  class DebugEventStorage;
-  class DebugEventHandler;
-}
-
-namespace MCP::Native::ProcessExplorer
-{
-  class ProcessExplorer;
-}
-
-namespace MCP::Native::Debugger
-{
   class DebuggerThread : public Interfaces::IDebuggerThread
   {
   public:
-    DebuggerThread(MCP::Native::ProcessExplorer::ProcessExplorer* processExplorer,
-                   MCP::Native::Debugger::DebugEventHandler::DebugEventStorage* debugEventStorage,
-                   Interfaces::IDebuggerEventHandler* eventHandler);
+    /// <summary>
+    /// Takes ownership of the factory. The thread asks it on the debug thread, after every launch, for the
+    /// objects that serve the launched debuggee.
+    /// </summary>
+    explicit DebuggerThread(std::unique_ptr<Interfaces::IDebugThreadServicesFactory> servicesFactory);
     ~DebuggerThread() override;
 
     bool Start(const std::string& path) override;
@@ -91,12 +73,11 @@ namespace MCP::Native::Debugger
     std::thread _thread;
     MCP::Native::Threading::EventWaiter _startupWaiter;
 
-    MCP::Native::ProcessExplorer::ProcessExplorer* _processExplorer;
-    MCP::Native::Debugger::DebugEventHandler::DebugEventStorage* _debugEventStorage;
-    MCP::Native::Debugger::Interfaces::IDebuggerEventHandler* _eventHandler;
+    std::unique_ptr<Interfaces::IDebugThreadServicesFactory> _servicesFactory;
     PROCESS_INFORMATION _processInfo;
-    std::unique_ptr<DebuggerCommandQueue> _commandQueue;
-    std::unique_ptr<BreakpointManager> _breakpointManager;
-    std::unique_ptr<MCP::Native::Debugger::DebugEventHandler::DebugEventHandler> _debugEventHandler;
+
+    // Created on the debug thread after the launch, released on a client thread once the debug thread ended.
+    // Declared behind the startup waiter: the services borrow it and must be destroyed first.
+    std::unique_ptr<Interfaces::IDebugThreadServices> _services;
   };
 }

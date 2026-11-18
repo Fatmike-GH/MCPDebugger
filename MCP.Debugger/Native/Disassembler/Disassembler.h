@@ -5,6 +5,7 @@
 #include <string>
 #include "Instruction.h"
 #include "SymbolResolver.h"
+#include ".\Interfaces\IDisassembler.h"
 #include "..\Zydis\include\Zydis.h"
 
 namespace MCP::Native::ProcessExplorer
@@ -14,24 +15,24 @@ namespace MCP::Native::ProcessExplorer
 
 namespace MCP::Native::Disassembler
 {
-  class Disassembler
+  class Disassembler : public Interfaces::IDisassembler
   {
   public:
     Disassembler(MCP::Native::ProcessExplorer::ProcessExplorer* processExplorer);
-    ~Disassembler();
+    ~Disassembler() override;
 
     void Disassemble(HANDLE processHandle,
                      DWORD processId,
                      DWORD_PTR startAddress,
                      SSIZE_T length,
-                     std::shared_ptr<std::vector<Instruction>>& outInstructions);
+                     std::shared_ptr<std::vector<Instruction>>& outInstructions) override;
 
     void Disassemble(HANDLE processHandle,
                      DWORD processId,
                      DWORD_PTR address,
                      Instruction& outInstruction);
 
-    bool IsCallInstruction(HANDLE processHandle, DWORD_PTR address, size_t& instructionLength);
+    bool IsCallInstruction(HANDLE processHandle, DWORD_PTR address, size_t& instructionLength) override;
 
   private:
     void GetInstruction(BYTE* address, SSIZE_T length, DWORD_PTR runtimeAddress, ZydisDisassembledInstruction& instructionInfo);

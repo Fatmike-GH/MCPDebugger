@@ -1,7 +1,7 @@
 #include "RemoveBreakpointCommand.h"
 #include "CommandResult.h"
 #include ".\Base\ICommandContext.h"
-#include "..\BreakpointManager.h"
+#include "..\Interfaces\IBreakpointManager.h"
 #include <memory>
 
 namespace MCP::Native::Debugger::Commands

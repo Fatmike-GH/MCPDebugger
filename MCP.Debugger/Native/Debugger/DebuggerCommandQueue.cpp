@@ -5,7 +5,8 @@
 #include <future>
 #include <algorithm>
 #include <Windows.h>
-#include "BreakpointManager.h"
+#include ".\Interfaces\IBreakpointManager.h"
+#include ".\Interfaces\IDebuggeeBreakIn.h"
 #include ".\Commands\Base\CommandType.h"
 #include ".\Commands\Command.h"
 #include ".\Commands\DisassembleCommand.h"
@@ -20,17 +21,22 @@
 #include ".\DebugEventHandler\DebugEventStorage.h"
 #include ".\DebugEventHandler\ProcessInfo.h"
 #include ".\DebugEventHandler\ThreadInfo.h"
-#include "..\Disassembler\Disassembler.h"
+#include "..\Disassembler\Interfaces\IDisassembler.h"
+#include "..\Disassembler\Interfaces\ISymbolResolver.h"
 #include "..\Threading\EventWaiter.h"
 
 namespace MCP::Native::Debugger
 {
-  DebuggerCommandQueue::DebuggerCommandQueue(MCP::Native::ProcessExplorer::ProcessExplorer* processExplorer,
-                                             MCP::Native::Debugger::DebugEventHandler::DebugEventStorage* debugEventStorage,
-                                             BreakpointManager* breakpointManager)
-    : _processExplorer(processExplorer),
-      _debugEventStorage(debugEventStorage),
-      _breakpointManager(breakpointManager)
+  DebuggerCommandQueue::DebuggerCommandQueue(MCP::Native::Debugger::DebugEventHandler::DebugEventStorage& debugEventStorage,
+                                             Interfaces::IBreakpointManager& breakpointManager,
+                                             MCP::Native::Disassembler::Interfaces::IDisassembler& disassembler,
+                                             MCP::Native::Disassembler::Interfaces::ISymbolResolver& symbolResolver,
+                                             Interfaces::IDebuggeeBreakIn& debuggeeBreakIn)
+    : _debugEventStorage(debugEventStorage),
+      _breakpointManager(breakpointManager),
+      _disassembler(disassembler),
+      _symbolResolver(symbolResolver),
+      _debuggeeBreakIn(debuggeeBreakIn)
   {
     _currentProcessId = 0;
     _currentThreadId = 0;
@@ -84,8 +90,7 @@ namespace MCP::Native::Debugger
     }
     else
     {
-      HANDLE processHandle = GetCurrentDebuggeeProcess();
-      DebugBreakProcess(processHandle);
+      _debuggeeBreakIn.RequestBreakIn(GetCurrentDebuggeeProcess());
     }
   }
 
@@ -367,28 +372,26 @@ namespace MCP::Native::Debugger
 
   bool DebuggerCommandQueue::ExecuteDisassemble(DWORD_PTR address, size_t length, std::shared_ptr<std::vector<MCP::Native::Disassembler::Instruction>>& outInstructions)
   {
-    MCP::Native::Disassembler::Disassembler disassembler(_processExplorer);
-    disassembler.Disassemble(GetCurrentDebuggeeProcess(), _currentProcessId, address, length, outInstructions);
+    _disassembler.Disassemble(GetCurrentDebuggeeProcess(), _currentProcessId, address, length, outInstructions);
     return true;
   }
 
   std::string DebuggerCommandQueue::ExecuteTryResolveString(DWORD_PTR address)
   {
-    MCP::Native::Disassembler::SymbolResolver symbolResolver(_processExplorer);
-    return symbolResolver.ResolveString(GetCurrentDebuggeeProcess(), address);
+    return _symbolResolver.ResolveString(GetCurrentDebuggeeProcess(), address);
   }
 
   HANDLE DebuggerCommandQueue::GetCurrentDebuggeeProcess()
   {
     MCP::Native::Debugger::DebugEventHandler::ProcessInfo processInfo = { 0 };
-    _debugEventStorage->GetProcessById(_currentProcessId, processInfo);
+    _debugEventStorage.GetProcessById(_currentProcessId, processInfo);
     return processInfo.info.hProcess;
   }
 
   HANDLE DebuggerCommandQueue::GetCurrentDebuggeeThread()
   {
     MCP::Native::Debugger::DebugEventHandler::ThreadInfo threadInfo = { 0 };
-    _debugEventStorage->GetThreadById(_currentThreadId, threadInfo);
+    _debugEventStorage.GetThreadById(_currentThreadId, threadInfo);
     return threadInfo.info.hThread;
   }  
 }

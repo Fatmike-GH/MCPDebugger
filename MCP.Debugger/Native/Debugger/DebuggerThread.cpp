@@ -1,18 +1,12 @@
 #include "DebuggerThread.h"
-#include "DebuggerCommandQueue.h"
-#include ".\DebugEventHandler\DebugEventHandler.h"
-#include ".\Interfaces\IDebuggerEventHandler.h"
-#include "..\ProcessExplorer\ProcessExplorer.h"
+#include ".\Interfaces\IDebuggerCommandQueue.h"
 #include <memory>
+#include <utility>
 
 namespace MCP::Native::Debugger
 {
-  DebuggerThread::DebuggerThread(MCP::Native::ProcessExplorer::ProcessExplorer* processExplorer,
-                                 MCP::Native::Debugger::DebugEventHandler::DebugEventStorage* debugEventStorage,
-                                 Interfaces::IDebuggerEventHandler* eventHandler)
-    : _processExplorer(processExplorer),
-      _debugEventStorage(debugEventStorage),
-      _eventHandler(eventHandler)
+  DebuggerThread::DebuggerThread(std::unique_ptr<Interfaces::IDebugThreadServicesFactory> servicesFactory)
+    : _servicesFactory(std::move(servicesFactory))
   {
     _processInfo = {};
   }
@@ -50,7 +44,7 @@ namespace MCP::Native::Debugger
 
   Commands::CommandResult DebuggerThread::Stop()
   {
-    if (_commandQueue == nullptr) return Commands::CommandResult(false);
+    if (_services == nullptr) return Commands::CommandResult(false);
     if (Is(State::Stopped))
     {
       WaitForDebuggerThread();
@@ -60,7 +54,7 @@ namespace MCP::Native::Debugger
     {
       SetState(State::Stopping);
 
-      auto result = _commandQueue->Stop();
+      auto result = _services->GetCommandQueue().Stop();
       WaitForDebuggerThread();
 
       SetState(State::Stopped);
@@ -71,64 +65,64 @@ namespace MCP::Native::Debugger
 
   Commands::CommandResult DebuggerThread::Continue()
   {
-    if (_commandQueue == nullptr) return Commands::CommandResult(false);
-    auto result = _commandQueue->Continue();
+    if (_services == nullptr) return Commands::CommandResult(false);
+    auto result = _services->GetCommandQueue().Continue();
     return result;
   }
 
   Commands::CommandResult DebuggerThread::StepInto()
   {
-    if (_commandQueue == nullptr) return Commands::CommandResult(false);
-    auto result = _commandQueue->StepInto();
+    if (_services == nullptr) return Commands::CommandResult(false);
+    auto result = _services->GetCommandQueue().StepInto();
     return result;
   }
 
   Commands::CommandResult DebuggerThread::StepOver()
   {
-    if (_commandQueue == nullptr) return Commands::CommandResult(false);
-    auto result = _commandQueue->StepOver();
+    if (_services == nullptr) return Commands::CommandResult(false);
+    auto result = _services->GetCommandQueue().StepOver();
     return result;
   }
 
   Commands::CommandResult DebuggerThread::SetBreakpoint(DWORD_PTR va)
   {
-    if (_commandQueue == nullptr) return Commands::CommandResult(false);
-    auto result = _commandQueue->SetBreakpoint(va);
+    if (_services == nullptr) return Commands::CommandResult(false);
+    auto result = _services->GetCommandQueue().SetBreakpoint(va);
     return result;
   }
 
   Commands::CommandResult DebuggerThread::RemoveBreakpoint(DWORD_PTR va)
   {
-    if (_commandQueue == nullptr) return Commands::CommandResult(false);
-    auto result = _commandQueue->RemoveBreakpoint(va);
+    if (_services == nullptr) return Commands::CommandResult(false);
+    auto result = _services->GetCommandQueue().RemoveBreakpoint(va);
     return result;
   }
 
   Commands::ReadMemoryResult DebuggerThread::ReadMemory(DWORD_PTR va, size_t size)
   {
-    if (_commandQueue == nullptr) return Commands::ReadMemoryResult::ReadMemoryResult(false);
-    auto result = _commandQueue->ReadMemory(va, size);
+    if (_services == nullptr) return Commands::ReadMemoryResult::ReadMemoryResult(false);
+    auto result = _services->GetCommandQueue().ReadMemory(va, size);
     return result;
   }
 
   Commands::CommandResult DebuggerThread::WriteMemory(DWORD_PTR va, const BYTE* data, size_t size)
   {
-    if (_commandQueue == nullptr) return Commands::CommandResult(false);
-    auto result = _commandQueue->WriteMemory(va, data, size);
+    if (_services == nullptr) return Commands::CommandResult(false);
+    auto result = _services->GetCommandQueue().WriteMemory(va, data, size);
     return result;
   }
 
   Commands::DisassembleResult DebuggerThread::Disassemble(DWORD_PTR va, size_t length)
   {
-    if (_commandQueue == nullptr) return Commands::DisassembleResult(false);
-    auto result = _commandQueue->Disassemble(va, length);
+    if (_services == nullptr) return Commands::DisassembleResult(false);
+    auto result = _services->GetCommandQueue().Disassemble(va, length);
     return result;
   }
 
   Commands::TryResolveStringResult DebuggerThread::TryResolveString(DWORD_PTR va)
   {
-    if (_commandQueue == nullptr) return Commands::TryResolveStringResult(false, std::string());
-    auto result = _commandQueue->TryResolveString(va);
+    if (_services == nullptr) return Commands::TryResolveStringResult(false, std::string());
+    auto result = _services->GetCommandQueue().TryResolveString(va);
     return result;
   }
 
@@ -142,9 +136,7 @@ namespace MCP::Native::Debugger
   void DebuggerThread::ResetMembers()
   {
     _startupWaiter.Reset();
-    _commandQueue.reset();
-    _breakpointManager.reset();
-    _debugEventHandler.reset();
+    _services.reset();
     _processInfo = {};
   }
 
@@ -193,9 +185,9 @@ namespace MCP::Native::Debugger
       return false;
     }
 
-    _breakpointManager = std::make_unique<BreakpointManager>(_processInfo.hProcess);
-    _commandQueue = std::make_unique<DebuggerCommandQueue>(_processExplorer, _debugEventStorage, _breakpointManager.get());
-    _debugEventHandler = std::make_unique<MCP::Native::Debugger::DebugEventHandler::DebugEventHandler>(_debugEventStorage, _processExplorer, _breakpointManager.get(), _eventHandler, &_startupWaiter, _commandQueue.get());
+    // Created here, on the debug thread: what serves the debuggee uses the debug API, which belongs to the
+    // thread that launched the process.
+    _services = _servicesFactory->Create(_processInfo.hProcess, _startupWaiter);
 
     return true;
   }
@@ -218,15 +210,17 @@ namespace MCP::Native::Debugger
     DEBUG_EVENT debugEvent{};
     MCP::Native::Debugger::DebugEventHandler::HandleResult result = { DBG_CONTINUE, false };
 
+    Interfaces::IDebuggerCommandQueue& commandQueue = _services->GetCommandQueue();
+
     while (!Is(State::Stopping) && !result.ProcessExited)
     {
       if (WaitForDebugEvent(&debugEvent, INFINITE))
       {
-        _commandQueue->SetCurrentContext(debugEvent.dwProcessId, debugEvent.dwThreadId);
-        _debugEventHandler->HandleDebugEvent(debugEvent, result);
+        commandQueue.SetCurrentContext(debugEvent.dwProcessId, debugEvent.dwThreadId);
+        result = _services->HandleDebugEvent(debugEvent);
         if (!result.ProcessExited)
         {
-          _commandQueue->ProcessCommandsAsync();
+          commandQueue.ProcessCommandsAsync();
           ContinueDebugEvent(debugEvent.dwProcessId, debugEvent.dwThreadId, result.ContinueStatus);
         }
       }

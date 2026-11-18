@@ -49,6 +49,9 @@
     <Filter Include="Native\Composition">
       <UniqueIdentifier>{55c75323-b5ad-4de0-8ef7-3c560ebe4ef7}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Native\Disassembler\Interfaces">
+      <UniqueIdentifier>{7d5b33aa-4541-40bd-b6b9-ec3dbd41d6d7}</UniqueIdentifier>
+    </Filter>
     <Filter Include="Native\PEFile\Interfaces">
       <UniqueIdentifier>{fcc02410-a21c-44b4-84ca-2d113f0050f6}</UniqueIdentifier>
     </Filter>
@@ -71,6 +74,18 @@
     </ClCompile>
     <ClCompile Include="Native\Composition\PEFileFactory.cpp">
       <Filter>Native\Composition</Filter>
+    </ClCompile>
+    <ClCompile Include="Native\Composition\BreakpointFactory.cpp">
+      <Filter>Native\Composition</Filter>
+    </ClCompile>
+    <ClCompile Include="Native\Composition\DebugThreadServices.cpp">
+      <Filter>Native\Composition</Filter>
+    </ClCompile>
+    <ClCompile Include="Native\Composition\DebugThreadServicesFactory.cpp">
+      <Filter>Native\Composition</Filter>
+    </ClCompile>
+    <ClCompile Include="Native\Debugger\DebuggeeBreakIn.cpp">
+      <Filter>Native\Debugger</Filter>
     </ClCompile>
     <ClCompile Include="Native\PEFile\ExecutableValidator.cpp">
       <Filter>Native\PEFile</Filter>
@@ -223,6 +238,45 @@
     </ClInclude>
     <ClInclude Include="Native\Composition\PEFileFactory.h">
       <Filter>Native\Composition</Filter>
+    </ClInclude>
+    <ClInclude Include="Native\Composition\BreakpointFactory.h">
+      <Filter>Native\Composition</Filter>
+    </ClInclude>
+    <ClInclude Include="Native\Composition\DebugThreadServices.h">
+      <Filter>Native\Composition</Filter>
+    </ClInclude>
+    <ClInclude Include="Native\Composition\DebugThreadServicesFactory.h">
+      <Filter>Native\Composition</Filter>
+    </ClInclude>
+    <ClInclude Include="Native\Debugger\DebuggeeBreakIn.h">
+      <Filter>Native\Debugger</Filter>
+    </ClInclude>
+    <ClInclude Include="Native\Debugger\Interfaces\IBreakpoint.h">
+      <Filter>Native\Debugger\Interfaces</Filter>
+    </ClInclude>
+    <ClInclude Include="Native\Debugger\Interfaces\IBreakpointFactory.h">
+      <Filter>Native\Debugger\Interfaces</Filter>
+    </ClInclude>
+    <ClInclude Include="Native\Debugger\Interfaces\IBreakpointManager.h">
+      <Filter>Native\Debugger\Interfaces</Filter>
+    </ClInclude>
+    <ClInclude Include="Native\Debugger\Interfaces\IDebuggeeBreakIn.h">
+      <Filter>Native\Debugger\Interfaces</Filter>
+    </ClInclude>
+    <ClInclude Include="Native\Debugger\Interfaces\IDebuggerCommandQueue.h">
+      <Filter>Native\Debugger\Interfaces</Filter>
+    </ClInclude>
+    <ClInclude Include="Native\Debugger\Interfaces\IDebugThreadServices.h">
+      <Filter>Native\Debugger\Interfaces</Filter>
+    </ClInclude>
+    <ClInclude Include="Native\Debugger\Interfaces\IDebugThreadServicesFactory.h">
+      <Filter>Native\Debugger\Interfaces</Filter>
+    </ClInclude>
+    <ClInclude Include="Native\Disassembler\Interfaces\IDisassembler.h">
+      <Filter>Native\Disassembler\Interfaces</Filter>
+    </ClInclude>
+    <ClInclude Include="Native\Disassembler\Interfaces\ISymbolResolver.h">
+      <Filter>Native\Disassembler\Interfaces</Filter>
     </ClInclude>
     <ClInclude Include="Native\Debugger\Interfaces\IDebugger.h">
       <Filter>Native\Debugger\Interfaces</Filter>

@@ -10,12 +10,12 @@
 namespace MCP::Native::Debugger
 {
   class BreakpointManager;
-  class Breakpoint;
   class DebuggerCommandQueue;
 }
 
 namespace MCP::Native::Debugger::Interfaces
 {
+  class IBreakpoint;
   class IDebuggerEventHandler;
   struct BreakpointEventArgs;
   struct ExitProcessEventArgs;
@@ -54,7 +54,7 @@ namespace MCP::Native::Debugger::DebugEventHandler
     DWORD HandleGuardPageException(EXCEPTION_DEBUG_INFO& exception, ProcessInfo& processInfo, ThreadInfo& threadInfo);
 
     DWORD HandleSystemBreakpoint(EXCEPTION_DEBUG_INFO& exception, ProcessInfo& processInfo, ThreadInfo& threadInfo);
-    DWORD HandleUserBreakpoint(EXCEPTION_DEBUG_INFO& exception, ProcessInfo& processInfo, ThreadInfo& threadInfo, Breakpoint* breakpoint);
+    DWORD HandleUserBreakpoint(EXCEPTION_DEBUG_INFO& exception, ProcessInfo& processInfo, ThreadInfo& threadInfo, MCP::Native::Debugger::Interfaces::IBreakpoint* breakpoint);
     DWORD HandleStepOffBreakpoint(EXCEPTION_DEBUG_INFO& exception, ProcessInfo& processInfo, ThreadInfo& threadInfo);
     DWORD HandleStepHalt(EXCEPTION_DEBUG_INFO& exception, ProcessInfo& processInfo, ThreadInfo& threadInfo);
 
@@ -71,7 +71,7 @@ namespace MCP::Native::Debugger::DebugEventHandler
     MCP::Native::Debugger::DebuggerCommandQueue* _commandQueue;
 
     bool _systemBreakpoint;
-    Breakpoint* _lastBreakpoint; // Required to enable the user breakpoint again
+    MCP::Native::Debugger::Interfaces::IBreakpoint* _lastBreakpoint; // Required to enable the user breakpoint again
     MCP::Native::Debugger::Commands::Base::CommandType _postBreakpointAction; // Required to enable the user breakpoint again
     DWORD_PTR _ntdllDbgBreakPointAddress; // Required to detect DebugBreakProcess
     DWORD_PTR _stepOverBreakpointAddress = 0; // 0 means no active step-over

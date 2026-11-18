@@ -4,7 +4,7 @@
 #include "..\Interfaces\IDebuggerEventHandler.h"
 #include "..\Interfaces\BreakpointEventArgs.h"
 #include "..\BreakpointManager.h"
-#include "..\BreakPoint.h"
+#include "..\Interfaces\IBreakpoint.h"
 #include "..\DebuggerCommandQueue.h"
 #include "..\DebuggerThread.h"
 #include "..\..\Disassembler\Disassembler.h"
@@ -97,7 +97,7 @@ namespace MCP::Native::Debugger::DebugEventHandler
     }
 
     // User-defined breakpoint or the breakpoint on entryPoint
-    Breakpoint* breakpoint = _breakpointManager->GetBreakpoint((DWORD_PTR)address);
+    MCP::Native::Debugger::Interfaces::IBreakpoint* breakpoint = _breakpointManager->GetBreakpoint((DWORD_PTR)address);
     if (breakpoint != nullptr)
     {
       return HandleUserBreakpoint(exception, processInfo, threadInfo, breakpoint);
@@ -165,7 +165,7 @@ namespace MCP::Native::Debugger::DebugEventHandler
     return DBG_EXCEPTION_NOT_HANDLED;
   }
 
-  DWORD ExceptionEventHandler::HandleUserBreakpoint(EXCEPTION_DEBUG_INFO& exception, ProcessInfo& processInfo, ThreadInfo& threadInfo, Breakpoint* breakpoint)
+  DWORD ExceptionEventHandler::HandleUserBreakpoint(EXCEPTION_DEBUG_INFO& exception, ProcessInfo& processInfo, ThreadInfo& threadInfo, MCP::Native::Debugger::Interfaces::IBreakpoint* breakpoint)
   {
     breakpoint->Disable();
     RewindInstructionPointer(threadInfo.info.hThread, exception.ExceptionRecord.ExceptionAddress);
