@@ -273,7 +273,7 @@
       <LanguageStandard>stdcpp20</LanguageStandard>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>.\Native\Zydis\x86\Zydis.lib</AdditionalDependencies>
+      <AdditionalDependencies>..\ThirdParty\Zydis\lib\x86\Zydis.lib</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -287,7 +287,7 @@
       <LanguageStandard>stdcpp20</LanguageStandard>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>.\Native\Zydis\x64\Zydis.lib</AdditionalDependencies>
+      <AdditionalDependencies>..\ThirdParty\Zydis\lib\x64\Zydis.lib</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -301,7 +301,7 @@
       <LanguageStandard>stdcpp20</LanguageStandard>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>.\Native\Zydis\x86\Zydis.lib</AdditionalDependencies>
+      <AdditionalDependencies>..\ThirdParty\Zydis\lib\x86\Zydis.lib</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -315,7 +315,7 @@
       <LanguageStandard>stdcpp20</LanguageStandard>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>.\Native\Zydis\x64\Zydis.lib</AdditionalDependencies>
+      <AdditionalDependencies>..\ThirdParty\Zydis\lib\x64\Zydis.lib</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

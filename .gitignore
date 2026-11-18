@@ -361,3 +361,8 @@ MigrationBackup/
 
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
+
+# Third-party binaries are part of the repository: the prebuilt libraries and their debug info are needed
+# to build the solution. This rule must stay the last one that matches them, so it has to remain below the
+# platform folder patterns (x64/, x86/) and *.pdb above.
+!/ThirdParty/**

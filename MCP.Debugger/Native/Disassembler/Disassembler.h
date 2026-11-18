@@ -5,7 +5,7 @@
 #include <string>
 #include "Instruction.h"
 #include ".\Interfaces\IDisassembler.h"
-#include "..\Zydis\include\Zydis.h"
+#include "..\..\..\ThirdParty\Zydis\include\Zydis.h"
 
 namespace MCP::Native::Disassembler::Interfaces
 {
