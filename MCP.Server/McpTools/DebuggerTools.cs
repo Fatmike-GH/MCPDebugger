@@ -1,7 +1,7 @@
 ﻿using MCP.Debugger.Types.Interop;
 using MCP.Server.Base;
-using MCP.Server.McpTools.Converters;
-using MCP.Server.McpTools.Extensions;
+using MCP.Server.Interfaces.McpTools.Execution;
+using MCP.Server.Interfaces.McpTools.Formatting;
 using MCP.Server.McpTools.Results;
 using ModelContextProtocol;
 using ModelContextProtocol.Server;
@@ -16,26 +16,36 @@ namespace MCP.Server.McpTools
   {
     /// <summary>The debugger the tools drive. Owned by the composition root, not by this class.</summary>
     private MCP.Debugger.IDebuggerService _debuggerService;
-    private JsonSerializerOptions _jsonSerializerOptions;
+
+    /// <summary>
+    /// Runs the debuggee to its next stop and reads from a stop what the tools report. Owned by the composition
+    /// root, not by this class.
+    /// </summary>
+    private readonly IExecutionControl _executionControl;
+
+    /// <summary>
+    /// Writes memory content as the text the read-memory tool answers with. Owned by the composition root, not
+    /// by this class.
+    /// </summary>
+    private readonly IMemoryFormatter _memoryFormatter;
 
     /// <summary>Creates the tools on top of a debugger service. No debuggee is started yet.</summary>
     /// <param name="debuggerService">The debugger the tools drive.</param>
-    /// <exception cref="ArgumentNullException"><paramref name="debuggerService"/> is null.</exception>
-    public DebuggerTools(MCP.Debugger.IDebuggerService debuggerService)
+    /// <param name="executionControl">Runs the debuggee to its next stop for the tools that wait for one.</param>
+    /// <param name="memoryFormatter">Writes the memory content the read-memory tool answers with.</param>
+    /// <exception cref="ArgumentNullException">An argument is null.</exception>
+    public DebuggerTools(MCP.Debugger.IDebuggerService debuggerService,
+                         IExecutionControl executionControl,
+                         IMemoryFormatter memoryFormatter)
     {
       ArgumentNullException.ThrowIfNull(debuggerService);
+      ArgumentNullException.ThrowIfNull(executionControl);
+      ArgumentNullException.ThrowIfNull(memoryFormatter);
 
       _debuggerService = debuggerService;
+      _executionControl = executionControl;
+      _memoryFormatter = memoryFormatter;
       _debuggerService.ExitProcess += DebuggerService_ExitProcess;
-
-      _jsonSerializerOptions = new JsonSerializerOptions()
-      {
-        IncludeFields = true,
-        WriteIndented = false,
-        Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping
-      };
-      _jsonSerializerOptions.Converters.Add(new IntPtrConverter());
-      _jsonSerializerOptions.Converters.Add(new ByteArrayAsNumbersConverter());
 
       this.Started = false;
       this.Initialized = false;
@@ -44,6 +54,10 @@ namespace MCP.Server.McpTools
     private bool Started { get; set; }
     private bool Initialized { get; set; }
 
+    /// <summary>Starts a debugging session; the debuggee stops at the system breakpoint.</summary>
+    /// <param name="path">Full path of the executable to debug.</param>
+    /// <returns>Process, main thread, image base, entry point and the thread context of the first stop.</returns>
+    /// <exception cref="McpException">A session is already running, or the debuggee could not be started.</exception>
     [McpServerTool(Name = "Debugger_Start"), Description("Start the debugger. It will automatically break on system breakpoint.")]
     public DebuggerStartResult Debugger_Start([Description("Full path to the debuggee executable.")] string path)
     {
@@ -63,7 +77,7 @@ namespace MCP.Server.McpTools
           throw new McpException($"Debugger_Start failed. Error: {error}");
         }
 
-        var instruction = _debuggerService.Disassemble(_debuggerService.GetInstructionPointer(context));
+        var instruction = _executionControl.DisassembleInstruction(_executionControl.GetInstructionPointer(context));
 
         this.Started = true;
         return new DebuggerStartResult(processId, threadId, (ulong)imageBase, (ulong)entryPoint, context, instruction);
@@ -94,6 +108,11 @@ namespace MCP.Server.McpTools
       });
     }
 
+    /// <summary>Runs the debuggee from the system breakpoint to its entry point. Allowed once per session.</summary>
+    /// <returns>The thread context of the entry-point stop.</returns>
+    /// <exception cref="McpException">
+    /// No session is running, the entry point was already reached, or the stop did not arrive in time.
+    /// </exception>
     [McpServerTool(Name = "Debugger_ContinueToEntryPoint"), Description("Continues to run the debuggee from system breakpoint to the entry point of the debuggee. Returns current context.")]
     public async Task<BreakpointResult> Debugger_ContinueToEntryPoint()
     {
@@ -102,24 +121,40 @@ namespace MCP.Server.McpTools
         ThrowIfNotStarted();
         ThrowIfInitialized();
         this.Initialized = true;
-        CONTEXT context = await _debuggerService.ContinueToEntrypointAsync();
-        var instruction = _debuggerService.Disassemble(_debuggerService.GetInstructionPointer(context));
+        CONTEXT context = await _executionControl.ContinueToEntryPointAsync();
+        var instruction = _executionControl.DisassembleInstruction(_executionControl.GetInstructionPointer(context));
         return new BreakpointResult(context, instruction);
       });
     }
 
+    /// <summary>Runs the debuggee until it stops at a temporary breakpoint.</summary>
+    /// <param name="va">Absolute virtual address of the instruction to stop at.</param>
+    /// <returns>The thread context of the breakpoint stop.</returns>
+    /// <exception cref="McpException">
+    /// The session has not reached the entry point yet, <paramref name="va"/> is zero, or the stop did not arrive
+    /// in time.
+    /// </exception>
     [McpServerTool(Name = "Debugger_ContinueToBreakpoint"), Description("Continues to run the debuggee until the specified temporary breakpoint is reached. Returns current context.")]
     public async Task<BreakpointResult> Debugger_ContinueToBreakpoint([Description("Absolute virtual address of the temporary breakpoint.")] ulong va)
     {
       return await Execute(async () =>
       {
         ThrowIfNotReady();
-        CONTEXT context = await _debuggerService.ContinueToBreakpointAsync((nint)va);
-        var instruction = _debuggerService.Disassemble(_debuggerService.GetInstructionPointer(context));
+        CONTEXT context = await _executionControl.ContinueToBreakpointAsync((nint)va);
+        var instruction = _executionControl.DisassembleInstruction(_executionControl.GetInstructionPointer(context));
         return new BreakpointResult(context, instruction);
       });
     }
 
+    /// <summary>Runs the debuggee until it stops at a temporary breakpoint on an exported function of a module.</summary>
+    /// <param name="processId">Process id of the debuggee.</param>
+    /// <param name="moduleName">File name of the module that exports the function.</param>
+    /// <param name="functionName">Name of the exported function to stop at.</param>
+    /// <returns>The thread context of the breakpoint stop.</returns>
+    /// <exception cref="McpException">
+    /// The session has not reached the entry point yet, the function was not found (its address is zero), or the
+    /// stop did not arrive in time.
+    /// </exception>
     [McpServerTool(Name = "Debugger_ContinueToApiBreakpoint"), Description("Continues to run the debuggee until the specified temporary API breakpoint is reached. Returns current context.")]
     public async Task<BreakpointResult> Debugger_ContinueToApiBreakpoint([Description("The process id of the debuggee.")] uint processId,
                                                                          [Description("Name of the module.")] string moduleName,
@@ -130,32 +165,42 @@ namespace MCP.Server.McpTools
         ThrowIfNotReady();
         var moduleHandle = _debuggerService.GetRemoteModuleHandle(processId, moduleName);
         var address = _debuggerService.GetRemoteProcAddress(processId, moduleHandle, functionName);
-        CONTEXT context = await _debuggerService.ContinueToBreakpointAsync(address);
-        var instruction = _debuggerService.Disassemble(_debuggerService.GetInstructionPointer(context));
+        CONTEXT context = await _executionControl.ContinueToBreakpointAsync(address);
+        var instruction = _executionControl.DisassembleInstruction(_executionControl.GetInstructionPointer(context));
         return new BreakpointResult(context, instruction);
       });
     }
 
+    /// <summary>Executes one instruction, entering a call.</summary>
+    /// <returns>The thread context of the stop after the step.</returns>
+    /// <exception cref="McpException">
+    /// The session has not reached the entry point yet, or the stop did not arrive in time.
+    /// </exception>
     [McpServerTool(Name = "Debugger_StepInto"), Description("Steps from the current instruction to the next instruction. If the current instruction is a call it will step into this call.")]
     public async Task<BreakpointResult> Debugger_StepInto()
     {
       return await Execute(async () =>
       {
         ThrowIfNotReady();
-        CONTEXT context = await _debuggerService.StepIntoAsync();
-        var instruction = _debuggerService.Disassemble(_debuggerService.GetInstructionPointer(context));
+        CONTEXT context = await _executionControl.StepIntoAsync();
+        var instruction = _executionControl.DisassembleInstruction(_executionControl.GetInstructionPointer(context));
         return new BreakpointResult(context, instruction);
       });
     }
 
+    /// <summary>Executes one instruction, running through a call.</summary>
+    /// <returns>The thread context of the stop after the step.</returns>
+    /// <exception cref="McpException">
+    /// The session has not reached the entry point yet, or the stop did not arrive in time.
+    /// </exception>
     [McpServerTool(Name = "Debugger_StepOver"), Description("Steps from the current instruction to the next instruction. If the current instruction is a call it will step over the call to the instruction behind it.")]
     public async Task<BreakpointResult> Debugger_StepOver()
     {
       return await Execute(async () =>
       {
         ThrowIfNotReady();
-        CONTEXT context = await _debuggerService.StepOverAsync();
-        var instruction = _debuggerService.Disassemble(_debuggerService.GetInstructionPointer(context));
+        CONTEXT context = await _executionControl.StepOverAsync();
+        var instruction = _executionControl.DisassembleInstruction(_executionControl.GetInstructionPointer(context));
         return new BreakpointResult(context, instruction);
       });
     }
@@ -185,6 +230,14 @@ namespace MCP.Server.McpTools
       return result;
     }
 
+    /// <summary>Reads memory of the debuggee.</summary>
+    /// <param name="va">Absolute virtual address of the first byte.</param>
+    /// <param name="size">Number of bytes to read.</param>
+    /// <returns>
+    /// An object with the property <c>Memory</c>: the bytes as a JSON array of numbers in a string, or the text
+    /// <c>null</c> when the memory could not be read.
+    /// </returns>
+    /// <exception cref="McpException">The session has not reached the entry point yet.</exception>
     [McpServerTool(Name = "Debugger_ReadMemory"), Description("Reads memory of the debuggee process and returns the bytes.")]
     public object Debugger_ReadMemory([Description("Absolute virtual address of the memory.")] ulong va,
                                       [Description("Size to be read in bytes.")] uint size)
@@ -195,7 +248,7 @@ namespace MCP.Server.McpTools
         return _debuggerService.ReadMemory((nint)va, size);
       });
 
-      return new { Memory = JsonSerializer.Serialize(result, _jsonSerializerOptions) };
+      return new { Memory = _memoryFormatter.Format(result) };
     }
 
     [McpServerTool(Name = "Debugger_WriteMemory"), Description("Writes the given data into the memory of the debuggee process. Expecting an array of bytes (0-255) for data parameter.")]

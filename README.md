@@ -182,7 +182,10 @@ Test projects (solution folder `Tests`; NUnit, except for the native tests):
 - **MCP.Server.IntegrationTests**  
   Integration tests of the MCP server: they start the built `MCP.Server.exe` and call its tools as an MCP client over stdio.
 
-- **MCP.Debugger.Tests**, **MCP.Debugger.Types.Tests**, **MCP.Server.Tests**  
+- **MCP.Server.Tests**  
+  Unit tests of the MCP server's classes. They start no process: the debugger is replaced by Moq mocks. The project also checks two structure rules of the server (interfaces live under `MCP.Server.Interfaces`; a class receives its collaborators as interfaces).
+
+- **MCP.Debugger.Tests**, **MCP.Debugger.Types.Tests**  
   Unit-test projects of the corresponding projects. They are set up but do not contain tests yet.
 
 ### Packages
@@ -247,10 +250,11 @@ All NUnit test projects use the same package versions; they are defined once in 
 | `NUnit3TestAdapter` | 6.3.1 | MIT | Lets `dotnet test` and the Visual Studio Test Explorer find and run NUnit tests |
 | `Microsoft.NET.Test.Sdk` | 18.12.0 | MIT | Test host and build integration of the test projects |
 | `NUnit.Analyzers` | 4.15.0 | MIT | Compile-time checks of the test code |
+| `Moq` | 4.21.0 | BSD-3-Clause | Mocks of the interfaces a tested class depends on |
 | `ModelContextProtocol.Core` | 2.4.0 | Apache-2.0 | MCP client of the server integration tests (same version as the SDK used by `MCP.Server`); only in `MCP.Server.IntegrationTests` |
 | `Microsoft.Extensions.DependencyInjection` | 10.0.15 | MIT | Container the debugger integration tests take the debugger service from (same version as in `MCP.Server`, see [Packages](#packages)); only in `MCP.Debugger.IntegrationTests` |
 
-The packages these pull in (Microsoft test platform and `Microsoft.Extensions.*` packages) are licensed under MIT.
+The packages these pull in are licensed under MIT (Microsoft test platform and `Microsoft.Extensions.*` packages; `System.Diagnostics.EventLog` 6.0.0, through `Castle.Core`) or Apache-2.0 (`Castle.Core` 5.2.1, the proxy generator of `Moq`).
 
 The native tests use Google Test, which is not a NuGet package: vcpkg builds it from source during the build and links it statically into the test binary. The version is pinned in `MCP.Debugger.NativeTests/vcpkg.json` (registry baseline plus version override).
 

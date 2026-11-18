@@ -1,6 +1,10 @@
 ﻿using System.Reflection;
 using MCP.Debugger;
+using MCP.Server.Interfaces.McpTools.Execution;
+using MCP.Server.Interfaces.McpTools.Formatting;
 using MCP.Server.McpTools;
+using MCP.Server.McpTools.Execution;
+using MCP.Server.McpTools.Formatting;
 using Microsoft.Extensions.DependencyInjection;
 using ModelContextProtocol.Server;
 
@@ -33,8 +37,14 @@ namespace MCP.Server
 
       // One dispatcher, one debugger service and one tool object per process: the debugging session lives in the
       // service and the session flags in the tool object, and both must survive from one tool call to the next.
+      // The helpers of the tool object - the wait for a time limit, the execution control and the memory
+      // formatter - keep nothing between two calls; they are singletons because the one tool object holds them
+      // for the whole process and the execution control holds the one debugger service.
       serviceCollection.AddSingleton<IDispatcher, ConsoleDispatcher>();
       serviceCollection.AddDebuggerService();
+      serviceCollection.AddSingleton<IDelay, TaskDelay>();
+      serviceCollection.AddSingleton<IExecutionControl, ExecutionControl>();
+      serviceCollection.AddSingleton<IMemoryFormatter, MemoryFormatter>();
       serviceCollection.AddSingleton<DebuggerTools>();
 
       var serverBuilder = serviceCollection.AddMcpServer(options => options.ServerInstructions = "The server provides tools for static and dynamic analysis (debugging) of windows executables. Very important: Always use HexToDecConverter before reading memory from addresses you see in disassembly!");
