@@ -388,7 +388,8 @@ namespace MCP.Debugger.IntegrationTests.Managed
     /// <summary>
     /// Tells where a step into the given instruction ends: at the target of a direct call or jump (named in
     /// the disassembly text), otherwise at the instruction behind it. The first instruction at the entry point
-    /// differs between the 64-bit and the 32-bit sample target, so both cases occur.
+    /// differs between the 64-bit and the 32-bit sample target, so both cases occur. Only the hexadecimal
+    /// digits of the target are read: a symbol of the target may follow them in the text.
     /// </summary>
     /// <param name="instruction">The instruction that is stepped into.</param>
     /// <returns>The address of the instruction executed next.</returns>
@@ -402,7 +403,8 @@ namespace MCP.Debugger.IntegrationTests.Managed
         return AddressBehind(instruction);
       }
 
-      string target = text.Substring(text.IndexOf(HexPrefix, StringComparison.Ordinal) + HexPrefix.Length);
+      string behindPrefix = text.Substring(text.IndexOf(HexPrefix, StringComparison.Ordinal) + HexPrefix.Length);
+      string target = new string(behindPrefix.TakeWhile(Uri.IsHexDigit).ToArray());
       return unchecked((nint)ulong.Parse(target, NumberStyles.HexNumber, CultureInfo.InvariantCulture));
     }
 

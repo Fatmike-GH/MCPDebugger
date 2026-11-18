@@ -59,7 +59,12 @@ namespace MCP::Native::Disassembler
     /// </summary>
     static DecodeOutcome Decode(const BYTE* bytes, size_t size, DWORD_PTR runtimeAddress, ZydisDisassembledInstruction& instruction);
 
+    /// <summary>
+    /// Appends the symbol of every address a visible operand of the instruction refers to. The runtime
+    /// address is where the instruction is located in the debuggee: relative operands are resolved from it.
+    /// </summary>
     void AppendOperandSymbols(const ZydisDisassembledInstruction& info,
+                              DWORD_PTR runtimeAddress,
                               Interfaces::ISymbolResolver& resolver,
                               HANDLE processHandle,
                               DWORD processId,

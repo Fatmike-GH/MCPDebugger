@@ -72,7 +72,7 @@ namespace MCP::Native::Disassembler
       {
         instruction.InstructionLength = decoded.info.length;
         instruction.Disassembly = decoded.text;
-        AppendOperandSymbols(decoded, _symbolResolver, processHandle, processId, instruction.Disassembly);
+        AppendOperandSymbols(decoded, address, _symbolResolver, processHandle, processId, instruction.Disassembly);
       }
       else
       {
@@ -88,6 +88,7 @@ namespace MCP::Native::Disassembler
   }
 
   void Disassembler::AppendOperandSymbols(const ZydisDisassembledInstruction& info,
+                                          DWORD_PTR runtimeAddress,
                                           Interfaces::ISymbolResolver& symbolResolver,
                                           HANDLE processHandle,
                                           DWORD processId,
@@ -100,13 +101,16 @@ namespace MCP::Native::Disassembler
       bool hasAddress = false;
 
       // Try Official Zydis Calculation
-      // Handles: [RIP + Disp], JMP/CALL Relatives
-      if (ZYAN_SUCCESS(ZydisCalcAbsoluteAddress(&info.info, info.operands, i, &targetAddress)))
+      // Handles: [RIP + Disp], JMP/CALL Relatives, absolute memory ([Disp])
+      // It works on one operand - the one this pass looks at - and needs the address the instruction runs
+      // at: a relative target is that address plus the instruction length plus the displacement
+      if (ZYAN_SUCCESS(ZydisCalcAbsoluteAddress(&info.info, &op, runtimeAddress, &targetAddress)))
       {
         hasAddress = true;
       }
 
-      // Fallback for Absolute Memory (e.g., PUSH [0x403228])
+      // Fallback for Absolute Memory (e.g., PUSH [0x403228]). The calculation above accepts such an operand
+      // itself, so this only takes over should it ever decline one
       else if (op.type == ZYDIS_OPERAND_TYPE_MEMORY &&
                op.mem.base == ZYDIS_REGISTER_NONE &&
                op.mem.index == ZYDIS_REGISTER_NONE)

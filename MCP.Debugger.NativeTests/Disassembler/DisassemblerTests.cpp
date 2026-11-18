@@ -32,7 +32,10 @@ namespace MCP::Native::Tests::Disassembler
   /// memory or asks for a symbol it was not expected to.
   ///
   /// The byte sequences mean the same in the 32-bit and the 64-bit build: 90 is nop, 0A C0 is or al, al,
-  /// E8 with four bytes is a call, F3 A4 is rep movsb; 0F 0A and FF FF are no instruction in either mode.
+  /// E8 with four bytes is a call, F3 A4 is rep movsb, 68 with four bytes pushes a 32-bit value,
+  /// C7 04 25 with eight bytes writes a 32-bit value to a fixed address; 0F 0A and FF FF are no instruction in
+  /// either mode. The exception are the two tests of operands relative to the instruction pointer: their
+  /// bytes are that only in 64-bit code, so they are compiled for the 64-bit build alone.
   /// </summary>
   class DisassemblerTests : public ::testing::Test
   {
@@ -88,8 +91,11 @@ namespace MCP::Native::Tests::Disassembler
       return instructions;
     }
 
-    /// <summary>Matches a list entry by its address, its length and its whole text.</summary>
-    static Matcher<const Instruction&> IsEntry(DWORD_PTR address, DWORD_PTR length, const std::string& text)
+    /// <summary>
+    /// Matches a list entry by its address, its length and its text - the whole text, or what a matcher says
+    /// about it.
+    /// </summary>
+    static Matcher<const Instruction&> IsEntry(DWORD_PTR address, DWORD_PTR length, const Matcher<const std::string&>& text)
     {
       return AllOf(Field("VA", &Instruction::VA, address),
                    Field("InstructionLength", &Instruction::InstructionLength, length),
@@ -175,11 +181,78 @@ namespace MCP::Native::Tests::Disassembler
 
     // Assert
     ASSERT_NE(nullptr, instructions);
-    EXPECT_THAT(*instructions, ElementsAre(AllOf(Field("VA", &Instruction::VA, StartAddress),
-                                                 Field("InstructionLength", &Instruction::InstructionLength, pushLength),
-                                                 Field("Disassembly", &Instruction::Disassembly,
-                                                       AllOf(StartsWith("push "), EndsWith(" <Target>"))))));
+    EXPECT_THAT(*instructions, ElementsAre(IsEntry(StartAddress, pushLength, AllOf(StartsWith("push "), EndsWith(" <Target>")))));
   }
+
+  TEST_F(DisassemblerTests, DisassembleLooksUpTheTargetOfARelativeCallAtItsAbsoluteAddress)
+  {
+    // Arrange: a call whose target lies 0x10 bytes behind the instruction that follows the call
+    const DWORD_PTR callLength = 5;
+    const DWORD_PTR displacement = 0x10;
+    ExpectRangeRead({ 0xE8, 0x10, 0x00, 0x00, 0x00 });
+    EXPECT_CALL(_symbolResolver, Resolve(_process, ProcessId, StartAddress + callLength + displacement)).WillOnce(Return("<Target>"));
+
+    // Act
+    auto instructions = DisassembleRange(5);
+
+    // Assert: the strict resolver was asked once, for the target only
+    ASSERT_NE(nullptr, instructions);
+    EXPECT_THAT(*instructions, ElementsAre(IsEntry(StartAddress, callLength, AllOf(StartsWith("call "), EndsWith(" <Target>")))));
+  }
+
+  TEST_F(DisassemblerTests, DisassembleLooksUpEveryOperandThatRefersToAnAddressByItself)
+  {
+    // Arrange: mov dword ptr [0x403228], 0x404000 - a memory operand at a fixed address and a value that is
+    // large enough to be an address
+    const DWORD_PTR memoryAddress = 0x403228;
+    const DWORD_PTR valueAddress = 0x404000;
+    const DWORD_PTR movLength = 11;
+    ExpectRangeRead({ 0xC7, 0x04, 0x25, 0x28, 0x32, 0x40, 0x00, 0x00, 0x40, 0x40, 0x00 });
+    EXPECT_CALL(_symbolResolver, Resolve(_process, ProcessId, memoryAddress)).WillOnce(Return("<Memory>"));
+    EXPECT_CALL(_symbolResolver, Resolve(_process, ProcessId, valueAddress)).WillOnce(Return("<Value>"));
+
+    // Act
+    auto instructions = DisassembleRange(11);
+
+    // Assert: each address was asked for once, and the symbols follow the text in the order of the operands
+    ASSERT_NE(nullptr, instructions);
+    EXPECT_THAT(*instructions, ElementsAre(IsEntry(StartAddress, movLength, AllOf(StartsWith("mov dword ptr "), EndsWith(" <Memory> <Value>")))));
+  }
+
+// A memory operand relative to the instruction pointer exists in 64-bit code only.
+#ifdef _WIN64
+  TEST_F(DisassemblerTests, DisassembleLooksUpAMemoryOperandRelativeToTheInstructionPointerWhenItIsNotTheFirstOperand)
+  {
+    // Arrange: mov rax, [rip+0x10] - the operand designates the address 0x10 bytes behind the next instruction
+    const DWORD_PTR movLength = 7;
+    const DWORD_PTR displacement = 0x10;
+    ExpectRangeRead({ 0x48, 0x8B, 0x05, 0x10, 0x00, 0x00, 0x00 });
+    EXPECT_CALL(_symbolResolver, Resolve(_process, ProcessId, StartAddress + movLength + displacement)).WillOnce(Return("<Target>"));
+
+    // Act
+    auto instructions = DisassembleRange(7);
+
+    // Assert
+    ASSERT_NE(nullptr, instructions);
+    EXPECT_THAT(*instructions, ElementsAre(IsEntry(StartAddress, movLength, AllOf(StartsWith("mov rax, "), EndsWith(" <Target>")))));
+  }
+
+  TEST_F(DisassemblerTests, DisassembleLooksUpTheSlotACallThroughMemoryRelativeToTheInstructionPointerReads)
+  {
+    // Arrange: call [rip+0x10] - the form a call of an imported function takes in 64-bit code
+    const DWORD_PTR callLength = 6;
+    const DWORD_PTR displacement = 0x10;
+    ExpectRangeRead({ 0xFF, 0x15, 0x10, 0x00, 0x00, 0x00 });
+    EXPECT_CALL(_symbolResolver, Resolve(_process, ProcessId, StartAddress + callLength + displacement)).WillOnce(Return("<Target>"));
+
+    // Act
+    auto instructions = DisassembleRange(6);
+
+    // Assert
+    ASSERT_NE(nullptr, instructions);
+    EXPECT_THAT(*instructions, ElementsAre(IsEntry(StartAddress, callLength, AllOf(StartsWith("call "), EndsWith(" <Target>")))));
+  }
+#endif
 
   TEST_F(DisassemblerTests, DisassembleLeavesTheListUnsetWhenTheMemoryCannotBeRead)
   {
