@@ -2,18 +2,19 @@
 #include <string>
 #include <vector>
 #include <windows.h>
+#include ".\Interfaces\IPEFile.h"
 
 namespace MCP::Native::PEFile
 {
-  class PEFile
+  class PEFile : public Interfaces::IPEFile
   {
   public:
     PEFile(const std::string& path);
-    ~PEFile();
+    ~PEFile() override;
 
-    bool IsValid();
-    bool Isx64();
-    bool IsNative();   
+    bool IsValid() override;
+    bool Isx64() override;
+    bool IsNative() override;   
 
   private:
     bool OpenFile(const std::string& path);

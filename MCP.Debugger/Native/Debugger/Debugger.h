@@ -2,69 +2,71 @@
 #include <windows.h>
 #include <string>
 #include <memory>
-#include ".\Commands\Base\ICommand.h"
-#include ".\Commands\CommandResult.h"
-#include ".\Commands\DisassembleResult.h"
-#include ".\Commands\ReadMemoryResult.h"
-#include ".\Commands\TryResolveStringResult.h"
-
-namespace MCP::Native::Debugger
-{
-  class DebuggerThread;
-}
+#include ".\Interfaces\IDebugger.h"
 
 namespace MCP::Native::Debugger::Interfaces
 {
   class IDebuggerEventHandler;
+  class IDebuggerSession;
+  class IDebuggerSessionFactory;
 }
 
-namespace MCP::Native::Debugger::DebugEventHandler
+namespace MCP::Native::PEFile::Interfaces
 {
-  class DebugEventStorage;
-}
-
-namespace MCP::Native::ProcessExplorer
-{
-  class ProcessExplorer;
+  class IExecutableValidator;
 }
 
 namespace MCP::Native::Debugger
 {
-  class Debugger
+  /// <summary>
+  /// The debugger facade: checks the executable, asks the session factory for a new session on every start
+  /// and passes each operation to the session's debug thread while that thread is running.
+  /// </summary>
+  class Debugger : public Interfaces::IDebugger
   {
   public:
-    Debugger(Interfaces::IDebuggerEventHandler* eventHandler);
-    ~Debugger();
+    /// <summary>
+    /// Takes ownership of the session factory and the executable validator. The event handler is borrowed and
+    /// must outlive the debugger; it is handed to every session.
+    /// </summary>
+    Debugger(std::unique_ptr<Interfaces::IDebuggerSessionFactory> sessionFactory,
+             std::unique_ptr<MCP::Native::PEFile::Interfaces::IExecutableValidator> executableValidator,
+             Interfaces::IDebuggerEventHandler& eventHandler);
 
-    bool IsRunning() const;
-    bool Start(const std::string& path, std::string& error);
+    /// <summary>Stops a running session and waits for its debug thread.</summary>
+    ~Debugger() override;
 
-    Commands::CommandResult Stop();
-    Commands::CommandResult Continue();
-    Commands::CommandResult StepInto();
-    Commands::CommandResult StepOver();
-    Commands::CommandResult SetBreakpoint(DWORD_PTR va);
-    Commands::CommandResult RemoveBreakpoint(DWORD_PTR va);
-    Commands::ReadMemoryResult ReadMemory(DWORD_PTR va, size_t size);
-    Commands::CommandResult WriteMemory(DWORD_PTR va, const BYTE* data, size_t size);
-    Commands::DisassembleResult Disassemble(DWORD_PTR va, size_t length);
-    Commands::TryResolveStringResult TryResolveString(DWORD_PTR va);
+    Debugger(const Debugger&) = delete;
+    Debugger& operator=(const Debugger&) = delete;
+    Debugger(Debugger&&) = delete;
+    Debugger& operator=(Debugger&&) = delete;
 
-    PROCESS_INFORMATION GetProcessInformation() const;
-    DWORD_PTR GetEntryPoint(DWORD processId) const;
-    DWORD_PTR GetImageBase(DWORD processId) const;
-    MCP::Native::ProcessExplorer::ProcessExplorer* GetProcessExplorer() const { return _processExplorer.get(); }
+    bool IsRunning() const override;
+    bool Start(const std::string& path, std::string& error) override;
+
+    Commands::CommandResult Stop() override;
+    Commands::CommandResult Continue() override;
+    Commands::CommandResult StepInto() override;
+    Commands::CommandResult StepOver() override;
+    Commands::CommandResult SetBreakpoint(DWORD_PTR va) override;
+    Commands::CommandResult RemoveBreakpoint(DWORD_PTR va) override;
+    Commands::ReadMemoryResult ReadMemory(DWORD_PTR va, size_t size) override;
+    Commands::CommandResult WriteMemory(DWORD_PTR va, const BYTE* data, size_t size) override;
+    Commands::DisassembleResult Disassemble(DWORD_PTR va, size_t length) override;
+    Commands::TryResolveStringResult TryResolveString(DWORD_PTR va) override;
+
+    PROCESS_INFORMATION GetProcessInformation() const override;
+    DWORD_PTR GetEntryPoint(DWORD processId) const override;
+    DWORD_PTR GetImageBase(DWORD processId) const override;
+    MCP::Native::ProcessExplorer::Interfaces::IProcessExplorer* GetProcessExplorer() const override;
 
   private:
-    bool ValidateExecutable(const std::string& path, std::string& error);
-    void Initialize();
-    bool StartDebuggerThread(const std::string& path);
+    std::unique_ptr<Interfaces::IDebuggerSessionFactory> _sessionFactory;
+    std::unique_ptr<MCP::Native::PEFile::Interfaces::IExecutableValidator> _executableValidator;
+    Interfaces::IDebuggerEventHandler& _eventHandler;
 
-  private:
-    std::unique_ptr<MCP::Native::ProcessExplorer::ProcessExplorer> _processExplorer;
-    std::unique_ptr<MCP::Native::Debugger::DebugEventHandler::DebugEventStorage> _debugEventStorage;
-    MCP::Native::Debugger::Interfaces::IDebuggerEventHandler* _eventHandler;
-
-    std::unique_ptr<DebuggerThread> _debuggerThread;    
+    // The current or the last session. It is kept after its thread stopped, so its module bookkeeping stays
+    // readable, and is replaced by the next start.
+    std::unique_ptr<Interfaces::IDebuggerSession> _session;
   };
 }

@@ -20,10 +20,16 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Adapters\DebuggerEventHandlerAdapter.cpp" />
+    <ClCompile Include="Managed\DebuggerEventRelay.cpp" />
     <ClCompile Include="Managed\DebuggerService.cpp" />
     <ClCompile Include="Managed\DebuggerServiceCollectionExtensions.cpp" />
     <ClCompile Include="Managed\ConsoleDispatcher.cpp" />
+    <ClCompile Include="Managed\NativeDebuggerHost.cpp" />
     <ClCompile Include="Managed\UiDispatcher.cpp" />
+    <ClCompile Include="Native\Composition\DebuggerSession.cpp" />
+    <ClCompile Include="Native\Composition\DebuggerSessionFactory.cpp" />
+    <ClCompile Include="Native\Composition\NativeComposition.cpp" />
+    <ClCompile Include="Native\Composition\PEFileFactory.cpp" />
     <ClCompile Include="Native\Debugger\Breakpoint.cpp" />
     <ClCompile Include="Native\Debugger\BreakpointManager.cpp" />
     <ClCompile Include="Native\Debugger\Commands\Base\ICommand.cpp" />
@@ -52,6 +58,7 @@
     <ClCompile Include="Native\Debugger\DebuggerThread.cpp" />
     <ClCompile Include="Native\Disassembler\Disassembler.cpp" />
     <ClCompile Include="Native\Disassembler\SymbolResolver.cpp" />
+    <ClCompile Include="Native\PEFile\ExecutableValidator.cpp" />
     <ClCompile Include="Native\PEFile\PEFile.cpp" />
     <ClCompile Include="Native\ProcessExplorer\ModuleAnalyzer.cpp" />
     <ClCompile Include="Native\ProcessExplorer\ModuleInfo.cpp" />
@@ -63,12 +70,21 @@
   <ItemGroup>
     <ClInclude Include="Adapters\DebuggerEventHandlerAdapter.h" />
     <ClInclude Include="Managed\ActionWrapper.h" />
+    <ClInclude Include="Managed\DebuggerEventRelay.h" />
     <ClInclude Include="Managed\DebuggerService.h" />
     <ClInclude Include="Managed\DebuggerServiceCollectionExtensions.h" />
     <ClInclude Include="Managed\ConsoleDispatcher.h" />
+    <ClInclude Include="Managed\NativeDebuggerHost.h" />
     <ClInclude Include="Managed\UiDispatcher.h" />
+    <ClInclude Include="Managed\Interfaces\IDebuggerEventSink.h" />
+    <ClInclude Include="Managed\Interfaces\IDebuggerEventSource.h" />
     <ClInclude Include="Managed\Interfaces\IDebuggerService.h" />
     <ClInclude Include="Managed\Interfaces\IDispatcher.h" />
+    <ClInclude Include="Managed\Interfaces\INativeDebuggerHost.h" />
+    <ClInclude Include="Native\Composition\DebuggerSession.h" />
+    <ClInclude Include="Native\Composition\DebuggerSessionFactory.h" />
+    <ClInclude Include="Native\Composition\NativeComposition.h" />
+    <ClInclude Include="Native\Composition\PEFileFactory.h" />
     <ClInclude Include="Native\Debugger\Breakpoint.h" />
     <ClInclude Include="Native\Debugger\BreakpointManager.h" />
     <ClInclude Include="Native\Debugger\Commands\Base\ICommand.h" />
@@ -111,11 +127,20 @@
     <ClInclude Include="Native\Debugger\DebuggerThread.h" />
     <ClInclude Include="Native\Debugger\Interfaces\BreakpointEventArgs.h" />
     <ClInclude Include="Native\Debugger\Interfaces\ExitProcessEventArgs.h" />
+    <ClInclude Include="Native\Debugger\Interfaces\IDebugger.h" />
     <ClInclude Include="Native\Debugger\Interfaces\IDebuggerEventHandler.h" />
+    <ClInclude Include="Native\Debugger\Interfaces\IDebuggerSession.h" />
+    <ClInclude Include="Native\Debugger\Interfaces\IDebuggerSessionFactory.h" />
+    <ClInclude Include="Native\Debugger\Interfaces\IDebuggerThread.h" />
     <ClInclude Include="Native\Disassembler\Disassembler.h" />
     <ClInclude Include="Native\Disassembler\Instruction.h" />
     <ClInclude Include="Native\Disassembler\SymbolResolver.h" />
+    <ClInclude Include="Native\PEFile\ExecutableValidator.h" />
+    <ClInclude Include="Native\PEFile\Interfaces\IExecutableValidator.h" />
+    <ClInclude Include="Native\PEFile\Interfaces\IPEFile.h" />
+    <ClInclude Include="Native\PEFile\Interfaces\IPEFileFactory.h" />
     <ClInclude Include="Native\PEFile\PEFile.h" />
+    <ClInclude Include="Native\ProcessExplorer\Interfaces\IProcessExplorer.h" />
     <ClInclude Include="Native\ProcessExplorer\Interfaces\IProcessExplorerListener.h" />
     <ClInclude Include="Native\ProcessExplorer\ModuleAnalyzer.h" />
     <ClInclude Include="Native\ProcessExplorer\ModuleExport.h" />

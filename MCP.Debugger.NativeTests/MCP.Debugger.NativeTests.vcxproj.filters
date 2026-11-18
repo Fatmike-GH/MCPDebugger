@@ -19,6 +19,24 @@
     <Filter Include="Mocks\Debugger\Commands\Base">
       <UniqueIdentifier>{6d651caa-0d3a-4880-88b1-e67c588b5403}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Mocks\Debugger\Interfaces">
+      <UniqueIdentifier>{317af918-f235-42f9-8756-ee0a3ba0dec6}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Mocks\PEFile">
+      <UniqueIdentifier>{8d41dc43-6407-4914-9dd7-4231df32d21f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Mocks\PEFile\Interfaces">
+      <UniqueIdentifier>{43026994-9d24-415c-9104-a22897a5cf00}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Mocks\ProcessExplorer">
+      <UniqueIdentifier>{ac8a17e8-bbdc-496b-b495-f9c1049f326f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Mocks\ProcessExplorer\Interfaces">
+      <UniqueIdentifier>{cb261a49-c452-4c57-bb54-c71059b1dc05}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="PEFile">
+      <UniqueIdentifier>{b280e6b4-5a80-418b-b08f-ae6935f61da0}</UniqueIdentifier>
+    </Filter>
     <Filter Include="ProcessExplorer">
       <UniqueIdentifier>{6359d05a-28f6-42ca-9c85-209a88e1ab49}</UniqueIdentifier>
     </Filter>
@@ -52,6 +70,12 @@
       <Filter>Production sources under test</Filter>
     </ClCompile>
     <ClCompile Include="..\MCP.Debugger\Native\Debugger\Commands\WriteMemoryCommand.cpp">
+      <Filter>Production sources under test</Filter>
+    </ClCompile>
+    <ClCompile Include="..\MCP.Debugger\Native\Debugger\Debugger.cpp">
+      <Filter>Production sources under test</Filter>
+    </ClCompile>
+    <ClCompile Include="..\MCP.Debugger\Native\PEFile\ExecutableValidator.cpp">
       <Filter>Production sources under test</Filter>
     </ClCompile>
     <ClCompile Include="..\MCP.Debugger\Native\ProcessExplorer\ModuleInfo.cpp">
@@ -88,10 +112,40 @@
     <ClCompile Include="ProcessExplorer\ProcessDataStoreTests.cpp">
       <Filter>ProcessExplorer</Filter>
     </ClCompile>
+    <ClCompile Include="Debugger\DebuggerTests.cpp">
+      <Filter>Debugger</Filter>
+    </ClCompile>
+    <ClCompile Include="PEFile\ExecutableValidatorTests.cpp">
+      <Filter>PEFile</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Mocks\Debugger\Commands\Base\MockCommandContext.h">
       <Filter>Mocks\Debugger\Commands\Base</Filter>
+    </ClInclude>
+    <ClInclude Include="Mocks\Debugger\Interfaces\MockDebuggerEventHandler.h">
+      <Filter>Mocks\Debugger\Interfaces</Filter>
+    </ClInclude>
+    <ClInclude Include="Mocks\Debugger\Interfaces\MockDebuggerSession.h">
+      <Filter>Mocks\Debugger\Interfaces</Filter>
+    </ClInclude>
+    <ClInclude Include="Mocks\Debugger\Interfaces\MockDebuggerSessionFactory.h">
+      <Filter>Mocks\Debugger\Interfaces</Filter>
+    </ClInclude>
+    <ClInclude Include="Mocks\Debugger\Interfaces\MockDebuggerThread.h">
+      <Filter>Mocks\Debugger\Interfaces</Filter>
+    </ClInclude>
+    <ClInclude Include="Mocks\PEFile\Interfaces\MockExecutableValidator.h">
+      <Filter>Mocks\PEFile\Interfaces</Filter>
+    </ClInclude>
+    <ClInclude Include="Mocks\PEFile\Interfaces\MockPEFile.h">
+      <Filter>Mocks\PEFile\Interfaces</Filter>
+    </ClInclude>
+    <ClInclude Include="Mocks\PEFile\Interfaces\MockPEFileFactory.h">
+      <Filter>Mocks\PEFile\Interfaces</Filter>
+    </ClInclude>
+    <ClInclude Include="Mocks\ProcessExplorer\Interfaces\MockProcessExplorer.h">
+      <Filter>Mocks\ProcessExplorer\Interfaces</Filter>
     </ClInclude>
     <ClInclude Include="TestHelpers\Futures.h">
       <Filter>TestHelpers</Filter>

@@ -185,8 +185,11 @@ Test projects (solution folder `Tests`; NUnit, except for the native tests):
 - **MCP.Server.Tests**  
   Unit tests of the MCP server's classes. They start no process: the debugger is replaced by Moq mocks. The project also checks two structure rules of the server (interfaces live under `MCP.Server.Interfaces`; a class receives its collaborators as interfaces).
 
-- **MCP.Debugger.Tests**, **MCP.Debugger.Types.Tests**  
-  Unit-test projects of the corresponding projects. They are set up but do not contain tests yet.
+- **MCP.Debugger.Tests**  
+  Unit tests of the managed classes of `MCP.Debugger` that need no native debugger, currently the console dispatcher. The debugger service itself is covered by `MCP.Debugger.IntegrationTests`: a C# test cannot replace the native debugger behind it.
+
+- **MCP.Debugger.Types.Tests**  
+  Unit-test project of `MCP.Debugger.Types`. It is set up but does not contain tests yet.
 
 ### Packages
 

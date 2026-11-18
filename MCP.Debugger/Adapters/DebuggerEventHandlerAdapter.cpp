@@ -1,45 +1,46 @@
 #include "DebuggerEventHandlerAdapter.h"
 #include "..\Native\Debugger\Interfaces\BreakpointEventArgs.h"
 #include "..\Native\Debugger\Interfaces\ExitProcessEventArgs.h"
-#include "..\Managed\DebuggerService.h"
+#include "..\Managed\Interfaces\IDebuggerEventSink.h"
 
+using namespace System;
 using namespace System::Runtime::InteropServices;
 namespace MCP::Adapters
 {
-  DebuggerEventHandlerAdapter::DebuggerEventHandlerAdapter(MCP::Debugger::DebuggerService^ managedHandler)
+  DebuggerEventHandlerAdapter::DebuggerEventHandlerAdapter(MCP::Debugger::IDebuggerEventSink^ sink)
   {
-    _managedHandler = managedHandler;
+    _sink = sink;
   }
 
   void DebuggerEventHandlerAdapter::OnExitProcess(std::shared_ptr<MCP::Native::Debugger::Interfaces::ExitProcessEventArgs> args)
   {
     System::UInt32 processId = args->ProcessId;
     auto managedArgs = gcnew MCP::Debugger::Types::EventArgs::ExitProcessEventArgs(processId);
-    _managedHandler->OnExitProcess(managedArgs);
+    _sink->OnExitProcess(managedArgs);
   }
 
   void DebuggerEventHandlerAdapter::OnSystemBreakpoint(std::shared_ptr<MCP::Native::Debugger::Interfaces::BreakpointEventArgs> args)
   {
     auto managedArgs = CreateBreakpointEventArgs(args->ProcessId, args->ThreadId, args->Context);
-    _managedHandler->OnSystemBreakpoint(managedArgs);
+    _sink->OnSystemBreakpoint(managedArgs);
   }
 
   void DebuggerEventHandlerAdapter::OnEntryPointBreakpoint(std::shared_ptr<MCP::Native::Debugger::Interfaces::BreakpointEventArgs> args)
   {
     auto managedArgs = CreateBreakpointEventArgs(args->ProcessId, args->ThreadId, args->Context);
-    _managedHandler->OnEntryPointBreakpoint(managedArgs);
+    _sink->OnEntryPointBreakpoint(managedArgs);
   }
 
   void DebuggerEventHandlerAdapter::OnBreakpoint(std::shared_ptr<MCP::Native::Debugger::Interfaces::BreakpointEventArgs> args)
   {
     auto managedArgs = CreateBreakpointEventArgs(args->ProcessId, args->ThreadId, args->Context);
-    _managedHandler->OnBreakpoint(managedArgs);
+    _sink->OnBreakpoint(managedArgs);
   }
 
   void DebuggerEventHandlerAdapter::OnSingleStep(std::shared_ptr<MCP::Native::Debugger::Interfaces::BreakpointEventArgs> args)
   {
     auto managedArgs = CreateBreakpointEventArgs(args->ProcessId, args->ThreadId, args->Context);
-    _managedHandler->OnSingleStep(managedArgs);
+    _sink->OnSingleStep(managedArgs);
   }
 
   MCP::Debugger::Types::EventArgs::BreakpointEventArgs^ DebuggerEventHandlerAdapter::CreateBreakpointEventArgs(DWORD processId, DWORD threadId, const ::CONTEXT& context)

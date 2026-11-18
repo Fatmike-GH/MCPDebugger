@@ -29,11 +29,14 @@
     <ClCompile Include="..\MCP.Debugger\Native\Debugger\Commands\StopCommand.cpp" />
     <ClCompile Include="..\MCP.Debugger\Native\Debugger\Commands\TryResolveStringCommand.cpp" />
     <ClCompile Include="..\MCP.Debugger\Native\Debugger\Commands\WriteMemoryCommand.cpp" />
+    <ClCompile Include="..\MCP.Debugger\Native\Debugger\Debugger.cpp" />
+    <ClCompile Include="..\MCP.Debugger\Native\PEFile\ExecutableValidator.cpp" />
     <ClCompile Include="..\MCP.Debugger\Native\ProcessExplorer\ModuleInfo.cpp" />
     <ClCompile Include="..\MCP.Debugger\Native\ProcessExplorer\ProcessDataStore.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Main.cpp" />
+    <ClCompile Include="Debugger\DebuggerTests.cpp" />
     <ClCompile Include="Debugger\Commands\CommandTests.cpp" />
     <ClCompile Include="Debugger\Commands\DisassembleCommandTests.cpp" />
     <ClCompile Include="Debugger\Commands\ReadMemoryCommandTests.cpp" />
@@ -42,10 +45,19 @@
     <ClCompile Include="Debugger\Commands\StopCommandTests.cpp" />
     <ClCompile Include="Debugger\Commands\TryResolveStringCommandTests.cpp" />
     <ClCompile Include="Debugger\Commands\WriteMemoryCommandTests.cpp" />
+    <ClCompile Include="PEFile\ExecutableValidatorTests.cpp" />
     <ClCompile Include="ProcessExplorer\ProcessDataStoreTests.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Mocks\Debugger\Commands\Base\MockCommandContext.h" />
+    <ClInclude Include="Mocks\Debugger\Interfaces\MockDebuggerEventHandler.h" />
+    <ClInclude Include="Mocks\Debugger\Interfaces\MockDebuggerSession.h" />
+    <ClInclude Include="Mocks\Debugger\Interfaces\MockDebuggerSessionFactory.h" />
+    <ClInclude Include="Mocks\Debugger\Interfaces\MockDebuggerThread.h" />
+    <ClInclude Include="Mocks\PEFile\Interfaces\MockExecutableValidator.h" />
+    <ClInclude Include="Mocks\PEFile\Interfaces\MockPEFile.h" />
+    <ClInclude Include="Mocks\PEFile\Interfaces\MockPEFileFactory.h" />
+    <ClInclude Include="Mocks\ProcessExplorer\Interfaces\MockProcessExplorer.h" />
     <ClInclude Include="TestHelpers\Futures.h" />
   </ItemGroup>
   <ItemGroup>

@@ -5,6 +5,7 @@
 #include <atomic>
 #include <memory>
 #include "BreakpointManager.h"
+#include ".\Interfaces\IDebuggerThread.h"
 #include ".\Commands\Base\ICommand.h"
 #include ".\Commands\CommandResult.h"
 #include ".\Commands\DisassembleResult.h"
@@ -36,29 +37,29 @@ namespace MCP::Native::ProcessExplorer
 
 namespace MCP::Native::Debugger
 {
-  class DebuggerThread
+  class DebuggerThread : public Interfaces::IDebuggerThread
   {
   public:
     DebuggerThread(MCP::Native::ProcessExplorer::ProcessExplorer* processExplorer,
                    MCP::Native::Debugger::DebugEventHandler::DebugEventStorage* debugEventStorage,
                    Interfaces::IDebuggerEventHandler* eventHandler);
-    ~DebuggerThread();
+    ~DebuggerThread() override;
 
-    bool Start(const std::string& path);
+    bool Start(const std::string& path) override;
     
-    Commands::CommandResult Stop();
-    Commands::CommandResult Continue();
-    Commands::CommandResult StepInto();
-    Commands::CommandResult StepOver();
-    Commands::CommandResult SetBreakpoint(DWORD_PTR va);
-    Commands::CommandResult RemoveBreakpoint(DWORD_PTR va);
-    Commands::ReadMemoryResult ReadMemory(DWORD_PTR va, size_t size);
-    Commands::CommandResult WriteMemory(DWORD_PTR va, const BYTE* data, size_t size);
-    Commands::DisassembleResult Disassemble(DWORD_PTR va, size_t length);
-    Commands::TryResolveStringResult TryResolveString(DWORD_PTR va);
+    Commands::CommandResult Stop() override;
+    Commands::CommandResult Continue() override;
+    Commands::CommandResult StepInto() override;
+    Commands::CommandResult StepOver() override;
+    Commands::CommandResult SetBreakpoint(DWORD_PTR va) override;
+    Commands::CommandResult RemoveBreakpoint(DWORD_PTR va) override;
+    Commands::ReadMemoryResult ReadMemory(DWORD_PTR va, size_t size) override;
+    Commands::CommandResult WriteMemory(DWORD_PTR va, const BYTE* data, size_t size) override;
+    Commands::DisassembleResult Disassemble(DWORD_PTR va, size_t length) override;
+    Commands::TryResolveStringResult TryResolveString(DWORD_PTR va) override;
 
-    PROCESS_INFORMATION GetProcessInformation();
-    bool IsRunning() const { return Is(State::Running); }  
+    PROCESS_INFORMATION GetProcessInformation() override;
+    bool IsRunning() const override { return Is(State::Running); }  
 
   private:
     enum class State

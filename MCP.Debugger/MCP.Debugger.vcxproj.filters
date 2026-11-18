@@ -46,8 +46,35 @@
     <Filter Include="Managed\Interfaces">
       <UniqueIdentifier>{de95e9a8-640d-45b4-bafc-ac06ec560aaf}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Native\Composition">
+      <UniqueIdentifier>{55c75323-b5ad-4de0-8ef7-3c560ebe4ef7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Native\PEFile\Interfaces">
+      <UniqueIdentifier>{fcc02410-a21c-44b4-84ca-2d113f0050f6}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="Managed\DebuggerEventRelay.cpp">
+      <Filter>Managed</Filter>
+    </ClCompile>
+    <ClCompile Include="Managed\NativeDebuggerHost.cpp">
+      <Filter>Managed</Filter>
+    </ClCompile>
+    <ClCompile Include="Native\Composition\DebuggerSession.cpp">
+      <Filter>Native\Composition</Filter>
+    </ClCompile>
+    <ClCompile Include="Native\Composition\DebuggerSessionFactory.cpp">
+      <Filter>Native\Composition</Filter>
+    </ClCompile>
+    <ClCompile Include="Native\Composition\NativeComposition.cpp">
+      <Filter>Native\Composition</Filter>
+    </ClCompile>
+    <ClCompile Include="Native\Composition\PEFileFactory.cpp">
+      <Filter>Native\Composition</Filter>
+    </ClCompile>
+    <ClCompile Include="Native\PEFile\ExecutableValidator.cpp">
+      <Filter>Native\PEFile</Filter>
+    </ClCompile>
     <ClCompile Include="Managed\DebuggerService.cpp">
       <Filter>Managed</Filter>
     </ClCompile>
@@ -170,6 +197,60 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Managed\DebuggerEventRelay.h">
+      <Filter>Managed</Filter>
+    </ClInclude>
+    <ClInclude Include="Managed\NativeDebuggerHost.h">
+      <Filter>Managed</Filter>
+    </ClInclude>
+    <ClInclude Include="Managed\Interfaces\IDebuggerEventSink.h">
+      <Filter>Managed\Interfaces</Filter>
+    </ClInclude>
+    <ClInclude Include="Managed\Interfaces\IDebuggerEventSource.h">
+      <Filter>Managed\Interfaces</Filter>
+    </ClInclude>
+    <ClInclude Include="Managed\Interfaces\INativeDebuggerHost.h">
+      <Filter>Managed\Interfaces</Filter>
+    </ClInclude>
+    <ClInclude Include="Native\Composition\DebuggerSession.h">
+      <Filter>Native\Composition</Filter>
+    </ClInclude>
+    <ClInclude Include="Native\Composition\DebuggerSessionFactory.h">
+      <Filter>Native\Composition</Filter>
+    </ClInclude>
+    <ClInclude Include="Native\Composition\NativeComposition.h">
+      <Filter>Native\Composition</Filter>
+    </ClInclude>
+    <ClInclude Include="Native\Composition\PEFileFactory.h">
+      <Filter>Native\Composition</Filter>
+    </ClInclude>
+    <ClInclude Include="Native\Debugger\Interfaces\IDebugger.h">
+      <Filter>Native\Debugger\Interfaces</Filter>
+    </ClInclude>
+    <ClInclude Include="Native\Debugger\Interfaces\IDebuggerSession.h">
+      <Filter>Native\Debugger\Interfaces</Filter>
+    </ClInclude>
+    <ClInclude Include="Native\Debugger\Interfaces\IDebuggerSessionFactory.h">
+      <Filter>Native\Debugger\Interfaces</Filter>
+    </ClInclude>
+    <ClInclude Include="Native\Debugger\Interfaces\IDebuggerThread.h">
+      <Filter>Native\Debugger\Interfaces</Filter>
+    </ClInclude>
+    <ClInclude Include="Native\PEFile\ExecutableValidator.h">
+      <Filter>Native\PEFile</Filter>
+    </ClInclude>
+    <ClInclude Include="Native\PEFile\Interfaces\IExecutableValidator.h">
+      <Filter>Native\PEFile\Interfaces</Filter>
+    </ClInclude>
+    <ClInclude Include="Native\PEFile\Interfaces\IPEFile.h">
+      <Filter>Native\PEFile\Interfaces</Filter>
+    </ClInclude>
+    <ClInclude Include="Native\PEFile\Interfaces\IPEFileFactory.h">
+      <Filter>Native\PEFile\Interfaces</Filter>
+    </ClInclude>
+    <ClInclude Include="Native\ProcessExplorer\Interfaces\IProcessExplorer.h">
+      <Filter>Native\ProcessExplorer\Interfaces</Filter>
+    </ClInclude>
     <ClInclude Include="Managed\DebuggerService.h">
       <Filter>Managed</Filter>
     </ClInclude>

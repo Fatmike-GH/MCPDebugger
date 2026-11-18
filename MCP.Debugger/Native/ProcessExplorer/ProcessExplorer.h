@@ -9,6 +9,7 @@
 #include "PEImage.h"
 #include "ProcessDataStore.h" 
 #include "ModuleInfo.h"
+#include ".\Interfaces\IProcessExplorer.h"
 #include "..\Debugger\DebugEventHandler\Interfaces\IDebugEventStorageListener.h"
 
 namespace MCP::Native::ProcessExplorer::Interfaces
@@ -18,7 +19,8 @@ namespace MCP::Native::ProcessExplorer::Interfaces
 
 namespace MCP::Native::ProcessExplorer
 {
-  class ProcessExplorer : public MCP::Native::Debugger::DebugEventHandler::Interfaces::IDebugEventStorageListener
+  class ProcessExplorer : public Interfaces::IProcessExplorer,
+                          public MCP::Native::Debugger::DebugEventHandler::Interfaces::IDebugEventStorageListener
   {
   public:
     void OnProcessCreated(std::shared_ptr<MCP::Native::Debugger::DebugEventHandler::ProcessInfo> info);
@@ -31,13 +33,13 @@ namespace MCP::Native::ProcessExplorer
     void AddListener(Interfaces::IProcessExplorerListener* listener);
     void RemoveListener(Interfaces::IProcessExplorerListener* listener);
 
-    bool GetModules(DWORD processId, std::vector<ModuleInfoPtr>& modules);
-    bool GetModule(DWORD processId, HMODULE moduleHandle, ModuleInfoPtr& outModuleInfo);
-    bool GetModuleByVA(DWORD processId, DWORD_PTR va, ModuleInfoPtr& outModuleInfo);
-    bool GetFunctionByVA(DWORD processId, DWORD_PTR va, ModuleExport& outExport);
+    bool GetModules(DWORD processId, std::vector<ModuleInfoPtr>& modules) override;
+    bool GetModule(DWORD processId, HMODULE moduleHandle, ModuleInfoPtr& outModuleInfo) override;
+    bool GetModuleByVA(DWORD processId, DWORD_PTR va, ModuleInfoPtr& outModuleInfo) override;
+    bool GetFunctionByVA(DWORD processId, DWORD_PTR va, ModuleExport& outExport) override;
 
-    HMODULE GetRemoteModuleHandle(DWORD processId, const wchar_t* moduleName);
-    FARPROC GetRemoteProcAddress(DWORD processId, HMODULE hModule, LPCSTR lpProcName);
+    HMODULE GetRemoteModuleHandle(DWORD processId, const wchar_t* moduleName) override;
+    FARPROC GetRemoteProcAddress(DWORD processId, HMODULE hModule, LPCSTR lpProcName) override;
 
   private:
     void NotifyProcessAdded(DWORD processId);

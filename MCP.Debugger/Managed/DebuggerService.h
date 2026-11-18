@@ -6,26 +6,23 @@ using namespace System;
 using namespace System::Collections::Generic;
 using namespace System::Threading;
 
-namespace MCP::Native::Debugger
+namespace MCP::Native::Debugger::Interfaces
 {
-  class Debugger;
-}
-
-namespace MCP::Adapters
-{
-  class DebuggerEventHandlerAdapter;
+  class IDebugger;
 }
 
 namespace MCP::Debugger
 {
   interface class IDispatcher;
+  interface class IDebuggerEventSource;
+  interface class INativeDebuggerHost;
 }
 
 namespace MCP::Debugger
 {
   // Native helpers
-  bool NativeStepInto(MCP::Native::Debugger::Debugger* debugger);
-  bool NativeStepOver(MCP::Native::Debugger::Debugger* debugger);
+  bool NativeStepInto(MCP::Native::Debugger::Interfaces::IDebugger& debugger);
+  bool NativeStepOver(MCP::Native::Debugger::Interfaces::IDebugger& debugger);
 }
 
 namespace MCP::Debugger
@@ -36,11 +33,22 @@ namespace MCP::Debugger
 
   public ref class DebuggerService : public IDebuggerService
   {
+  internal:
+    /// <summary>
+    /// Created by the registration code of this assembly only: the collaborators are types a consumer of the
+    /// assembly cannot see. The service keeps all three alive and owns none of them.
+    /// </summary>
+    /// <param name="dispatcher">Decides the thread the handlers of the service's events run on.</param>
+    /// <param name="host">Gives access to the native debugger every call is passed to.</param>
+    /// <param name="events">The source of the debugger events the service passes on to its own subscribers.</param>
+    DebuggerService(IDispatcher^ dispatcher, INativeDebuggerHost^ host, IDebuggerEventSource^ events);
+
   public:
-    DebuggerService(IDispatcher^ dispatcher);
-    /*DebuggerService(System::Threading::SynchronizationContext^ synchronizationContext);*/
-    ~DebuggerService(); // Dispose: Clean up managed resources
-    !DebuggerService(); // Finalizer: Clean up unmanaged resources
+    /// <summary>
+    /// Dispose: stops listening to the debugger events and shuts the dispatcher down, so no handler runs any
+    /// more. The native debugger is ended by its owner, not here.
+    /// </summary>
+    ~DebuggerService();
 
     virtual event System::EventHandler<MCP::Debugger::Types::EventArgs::ExitProcessEventArgs^>^ ExitProcess;
     virtual event System::EventHandler<MCP::Debugger::Types::EventArgs::BreakpointEventArgs^>^ SystemBreakpoint;
@@ -72,14 +80,15 @@ namespace MCP::Debugger
     virtual System::IntPtr GetRemoteModuleHandle(System::UInt32 processId, String^ moduleName);
     virtual System::IntPtr GetRemoteProcAddress(System::UInt32 processId, System::IntPtr moduleHandle, String^ procedureName);
 
-    // Event Handlers are called from native adapter
-    void OnExitProcess(MCP::Debugger::Types::EventArgs::ExitProcessEventArgs^ args);
-    void OnSystemBreakpoint(MCP::Debugger::Types::EventArgs::BreakpointEventArgs^ args);
-    void OnEntryPointBreakpoint(MCP::Debugger::Types::EventArgs::BreakpointEventArgs^ args);
-    void OnBreakpoint(MCP::Debugger::Types::EventArgs::BreakpointEventArgs^ args);
-    void OnSingleStep(MCP::Debugger::Types::EventArgs::BreakpointEventArgs^ args);
-
   private:
+    // Handlers of the debugger event source. They run on the debugger thread and only hand the event to the
+    // dispatcher; the event of the service is raised wherever the dispatcher runs it.
+    void OnExitProcess(System::Object^ sender, MCP::Debugger::Types::EventArgs::ExitProcessEventArgs^ args);
+    void OnSystemBreakpoint(System::Object^ sender, MCP::Debugger::Types::EventArgs::BreakpointEventArgs^ args);
+    void OnEntryPointBreakpoint(System::Object^ sender, MCP::Debugger::Types::EventArgs::BreakpointEventArgs^ args);
+    void OnBreakpoint(System::Object^ sender, MCP::Debugger::Types::EventArgs::BreakpointEventArgs^ args);
+    void OnSingleStep(System::Object^ sender, MCP::Debugger::Types::EventArgs::BreakpointEventArgs^ args);
+
     MCP::Debugger::Types::Interop::CONTEXT GetThreadContext(HANDLE threadHandle);
     MCP::Debugger::Types::Interop::CONTEXT ConvertThreadContext(::CONTEXT& ncontext);
 
@@ -90,8 +99,8 @@ namespace MCP::Debugger
     void RaiseSingleStepEvent(MCP::Debugger::Types::EventArgs::BreakpointEventArgs^ args);
 
   private:
-    MCP::Adapters::DebuggerEventHandlerAdapter* _adapter;
-    MCP::Native::Debugger::Debugger* _debugger;
     MCP::Debugger::IDispatcher^ _dispatcher;
+    MCP::Debugger::INativeDebuggerHost^ _host;
+    MCP::Debugger::IDebuggerEventSource^ _events;
   };
 }

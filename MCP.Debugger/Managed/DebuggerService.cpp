@@ -6,10 +6,11 @@
 
 #include "DebuggerService.h"
 #include ".\Interfaces\IDispatcher.h"
-#include "..\Native\Debugger\Debugger.h"
-#include "..\Adapters\DebuggerEventHandlerAdapter.h"
+#include ".\Interfaces\IDebuggerEventSource.h"
+#include ".\Interfaces\INativeDebuggerHost.h"
+#include "..\Native\Debugger\Interfaces\IDebugger.h"
 
-#include "..\Native\ProcessExplorer\ProcessExplorer.h"
+#include "..\Native\ProcessExplorer\Interfaces\IProcessExplorer.h"
 #include "..\Native\ProcessExplorer\ModuleInfo.h"
 
 using namespace System;
@@ -17,31 +18,28 @@ using namespace System::Runtime::InteropServices;
 
 namespace MCP::Debugger
 {
-  DebuggerService::DebuggerService(IDispatcher^ dispatcher)
+  DebuggerService::DebuggerService(IDispatcher^ dispatcher, INativeDebuggerHost^ host, IDebuggerEventSource^ events)
   {
-    _adapter = new MCP::Adapters::DebuggerEventHandlerAdapter(this);
-    _debugger = new MCP::Native::Debugger::Debugger(_adapter);
     _dispatcher = dispatcher;
+    _host = host;
+    _events = events;
+
+    _events->ExitProcess += gcnew System::EventHandler<MCP::Debugger::Types::EventArgs::ExitProcessEventArgs^>(this, &DebuggerService::OnExitProcess);
+    _events->SystemBreakpoint += gcnew System::EventHandler<MCP::Debugger::Types::EventArgs::BreakpointEventArgs^>(this, &DebuggerService::OnSystemBreakpoint);
+    _events->EntryPointBreakpoint += gcnew System::EventHandler<MCP::Debugger::Types::EventArgs::BreakpointEventArgs^>(this, &DebuggerService::OnEntryPointBreakpoint);
+    _events->Breakpoint += gcnew System::EventHandler<MCP::Debugger::Types::EventArgs::BreakpointEventArgs^>(this, &DebuggerService::OnBreakpoint);
+    _events->SingleStep += gcnew System::EventHandler<MCP::Debugger::Types::EventArgs::BreakpointEventArgs^>(this, &DebuggerService::OnSingleStep);
   }
 
-  DebuggerService::~DebuggerService() // Dispose: Clean up managed resources
+  DebuggerService::~DebuggerService()
   {
+    _events->ExitProcess -= gcnew System::EventHandler<MCP::Debugger::Types::EventArgs::ExitProcessEventArgs^>(this, &DebuggerService::OnExitProcess);
+    _events->SystemBreakpoint -= gcnew System::EventHandler<MCP::Debugger::Types::EventArgs::BreakpointEventArgs^>(this, &DebuggerService::OnSystemBreakpoint);
+    _events->EntryPointBreakpoint -= gcnew System::EventHandler<MCP::Debugger::Types::EventArgs::BreakpointEventArgs^>(this, &DebuggerService::OnEntryPointBreakpoint);
+    _events->Breakpoint -= gcnew System::EventHandler<MCP::Debugger::Types::EventArgs::BreakpointEventArgs^>(this, &DebuggerService::OnBreakpoint);
+    _events->SingleStep -= gcnew System::EventHandler<MCP::Debugger::Types::EventArgs::BreakpointEventArgs^>(this, &DebuggerService::OnSingleStep);
+
     _dispatcher->Shutdown();
-    this->!DebuggerService();
-  }
-
-  DebuggerService::!DebuggerService() // Finalizer: Clean up unmanaged resources
-  {
-    if (_debugger != nullptr)
-    {
-      delete _debugger;
-      _debugger = nullptr;
-    }
-    if (_adapter != nullptr)
-    {
-      delete _adapter;
-      _adapter = nullptr;
-    }
   }
 
   bool DebuggerService::Start(String^ path, String^% error, System::UInt32% processId, System::UInt32% threadid, System::IntPtr% imageBase, System::IntPtr% entryPoint, MCP::Debugger::Types::Interop::CONTEXT% context)
@@ -49,17 +47,17 @@ namespace MCP::Debugger
     std::string nPath = msclr::interop::marshal_as<std::string>(path);
     std::string nError;
 
-    if (!_debugger->Start(nPath, nError))
+    if (!_host->Debugger->Start(nPath, nError))
     {
       error = msclr::interop::marshal_as<System::String^>(nError);
       return false;
     }
 
-    PROCESS_INFORMATION processInformation = _debugger->GetProcessInformation();
+    PROCESS_INFORMATION processInformation = _host->Debugger->GetProcessInformation();
     processId = processInformation.dwProcessId;
     threadid = processInformation.dwThreadId;
-    imageBase = System::IntPtr(reinterpret_cast<void*>(_debugger->GetImageBase(processInformation.dwProcessId)));
-    entryPoint = System::IntPtr(reinterpret_cast<void*>(_debugger->GetEntryPoint(processInformation.dwProcessId)));
+    imageBase = System::IntPtr(reinterpret_cast<void*>(_host->Debugger->GetImageBase(processInformation.dwProcessId)));
+    entryPoint = System::IntPtr(reinterpret_cast<void*>(_host->Debugger->GetEntryPoint(processInformation.dwProcessId)));
     context = GetThreadContext(processInformation.hThread);
 
     return true;
@@ -67,27 +65,27 @@ namespace MCP::Debugger
 
   void DebuggerService::Stop()
   {
-    _debugger->Stop();
+    _host->Debugger->Stop();
   }
 
   bool DebuggerService::IsRunning()
   {
-    return _debugger->IsRunning();
+    return _host->Debugger->IsRunning();
   }
 
   void DebuggerService::Continue()
   {
-    _debugger->Continue();
+    _host->Debugger->Continue();
   }
 
   bool DebuggerService::StepInto()
   {
-    return NativeStepInto(_debugger);
+    return NativeStepInto(*_host->Debugger);
   }
 
   bool DebuggerService::StepOver()
   {
-    return NativeStepOver(_debugger);
+    return NativeStepOver(*_host->Debugger);
   }
 
   void DebuggerService::SetBreakpoint(System::IntPtr va)
@@ -97,7 +95,7 @@ namespace MCP::Debugger
 #else
     DWORD_PTR nVA = static_cast<DWORD_PTR>(va.ToInt32());
 #endif
-    _debugger->SetBreakpoint(nVA);
+    _host->Debugger->SetBreakpoint(nVA);
   }
 
   void DebuggerService::RemoveBreakpoint(System::IntPtr va)
@@ -107,7 +105,7 @@ namespace MCP::Debugger
 #else
     DWORD_PTR nVA = static_cast<DWORD_PTR>(va.ToInt32());
 #endif
-    _debugger->RemoveBreakpoint(nVA);
+    _host->Debugger->RemoveBreakpoint(nVA);
   }
 
   array<System::Byte>^ DebuggerService::ReadMemory(System::IntPtr va, System::UInt32 size)
@@ -118,7 +116,7 @@ namespace MCP::Debugger
     DWORD_PTR nVA = static_cast<DWORD_PTR>(va.ToInt32());
 #endif
 
-    MCP::Native::Debugger::Commands::ReadMemoryResult nresult = _debugger->ReadMemory(nVA, size);
+    MCP::Native::Debugger::Commands::ReadMemoryResult nresult = _host->Debugger->ReadMemory(nVA, size);
     if (!nresult.IsSuccessful() || !nresult.GetData() || nresult.GetData()->empty())
     {
       return nullptr;
@@ -145,7 +143,7 @@ namespace MCP::Debugger
     size_t length = static_cast<size_t>(data->Length);
     pin_ptr<System::Byte> pdata = &data[0];
     const BYTE* ndata = static_cast<const BYTE*>(pdata);
-    MCP::Native::Debugger::Commands::CommandResult result = _debugger->WriteMemory(nVA, ndata, length);
+    MCP::Native::Debugger::Commands::CommandResult result = _host->Debugger->WriteMemory(nVA, ndata, length);
 
     return result.IsSuccessful();
   }
@@ -160,7 +158,7 @@ namespace MCP::Debugger
 
     List<MCP::Debugger::Types::Disassembler::Instruction^>^ result = gcnew List<MCP::Debugger::Types::Disassembler::Instruction^>(0);
 
-    MCP::Native::Debugger::Commands::DisassembleResult nresult = _debugger->Disassemble(nVA, length);
+    MCP::Native::Debugger::Commands::DisassembleResult nresult = _host->Debugger->Disassemble(nVA, length);
     if (!nresult.IsSuccessful() || !nresult.GetInstructions() || nresult.GetInstructions()->empty())
     {
       return result;
@@ -188,7 +186,7 @@ namespace MCP::Debugger
     DWORD_PTR nVA = static_cast<DWORD_PTR>(va.ToInt32());
 #endif
 
-    MCP::Native::Debugger::Commands::TryResolveStringResult nresult = _debugger->TryResolveString(nVA);
+    MCP::Native::Debugger::Commands::TryResolveStringResult nresult = _host->Debugger->TryResolveString(nVA);
     if (!nresult.IsSuccessful())
     {
       return System::String::Empty;
@@ -202,7 +200,7 @@ namespace MCP::Debugger
   {
     List<MCP::Debugger::Types::Modules::Module^>^ result = gcnew List<MCP::Debugger::Types::Modules::Module^>(0);
 
-    auto processExplorer = _debugger->GetProcessExplorer();
+    auto processExplorer = _host->Debugger->GetProcessExplorer();
     if (processExplorer == nullptr) return result;
 
     std::vector<MCP::Native::ProcessExplorer::ModuleInfoPtr> modules;
@@ -225,7 +223,7 @@ namespace MCP::Debugger
   {
     List<MCP::Debugger::Types::Modules::ModuleImport^>^ result = gcnew List<MCP::Debugger::Types::Modules::ModuleImport^>(0);
 
-    auto processExplorer = _debugger->GetProcessExplorer();
+    auto processExplorer = _host->Debugger->GetProcessExplorer();
     if (processExplorer == nullptr) return result;
 
     MCP::Native::ProcessExplorer::ModuleInfoPtr module;
@@ -262,7 +260,7 @@ namespace MCP::Debugger
   {
     List<MCP::Debugger::Types::Modules::ModuleExport^>^ result = gcnew List<MCP::Debugger::Types::Modules::ModuleExport^>(0);
 
-    auto processExplorer = _debugger->GetProcessExplorer();
+    auto processExplorer = _host->Debugger->GetProcessExplorer();
     if (processExplorer == nullptr) return result;
 
     MCP::Native::ProcessExplorer::ModuleInfoPtr module;
@@ -290,7 +288,7 @@ namespace MCP::Debugger
   {
     List<MCP::Debugger::Types::Modules::ModuleSection^>^ result = gcnew List<MCP::Debugger::Types::Modules::ModuleSection^>(0);
 
-    auto processExplorer = _debugger->GetProcessExplorer();
+    auto processExplorer = _host->Debugger->GetProcessExplorer();
     if (processExplorer == nullptr) return result;
 
     MCP::Native::ProcessExplorer::ModuleInfoPtr module;
@@ -317,7 +315,7 @@ namespace MCP::Debugger
 
   System::IntPtr DebuggerService::GetRemoteModuleHandle(System::UInt32 processId, String^ moduleName)
   {
-    auto processExplorer = _debugger->GetProcessExplorer();
+    auto processExplorer = _host->Debugger->GetProcessExplorer();
     if (processExplorer == nullptr) return System::IntPtr::Zero;
 
     std::wstring nmoduleName = msclr::interop::marshal_as<std::wstring>(moduleName);
@@ -329,7 +327,7 @@ namespace MCP::Debugger
 
   System::IntPtr DebuggerService::GetRemoteProcAddress(System::UInt32 processId, System::IntPtr moduleHandle, String^ procedureName)
   {
-    auto processExplorer = _debugger->GetProcessExplorer();
+    auto processExplorer = _host->Debugger->GetProcessExplorer();
     if (processExplorer == nullptr) return System::IntPtr::Zero;
 
     std::string nprocedureName = msclr::interop::marshal_as<std::string>(procedureName);
@@ -339,31 +337,31 @@ namespace MCP::Debugger
     return System::IntPtr(reinterpret_cast<void*>(result));
   }
 
-  void DebuggerService::OnExitProcess(MCP::Debugger::Types::EventArgs::ExitProcessEventArgs^ args)
+  void DebuggerService::OnExitProcess(System::Object^ sender, MCP::Debugger::Types::EventArgs::ExitProcessEventArgs^ args)
   {
     auto action = gcnew Action<MCP::Debugger::Types::EventArgs::ExitProcessEventArgs^>(this, &DebuggerService::RaiseExitProcessEvent);
     _dispatcher->Dispatch(action, args);
   }
 
-  void DebuggerService::OnSystemBreakpoint(MCP::Debugger::Types::EventArgs::BreakpointEventArgs^ args)
+  void DebuggerService::OnSystemBreakpoint(System::Object^ sender, MCP::Debugger::Types::EventArgs::BreakpointEventArgs^ args)
   {
     auto action = gcnew Action<MCP::Debugger::Types::EventArgs::BreakpointEventArgs^>(this, &DebuggerService::RaiseSystemBreakpointEvent);
     _dispatcher->Dispatch(action, args);
   }
 
-  void DebuggerService::OnEntryPointBreakpoint(MCP::Debugger::Types::EventArgs::BreakpointEventArgs^ args)
+  void DebuggerService::OnEntryPointBreakpoint(System::Object^ sender, MCP::Debugger::Types::EventArgs::BreakpointEventArgs^ args)
   {
     auto action = gcnew Action<MCP::Debugger::Types::EventArgs::BreakpointEventArgs^>(this, &DebuggerService::RaiseEntryPointBreakpointEvent);
     _dispatcher->Dispatch(action, args);
   }
 
-  void DebuggerService::OnBreakpoint(MCP::Debugger::Types::EventArgs::BreakpointEventArgs^ args)
+  void DebuggerService::OnBreakpoint(System::Object^ sender, MCP::Debugger::Types::EventArgs::BreakpointEventArgs^ args)
   {
     auto action = gcnew Action<MCP::Debugger::Types::EventArgs::BreakpointEventArgs^>(this, &DebuggerService::RaiseBreakpointEvent);
     _dispatcher->Dispatch(action, args);
   }
 
-  void DebuggerService::OnSingleStep(MCP::Debugger::Types::EventArgs::BreakpointEventArgs^ args)
+  void DebuggerService::OnSingleStep(System::Object^ sender, MCP::Debugger::Types::EventArgs::BreakpointEventArgs^ args)
   {
     auto action = gcnew Action<MCP::Debugger::Types::EventArgs::BreakpointEventArgs^>(this, &DebuggerService::RaiseSingleStepEvent);
     _dispatcher->Dispatch(action, args);
@@ -430,15 +428,15 @@ namespace MCP::Debugger
   }
 
 #pragma unmanaged
-  bool NativeStepInto(MCP::Native::Debugger::Debugger* debugger)
+  bool NativeStepInto(MCP::Native::Debugger::Interfaces::IDebugger& debugger)
   {
-    MCP::Native::Debugger::Commands::CommandResult nresult = debugger->StepInto();
+    MCP::Native::Debugger::Commands::CommandResult nresult = debugger.StepInto();
     return nresult.IsSuccessful();
   }
 
-  bool NativeStepOver(MCP::Native::Debugger::Debugger* debugger)
+  bool NativeStepOver(MCP::Native::Debugger::Interfaces::IDebugger& debugger)
   {
-    MCP::Native::Debugger::Commands::CommandResult nresult = debugger->StepOver();
+    MCP::Native::Debugger::Commands::CommandResult nresult = debugger.StepOver();
     return nresult.IsSuccessful();
   }
 #pragma managed

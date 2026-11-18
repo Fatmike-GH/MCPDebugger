@@ -9,7 +9,8 @@ namespace MCP::Native::Debugger::Interfaces
 
 namespace MCP::Native::Debugger::Interfaces
 {
-  // Event notification for managed clients; handled by DebuggerService via DebuggerEventHandlerAdapter
+  // Event notification for managed clients; implemented by DebuggerEventHandlerAdapter, which converts the
+  // events and passes them on to the managed side
   class IDebuggerEventHandler
   {
   public:

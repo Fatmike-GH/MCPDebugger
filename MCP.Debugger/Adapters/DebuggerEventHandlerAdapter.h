@@ -5,7 +5,7 @@
 
 namespace MCP::Debugger
 {
-  ref class DebuggerService;
+  interface class IDebuggerEventSink;
 }
 
 namespace MCP::Adapters
@@ -13,7 +13,9 @@ namespace MCP::Adapters
   class DebuggerEventHandlerAdapter : public MCP::Native::Debugger::Interfaces::IDebuggerEventHandler
   {
   public:
-    DebuggerEventHandlerAdapter(MCP::Debugger::DebuggerService^ managedHandler);
+    // Converts every native event into managed event arguments and hands it to the sink. The sink is kept
+    // alive by this adapter.
+    explicit DebuggerEventHandlerAdapter(MCP::Debugger::IDebuggerEventSink^ sink);
 
     void OnExitProcess(std::shared_ptr<MCP::Native::Debugger::Interfaces::ExitProcessEventArgs> args) override;
     void OnSystemBreakpoint(std::shared_ptr<MCP::Native::Debugger::Interfaces::BreakpointEventArgs> args) override;
@@ -25,6 +27,6 @@ namespace MCP::Adapters
     MCP::Debugger::Types::EventArgs::BreakpointEventArgs^ CreateBreakpointEventArgs(DWORD processId, DWORD threadId, const ::CONTEXT& context);
 
   private:
-    gcroot<MCP::Debugger::DebuggerService^> _managedHandler;        
+    gcroot<MCP::Debugger::IDebuggerEventSink^> _sink;
   };
 }
