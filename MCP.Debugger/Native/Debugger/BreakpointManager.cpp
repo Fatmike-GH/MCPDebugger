@@ -36,18 +36,18 @@ namespace MCP::Native::Debugger
 
   bool BreakpointManager::SetBreakpoint(DWORD_PTR address)
   {
-    Interfaces::IBreakpoint* existing = GetBreakpoint(address);
-    if (existing != nullptr)
+    auto iter = _breakpoints.find(address);
+    if (iter == _breakpoints.end())
     {
-      existing->Enable();
+      iter = _breakpoints.emplace(address, _breakpointFactory->Create(address)).first;
     }
-    else
+
+    // The debuggee is stopped at the held address: its breakpoint instruction is written at the release.
+    if (_heldAddress != address)
     {
-      auto breakpoint = _breakpointFactory->Create(address);
-      breakpoint->Enable();
-      _breakpoints[address] = std::move(breakpoint);
+      iter->second->Enable();
     }
-    return true;    
+    return true;
   }
 
   bool BreakpointManager::RemoveBreakpoint(DWORD_PTR address)
@@ -56,21 +56,42 @@ namespace MCP::Native::Debugger
     if (iter == _breakpoints.end()) return false;
 
     iter->second->Disable();
+    _breakpoints.erase(iter);
 
     return true;
-  }
-
-  Interfaces::IBreakpoint* BreakpointManager::GetBreakpoint(DWORD_PTR address)
-  {
-    auto iter = _breakpoints.find(address);
-    if (iter == _breakpoints.end()) return nullptr;
-    return iter->second.get();    
   }
 
   bool BreakpointManager::HasBreakpoint(DWORD_PTR address)
   {
     auto iter = _breakpoints.find(address);
     return (iter != _breakpoints.end());
+  }
+
+  void BreakpointManager::HoldBreakpointAt(DWORD_PTR address)
+  {
+    if (_heldAddress == address) return;
+
+    // Only one address is held: a breakpoint at the address held so far must not stay out of memory.
+    ReleaseHeldBreakpoint();
+
+    _heldAddress = address;
+    auto iter = _breakpoints.find(address);
+    if (iter != _breakpoints.end())
+    {
+      iter->second->Disable();
+    }
+  }
+
+  void BreakpointManager::ReleaseHeldBreakpoint()
+  {
+    if (!_heldAddress.has_value()) return;
+
+    auto iter = _breakpoints.find(*_heldAddress);
+    _heldAddress.reset();
+    if (iter != _breakpoints.end())
+    {
+      iter->second->Enable();
+    }
   }
 
   bool BreakpointManager::SetMemoryBreakpoint(DWORD_PTR address, DWORD_PTR size)

@@ -44,6 +44,9 @@ namespace MCP.Debugger.IntegrationTests.TestHelpers
     /// <summary>Number of single-step events raised so far.</summary>
     private int _singleStepCount;
 
+    /// <summary>Number of breakpoint events raised so far.</summary>
+    private int _breakpointCount;
+
     /// <summary>The debuggee process; null until a start succeeded.</summary>
     private Process _debuggee;
 
@@ -67,6 +70,7 @@ namespace MCP.Debugger.IntegrationTests.TestHelpers
       _service = _serviceProvider.GetRequiredService<IDebuggerService>();
       _service.SystemBreakpoint += OnSystemBreakpoint;
       _service.SingleStep += OnSingleStep;
+      _service.Breakpoint += OnBreakpoint;
     }
 
     /// <summary>The service under test, for the calls a test makes itself.</summary>
@@ -98,6 +102,12 @@ namespace MCP.Debugger.IntegrationTests.TestHelpers
 
     /// <summary>Number of single-step events raised so far.</summary>
     public int SingleStepCount => Volatile.Read(ref _singleStepCount);
+
+    /// <summary>
+    /// Number of breakpoint events raised so far. Stops at the system breakpoint and at the entry point have
+    /// events of their own and are not counted.
+    /// </summary>
+    public int BreakpointCount => Volatile.Read(ref _breakpointCount);
 
     /// <summary>Reads the instruction pointer of a thread context of this build's bitness.</summary>
     /// <param name="context">The thread context of a stop.</param>
@@ -244,6 +254,7 @@ namespace MCP.Debugger.IntegrationTests.TestHelpers
       _isDisposed = true;
       _service.SystemBreakpoint -= OnSystemBreakpoint;
       _service.SingleStep -= OnSingleStep;
+      _service.Breakpoint -= OnBreakpoint;
       if (_start != null && !_start.IsCompleted)
       {
         return;
@@ -350,6 +361,14 @@ namespace MCP.Debugger.IntegrationTests.TestHelpers
     private void OnSingleStep(object sender, BreakpointEventArgs e)
     {
       Interlocked.Increment(ref _singleStepCount);
+    }
+
+    /// <summary>Records a breakpoint event. Runs on the dispatcher thread and must not throw.</summary>
+    /// <param name="sender">The service.</param>
+    /// <param name="e">The stop.</param>
+    private void OnBreakpoint(object sender, BreakpointEventArgs e)
+    {
+      Interlocked.Increment(ref _breakpointCount);
     }
 
     /// <summary>

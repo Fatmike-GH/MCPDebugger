@@ -2,6 +2,7 @@
 #include <Windows.h>
 #include <map>
 #include <memory>
+#include <optional>
 #include ".\Interfaces\IBreakpoint.h"
 #include ".\Interfaces\IBreakpointFactory.h"
 #include ".\Interfaces\IBreakpointManager.h"
@@ -24,8 +25,9 @@ namespace MCP::Native::Debugger
 
     bool SetBreakpoint(DWORD_PTR address) override;
     bool RemoveBreakpoint(DWORD_PTR address) override;
-    Interfaces::IBreakpoint* GetBreakpoint(DWORD_PTR address) override;
-    bool HasBreakpoint(DWORD_PTR address);
+    bool HasBreakpoint(DWORD_PTR address) override;
+    void HoldBreakpointAt(DWORD_PTR address) override;
+    void ReleaseHeldBreakpoint() override;
 
     bool SetMemoryBreakpoint(DWORD_PTR address, DWORD_PTR size);
     bool IsMemoryBreakpointActive() { return _memoryBreakPointActive; }
@@ -36,7 +38,10 @@ namespace MCP::Native::Debugger
 
   private:
     std::unique_ptr<Interfaces::IBreakpointFactory> _breakpointFactory;
+    // One entry per address a breakpoint is set at. Every entry is enabled, except the one at the held address.
     std::map<DWORD_PTR, std::unique_ptr<Interfaces::IBreakpoint>> _breakpoints;
+    // The address the debuggee is stopped at, from the stop until it has left the address; empty otherwise.
+    std::optional<DWORD_PTR> _heldAddress;
     bool _memoryBreakPointActive;
     HANDLE _processHandle;
   };

@@ -6,7 +6,8 @@ using MCP.Debugger.Types.Interop;
 namespace MCP.Debugger.IntegrationTests.Managed
 {
   /// <summary>
-  /// Execution control through <see cref="DebuggerService"/>: continue, step into, step over, breakpoint.
+  /// Execution control through <see cref="DebuggerService"/>: continue, step into, step over, breakpoint, and
+  /// what a breakpoint leaves in the debuggee's memory once it was hit, removed or set at the current stop.
   /// Every test owns its session because each one moves the debuggee. The tests stay within the first
   /// instructions behind the entry point, long before the sample target waits for console input. Addresses
   /// are never fixed values: they are taken from what the session reports and from the disassembly.
@@ -21,6 +22,12 @@ namespace MCP.Debugger.IntegrationTests.Managed
 
     /// <summary>Prefix of the hexadecimal target address in the text of a direct call or jump.</summary>
     private const string HexPrefix = "0x";
+
+    /// <summary>
+    /// The byte the debugger writes over the first byte of an instruction to arm a breakpoint there (the
+    /// <c>int 3</c> instruction). No instruction the tests set a breakpoint on starts with it.
+    /// </summary>
+    private const byte BreakpointOpcode = 0xCC;
 
     [Test]
     public async Task Continue_FromSystemBreakpoint_StopsAtEntryPoint()
@@ -91,6 +98,171 @@ namespace MCP.Debugger.IntegrationTests.Managed
       Assert.That(DebugSession.InstructionPointer(stop), Is.EqualTo(second.VirtualAdress));
     }
 
+    [Test]
+    public async Task StepInto_AtBreakpointRemovedDuringItsStop_LeavesOriginalByte()
+    {
+      // Arrange
+      using var session = new DebugSession();
+      await session.StartAtEntryPointAsync();
+      Instruction second = ReadEntrySequence(session)[1];
+      byte originalByte = ReadByte(session, second.VirtualAdress);
+      await session.ContinueToBreakpointAsync(second.VirtualAdress);
+      session.Service.RemoveBreakpoint(second.VirtualAdress);
+
+      // Act
+      CONTEXT stop = await session.StepIntoAsync();
+
+      // Assert
+      Assert.That(DebugSession.InstructionPointer(stop), Is.EqualTo(AddressAfterStepInto(second)));
+      Assert.That(session.SingleStepCount, Is.EqualTo(1));
+      Assert.That(session.BreakpointCount, Is.EqualTo(1));
+      Assert.That(ReadByte(session, second.VirtualAdress), Is.EqualTo(originalByte));
+    }
+
+    [Test]
+    public async Task StepOver_AtBreakpointRemovedDuringItsStop_LeavesOriginalByte()
+    {
+      // Arrange
+      using var session = new DebugSession();
+      await session.StartAtEntryPointAsync();
+      Instruction second = ReadEntrySequence(session)[1];
+      byte originalByte = ReadByte(session, second.VirtualAdress);
+      await session.ContinueToBreakpointAsync(second.VirtualAdress);
+      session.Service.RemoveBreakpoint(second.VirtualAdress);
+
+      // Act
+      CONTEXT stop = await session.StepOverAsync();
+
+      // Assert
+      Assert.That(DebugSession.InstructionPointer(stop), Is.EqualTo(AddressAfterStepOver(second)));
+      Assert.That(session.SingleStepCount, Is.EqualTo(1));
+      Assert.That(session.BreakpointCount, Is.EqualTo(1));
+      Assert.That(ReadByte(session, second.VirtualAdress), Is.EqualTo(originalByte));
+    }
+
+    [Test]
+    public async Task Continue_AtBreakpointRemovedDuringItsStop_LeavesOriginalByte()
+    {
+      // Arrange
+      using var session = new DebugSession();
+      await session.StartAtEntryPointAsync();
+      Instruction second = ReadEntrySequence(session)[1];
+      byte originalByte = ReadByte(session, second.VirtualAdress);
+      nint next = AddressAfterStepOver(second);
+      await session.ContinueToBreakpointAsync(second.VirtualAdress);
+      session.Service.RemoveBreakpoint(second.VirtualAdress);
+
+      // Act
+      CONTEXT stop = await session.ContinueToBreakpointAsync(next);
+
+      // Assert
+      // The byte is read at the next stop: a read while the debuggee runs would race the running code.
+      Assert.That(DebugSession.InstructionPointer(stop), Is.EqualTo(next));
+      Assert.That(session.BreakpointCount, Is.EqualTo(2));
+      Assert.That(ReadByte(session, second.VirtualAdress), Is.EqualTo(originalByte));
+    }
+
+    [Test]
+    public async Task StepInto_AtBreakpointNotRemoved_WritesBreakpointBack()
+    {
+      // Arrange
+      using var session = new DebugSession();
+      await session.StartAtEntryPointAsync();
+      Instruction second = ReadEntrySequence(session)[1];
+      await session.ContinueToBreakpointAsync(second.VirtualAdress);
+
+      // Act
+      await session.StepIntoAsync();
+
+      // Assert
+      Assert.That(ReadByte(session, second.VirtualAdress), Is.EqualTo(BreakpointOpcode));
+    }
+
+    [Test]
+    public async Task StepInto_WithBreakpointSetAtStepStopAddress_StepsOnceAndArmsIt()
+    {
+      // Arrange
+      using var session = new DebugSession();
+      await session.StartAtEntryPointAsync();
+      Instruction second = ReadEntrySequence(session)[1];
+      byte originalByte = ReadByte(session, second.VirtualAdress);
+      CONTEXT stepStop = await session.StepOverAsync();
+      Assert.That(DebugSession.InstructionPointer(stepStop), Is.EqualTo(second.VirtualAdress), "A step over the first instruction at the entry point does not end at the second one.");
+
+      // Act: set a breakpoint at the address the debuggee is stopped at
+      session.Service.SetBreakpoint(second.VirtualAdress);
+
+      // Assert
+      Assert.That(ReadByte(session, second.VirtualAdress), Is.EqualTo(originalByte));
+
+      // Act: step into
+      CONTEXT stop = await session.StepIntoAsync();
+
+      // Assert
+      Assert.That(DebugSession.InstructionPointer(stop), Is.EqualTo(AddressAfterStepInto(second)));
+      Assert.That(session.SingleStepCount, Is.EqualTo(2));
+      Assert.That(session.BreakpointCount, Is.Zero);
+      Assert.That(ReadByte(session, second.VirtualAdress), Is.EqualTo(BreakpointOpcode));
+    }
+
+    [Test]
+    public async Task StepInto_WithBreakpointRemovedAndSetAgainAtItsStop_StepsOnceAndArmsIt()
+    {
+      // Arrange
+      using var session = new DebugSession();
+      await session.StartAtEntryPointAsync();
+      Instruction second = ReadEntrySequence(session)[1];
+      byte originalByte = ReadByte(session, second.VirtualAdress);
+      await session.ContinueToBreakpointAsync(second.VirtualAdress);
+
+      // Act: remove the breakpoint the debuggee is stopped at and set it again
+      session.Service.RemoveBreakpoint(second.VirtualAdress);
+      session.Service.SetBreakpoint(second.VirtualAdress);
+
+      // Assert
+      Assert.That(ReadByte(session, second.VirtualAdress), Is.EqualTo(originalByte));
+
+      // Act: step into
+      CONTEXT stop = await session.StepIntoAsync();
+
+      // Assert
+      Assert.That(DebugSession.InstructionPointer(stop), Is.EqualTo(AddressAfterStepInto(second)));
+      Assert.That(session.SingleStepCount, Is.EqualTo(1));
+      Assert.That(session.BreakpointCount, Is.EqualTo(1));
+      Assert.That(ReadByte(session, second.VirtualAdress), Is.EqualTo(BreakpointOpcode));
+    }
+
+    [Test]
+    public async Task Continue_WithBreakpointSetAtStopAddress_StopsAtTheNextBreakpoint()
+    {
+      // Arrange
+      using var session = new DebugSession();
+      await session.StartAtEntryPointAsync();
+      Instruction second = ReadEntrySequence(session)[1];
+      nint next = AddressAfterStepOver(second);
+      CONTEXT stepStop = await session.StepOverAsync();
+      Assert.That(DebugSession.InstructionPointer(stepStop), Is.EqualTo(second.VirtualAdress), "A step over the first instruction at the entry point does not end at the second one.");
+      session.Service.SetBreakpoint(second.VirtualAdress);
+
+      // Act
+      CONTEXT stop = await session.ContinueToBreakpointAsync(next);
+
+      // Assert
+      Assert.That(DebugSession.InstructionPointer(stop), Is.EqualTo(next));
+      Assert.That(session.BreakpointCount, Is.EqualTo(1));
+    }
+
+    /// <summary>Reads the byte the debuggee holds at an address right now. The debuggee must be stopped.</summary>
+    /// <param name="session">A session whose debuggee is stopped.</param>
+    /// <param name="address">Absolute virtual address of the byte.</param>
+    /// <returns>The byte in the debuggee's memory, including a breakpoint instruction the debugger wrote there.</returns>
+    private static byte ReadByte(DebugSession session, nint address)
+    {
+      byte[] bytes = session.Service.ReadMemory(address, 1);
+      Assert.That(bytes, Is.Not.Null, $"The debuggee's memory at 0x{address:X} could not be read.");
+      return bytes[0];
+    }
+
     /// <summary>
     /// Disassembles the first instructions at the entry point. The last entry of a disassembly is left out:
     /// the range may end inside an instruction, and what is reported for the cut-off rest is not reliable.
@@ -138,6 +310,18 @@ namespace MCP.Debugger.IntegrationTests.Managed
 
       string target = text.Substring(text.IndexOf(HexPrefix, StringComparison.Ordinal) + HexPrefix.Length);
       return unchecked((nint)ulong.Parse(target, NumberStyles.HexNumber, CultureInfo.InvariantCulture));
+    }
+
+    /// <summary>
+    /// Tells where a step over the given instruction ends: behind a call, otherwise where a step into it ends.
+    /// Execution that runs on from the instruction reaches this address without passing the instruction again.
+    /// </summary>
+    /// <param name="instruction">The instruction that is stepped over.</param>
+    /// <returns>The address of the instruction the step stops at.</returns>
+    private static nint AddressAfterStepOver(Instruction instruction)
+    {
+      bool isCall = instruction.Disassembly.StartsWith("call ", StringComparison.Ordinal);
+      return isCall ? AddressBehind(instruction) : AddressAfterStepInto(instruction);
     }
 
     /// <summary>Computes the address of the instruction that follows the given one in memory.</summary>
