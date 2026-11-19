@@ -52,16 +52,4 @@ namespace MCP::Native::Tests::Debugger::Commands
     ASSERT_TRUE(IsCompleted(future));
     EXPECT_FALSE(future.get()->IsSuccessful());
   }
-
-  TEST(RemoveBreakpointCommandTests, GetTypeReturnsRemoveBreakpoint)
-  {
-    // Arrange
-    RemoveBreakpointCommand command(0x401000);
-
-    // Act
-    Base::CommandType type = command.GetType();
-
-    // Assert
-    EXPECT_EQ(Base::CommandType::CMD_REMOVE_BREAKPOINT, type);
-  }
 }

@@ -1,5 +1,4 @@
 #pragma once
-#include ".\Base\CommandType.h"
 #include ".\Base\ICommand.h"
 
 namespace MCP::Native::Debugger::Commands
@@ -8,8 +7,7 @@ namespace MCP::Native::Debugger::Commands
   {
   public:
     ReadMemoryCommand(DWORD_PTR address, size_t size)
-      : ICommand(Base::CommandType::CMD_READ_MEMORY),
-        _address(address),
+      : _address(address),
         _dataSize(size)
     {
     }

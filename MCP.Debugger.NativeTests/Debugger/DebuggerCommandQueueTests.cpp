@@ -6,25 +6,36 @@
 #include "Native/Debugger/DebuggerCommandQueue.h"
 #include "Native/Debugger/DebugEventHandler/DebugEventStorage.h"
 #include "Native/Debugger/Interfaces/IDebuggerCommandQueue.h"
+#include "Native/Debugger/Interfaces/IResumePlan.h"
+#include "Native/Debugger/Interfaces/StopOutcome.h"
 #include "TestHelpers/CrossThread.h"
+#include "TestHelpers/ResumePlanProbe.h"
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
+#include <future>
 #include <memory>
+#include <optional>
 #include <ostream>
 #include <string>
 #include <vector>
 
 namespace MCP::Native::Tests::Debugger
 {
-  using MCP::Native::Debugger::Commands::Base::CommandType;
   using MCP::Native::Debugger::DebugEventHandler::DebugEventStorage;
   using MCP::Native::Debugger::DebuggerCommandQueue;
   using MCP::Native::Debugger::Interfaces::IDebuggerCommandQueue;
+  using MCP::Native::Debugger::Interfaces::IResumePlan;
+  using MCP::Native::Debugger::Interfaces::StopOutcome;
   using MCP::Native::Disassembler::Instruction;
   using MCP::Native::Tests::Mocks::Debugger::Interfaces::MockBreakpointManager;
   using MCP::Native::Tests::Mocks::Debugger::Interfaces::MockDebuggeeBreakIn;
   using MCP::Native::Tests::Mocks::Disassembler::Interfaces::MockDisassembler;
   using MCP::Native::Tests::Mocks::Disassembler::Interfaces::MockSymbolResolver;
+  using MCP::Native::Tests::TestHelpers::BehaviourOfContinue;
+  using MCP::Native::Tests::TestHelpers::BehaviourOfStepInto;
+  using MCP::Native::Tests::TestHelpers::BehaviourOfStepOver;
+  using MCP::Native::Tests::TestHelpers::ProbeAtACall;
+  using MCP::Native::Tests::TestHelpers::ResumePlanBehaviour;
   using MCP::Native::Tests::TestHelpers::RunOnOtherThread;
   using MCP::Native::Tests::TestHelpers::SignalCounter;
   using MCP::Native::Tests::TestHelpers::WaitForResult;
@@ -37,6 +48,66 @@ namespace MCP::Native::Tests::Debugger
   using ::testing::Return;
   using ::testing::SetArgReferee;
   using ::testing::StrictMock;
+
+  /// <summary>
+  /// How a synchronous processing ended, as a value the tests can compare: the outcome itself only tells
+  /// whether the session ended and otherwise carries a plan, which shows what it is by what it does.
+  /// </summary>
+  struct ProcessingEnd
+  {
+    bool SessionEnded = false;
+
+    /// <summary>What the plan of a resumed debuggee does at a stop on a call; empty without a plan.</summary>
+    std::optional<ResumePlanBehaviour> Plan;
+
+    bool operator==(const ProcessingEnd&) const = default;
+  };
+
+  /// <summary>The end of a processing by a command that resumed the debuggee with a plan of this behaviour.</summary>
+  constexpr ProcessingEnd ResumedWith(const ResumePlanBehaviour& behaviour)
+  {
+    return ProcessingEnd{ false, behaviour };
+  }
+
+  /// <summary>The end of a processing by a command that ended the session.</summary>
+  constexpr ProcessingEnd SessionEnded()
+  {
+    return ProcessingEnd{ true, std::nullopt };
+  }
+
+  /// <summary>Prints the end in words; without it Google Test would dump the bytes of the struct.</summary>
+  void PrintTo(const ProcessingEnd& processingEnd, std::ostream* output)
+  {
+    if (processingEnd.SessionEnded)
+    {
+      *output << "session ended";
+    }
+    else if (processingEnd.Plan)
+    {
+      *output << "resumed with a plan: ";
+      PrintTo(*processingEnd.Plan, output);
+    }
+    else
+    {
+      *output << "resumed without a plan";
+    }
+  }
+
+  /// <summary>Turns the outcome of a processing into its comparable form. The plan is used up by that.</summary>
+  ProcessingEnd Describe(StopOutcome outcome)
+  {
+    if (outcome.IsSessionEnded())
+    {
+      return SessionEnded();
+    }
+
+    std::unique_ptr<IResumePlan> plan = outcome.TakePlan();
+    if (!plan)
+    {
+      return ProcessingEnd{};
+    }
+    return ResumedWith(ProbeAtACall(*plan));
+  }
 
   /// <summary>
   /// Tests the hand-over of commands from client threads to the debug thread, with doubles of everything the
@@ -94,13 +165,22 @@ namespace MCP::Native::Tests::Debugger
     }
 
     /// <summary>
-    /// Ends a synchronous processing that runs on another thread, as a client does that resumes the debuggee,
-    /// and returns the command type the processing ended with.
+    /// Runs the synchronous processing on a thread of its own, as the debug thread does at a stop, and hands
+    /// back how it ended.
     /// </summary>
-    CommandType ResumeAndWaitForTheEndOfProcessing(std::future<CommandType>& processing)
+    [[nodiscard]] std::future<ProcessingEnd> ProcessAStopOnOtherThread()
+    {
+      return RunOnOtherThread([this] { return Describe(_queue.ProcessCommandsSync()); });
+    }
+
+    /// <summary>
+    /// Ends a synchronous processing that runs on another thread, as a client does that resumes the debuggee,
+    /// and returns how the processing ended.
+    /// </summary>
+    ProcessingEnd ResumeAndWaitForTheEndOfProcessing(std::future<ProcessingEnd>& processing)
     {
       auto resuming = RunOnOtherThread([this] { _queue.Continue(); });
-      CommandType ended = WaitForResult(processing, "the synchronous processing to end");
+      ProcessingEnd ended = WaitForResult(processing, "the synchronous processing to end");
       WaitForResult(resuming, "the caller of the resuming command to be released");
       return ended;
     }
@@ -125,7 +205,7 @@ namespace MCP::Native::Tests::Debugger
     EXPECT_CALL(_breakpointManager, RemoveBreakpoint(0x30)).WillOnce(Return(false));
     auto first = RunOnOtherThread([this] { return _queue.SetBreakpoint(0x10).IsSuccessful(); });
     _queued.WaitForCount(1, "the first command to be queued");
-    auto processing = RunOnOtherThread([this] { return _queue.ProcessCommandsSync(); });
+    auto processing = ProcessAStopOnOtherThread();
     _executed.WaitForCount(1, "the debug thread to execute the queued command");
 
     // Act
@@ -139,7 +219,7 @@ namespace MCP::Native::Tests::Debugger
     EXPECT_TRUE(acceptedResult);
     EXPECT_FALSE(refusedResult);
     EXPECT_TRUE(WaitForResult(first, "the first caller to be released"));
-    EXPECT_EQ(CommandType::CMD_CONTINUE, ResumeAndWaitForTheEndOfProcessing(processing));
+    EXPECT_EQ(ResumedWith(BehaviourOfContinue), ResumeAndWaitForTheEndOfProcessing(processing));
   }
 
   TEST_F(DebuggerCommandQueueTests, PostingWhileTheDebuggeeRunsRequestsABreakInForTheProcessOfTheCurrentEventAndExecutesNothing)
@@ -194,11 +274,11 @@ namespace MCP::Native::Tests::Debugger
     _queued.WaitForCount(2, "the command behind it to be queued");
 
     // Act: the processing that the resuming command ends
-    CommandType ended = _queue.ProcessCommandsSync();
+    ProcessingEnd ended = Describe(_queue.ProcessCommandsSync());
     int executedByThatProcessing = _executed.Count();
 
     // Assert
-    EXPECT_EQ(CommandType::CMD_CONTINUE, ended);
+    EXPECT_EQ(ResumedWith(BehaviourOfContinue), ended);
     EXPECT_EQ(0, executedByThatProcessing);
     WaitForResult(resuming, "the caller of the resuming command to be released");
 
@@ -207,6 +287,31 @@ namespace MCP::Native::Tests::Debugger
 
     // Assert
     EXPECT_TRUE(WaitForResult(behind, "the caller of the command behind it to be released"));
+  }
+
+  TEST_F(DebuggerCommandQueueTests, AStopExecutedWhileTheDebuggeeRunsDoesNotEndTheProcessingOfTheNextStop)
+  {
+    // Arrange
+    ExpectBreakInRequests(2);
+    ExpectBreakpointSetAt(0x10);
+    auto stopping = RunOnOtherThread([this] { return _queue.Stop().IsSuccessful(); });
+    _queued.WaitForCount(1, "the stop to be queued");
+    _queue.ProcessCommandsAsync();
+    bool stopped = WaitForResult(stopping, "the caller of the stop to be released");
+    auto first = RunOnOtherThread([this] { return _queue.SetBreakpoint(0x10).IsSuccessful(); });
+    _queued.WaitForCount(2, "the first command of the next stop to be queued");
+    auto processing = ProcessAStopOnOtherThread();
+    _executed.WaitForCount(1, "the debug thread to execute the queued command");
+
+    // Act: the processing still waits for a command that ends the stop
+    ProcessingEnd ended = ResumeAndWaitForTheEndOfProcessing(processing);
+
+    // Assert
+    // A processing the earlier stop had ended would not wait: the resuming command would then find the debug
+    // thread not paused and ask for a third break-in.
+    EXPECT_TRUE(stopped);
+    EXPECT_EQ(ResumedWith(BehaviourOfContinue), ended);
+    EXPECT_TRUE(WaitForResult(first, "the first caller to be released"));
   }
 
   TEST_F(DebuggerCommandQueueTests, ExecuteDisassembleAsksTheDisassemblerWithTheProcessOfTheCurrentEvent)
@@ -275,11 +380,14 @@ namespace MCP::Native::Tests::Debugger
     EXPECT_FALSE(result);
   }
 
-  /// <summary>One command that ends the synchronous processing: how a client posts it and its type.</summary>
+  /// <summary>
+  /// One command that ends the synchronous processing: how the processing ends with it and how a client
+  /// posts it.
+  /// </summary>
   struct ProcessingEndCase
   {
     const char* Name;
-    CommandType Type;
+    ProcessingEnd Expected;
     void (*Post)(IDebuggerCommandQueue& queue);
   };
 
@@ -297,7 +405,7 @@ namespace MCP::Native::Tests::Debugger
   {
   };
 
-  TEST_P(DebuggerCommandQueueProcessingEndTests, SynchronousProcessingExecutesTheCommandQueuedBeforeAndEndsWithTheTypeOfTheEndingCommand)
+  TEST_P(DebuggerCommandQueueProcessingEndTests, SynchronousProcessingExecutesTheCommandQueuedBeforeAndEndsWithTheOutcomeOfTheEndingCommand)
   {
     // Arrange
     ExpectBreakInRequests(2);
@@ -308,17 +416,17 @@ namespace MCP::Native::Tests::Debugger
     _queued.WaitForCount(2, "the ending command to be queued");
 
     // Act
-    CommandType ended = _queue.ProcessCommandsSync();
+    ProcessingEnd ended = Describe(_queue.ProcessCommandsSync());
     int executedByTheProcessing = _executed.Count();
 
     // Assert
-    EXPECT_EQ(GetParam().Type, ended);
+    EXPECT_EQ(GetParam().Expected, ended);
     EXPECT_EQ(1, executedByTheProcessing);
     EXPECT_TRUE(WaitForResult(earlier, "the caller of the earlier command to be released"));
     WaitForResult(ending, "the caller of the ending command to be released");
   }
 
-  TEST_P(DebuggerCommandQueueProcessingEndTests, AnEndingCommandPostedWhileTheDebugThreadIsPausedEndsTheProcessingWithItsType)
+  TEST_P(DebuggerCommandQueueProcessingEndTests, AnEndingCommandPostedWhileTheDebugThreadIsPausedEndsTheProcessingWithItsOutcome)
   {
     // Arrange
     // Only the command that brings the debug thread to its pause is posted while it is not paused.
@@ -326,16 +434,16 @@ namespace MCP::Native::Tests::Debugger
     ExpectBreakpointSetAt(0x10);
     auto first = RunOnOtherThread([this] { return _queue.SetBreakpoint(0x10).IsSuccessful(); });
     _queued.WaitForCount(1, "the first command to be queued");
-    auto processing = RunOnOtherThread([this] { return _queue.ProcessCommandsSync(); });
+    auto processing = ProcessAStopOnOtherThread();
     _executed.WaitForCount(1, "the debug thread to execute the queued command");
 
     // Act
     auto ending = RunOnOtherThread([this] { GetParam().Post(_queue); });
-    CommandType ended = WaitForResult(processing, "the ending command to end the processing");
+    ProcessingEnd ended = WaitForResult(processing, "the ending command to end the processing");
 
     // Assert
     // That waking the paused debug thread needed no break-in is checked by the expectation of exactly one.
-    EXPECT_EQ(GetParam().Type, ended);
+    EXPECT_EQ(GetParam().Expected, ended);
     WaitForResult(ending, "the caller of the ending command to be released");
     EXPECT_TRUE(WaitForResult(first, "the first caller to be released"));
   }
@@ -344,20 +452,20 @@ namespace MCP::Native::Tests::Debugger
     EndingCommands,
     DebuggerCommandQueueProcessingEndTests,
     ::testing::Values(
-      ProcessingEndCase{ "Continue", CommandType::CMD_CONTINUE, [](IDebuggerCommandQueue& queue) { queue.Continue(); } },
-      ProcessingEndCase{ "StepInto", CommandType::CMD_STEP_INTO, [](IDebuggerCommandQueue& queue) { queue.StepInto(); } },
-      ProcessingEndCase{ "StepOver", CommandType::CMD_STEP_OVER, [](IDebuggerCommandQueue& queue) { queue.StepOver(); } },
-      ProcessingEndCase{ "Stop", CommandType::CMD_STOP, [](IDebuggerCommandQueue& queue) { queue.Stop(); } }),
+      ProcessingEndCase{ "Continue", ResumedWith(BehaviourOfContinue), [](IDebuggerCommandQueue& queue) { queue.Continue(); } },
+      ProcessingEndCase{ "StepInto", ResumedWith(BehaviourOfStepInto), [](IDebuggerCommandQueue& queue) { queue.StepInto(); } },
+      ProcessingEndCase{ "StepOver", ResumedWith(BehaviourOfStepOver), [](IDebuggerCommandQueue& queue) { queue.StepOver(); } },
+      ProcessingEndCase{ "Stop", SessionEnded(), [](IDebuggerCommandQueue& queue) { queue.Stop(); } }),
     [](const ::testing::TestParamInfo<ProcessingEndCase>& info) { return std::string(info.param.Name); });
 
   /// <summary>
-  /// One command that resumes the debuggee: its type and how a client posts it and learns whether the debugger
-  /// accepted it.
+  /// One command that resumes the debuggee: what its plan does, and how a client posts it and learns whether
+  /// the debugger accepted it.
   /// </summary>
   struct ResumingCommandCase
   {
     const char* Name;
-    CommandType Type;
+    ResumePlanBehaviour Plan;
     bool (*Post)(IDebuggerCommandQueue& queue);
   };
 
@@ -407,10 +515,10 @@ namespace MCP::Native::Tests::Debugger
     _queued.WaitForCount(1, "the resuming command to be queued");
 
     // Act
-    CommandType ended = _queue.ProcessCommandsSync();
+    ProcessingEnd ended = Describe(_queue.ProcessCommandsSync());
 
     // Assert
-    EXPECT_EQ(GetParam().Type, ended);
+    EXPECT_EQ(ResumedWith(GetParam().Plan), ended);
     EXPECT_TRUE(WaitForResult(resuming, "the caller of the resuming command to be released"));
   }
 
@@ -422,15 +530,15 @@ namespace MCP::Native::Tests::Debugger
     ExpectBreakpointSetAt(0x10);
     auto first = RunOnOtherThread([this] { return _queue.SetBreakpoint(0x10).IsSuccessful(); });
     _queued.WaitForCount(1, "the first command to be queued");
-    auto processing = RunOnOtherThread([this] { return _queue.ProcessCommandsSync(); });
+    auto processing = ProcessAStopOnOtherThread();
     _executed.WaitForCount(1, "the debug thread to execute the queued command");
 
     // Act
     auto resuming = RunOnOtherThread([this] { return GetParam().Post(_queue); });
-    CommandType ended = WaitForResult(processing, "the resuming command to end the processing");
+    ProcessingEnd ended = WaitForResult(processing, "the resuming command to end the processing");
 
     // Assert
-    EXPECT_EQ(GetParam().Type, ended);
+    EXPECT_EQ(ResumedWith(GetParam().Plan), ended);
     EXPECT_TRUE(WaitForResult(resuming, "the caller of the resuming command to be released"));
     EXPECT_TRUE(WaitForResult(first, "the first caller to be released"));
   }
@@ -445,10 +553,10 @@ namespace MCP::Native::Tests::Debugger
     _queued.WaitForCount(2, "the second resuming command to be queued");
 
     // Act: the processing of the stop, which the first command ends
-    CommandType ended = _queue.ProcessCommandsSync();
+    ProcessingEnd ended = Describe(_queue.ProcessCommandsSync());
 
     // Assert
-    EXPECT_EQ(GetParam().Type, ended);
+    EXPECT_EQ(ResumedWith(GetParam().Plan), ended);
     EXPECT_TRUE(WaitForResult(first, "the caller of the first resuming command to be released"));
 
     // Act: the processing after the debuggee was resumed
@@ -462,8 +570,8 @@ namespace MCP::Native::Tests::Debugger
     ResumingCommands,
     DebuggerCommandQueueResumingCommandTests,
     ::testing::Values(
-      ResumingCommandCase{ "Continue", CommandType::CMD_CONTINUE, [](IDebuggerCommandQueue& queue) { return queue.Continue().IsSuccessful(); } },
-      ResumingCommandCase{ "StepInto", CommandType::CMD_STEP_INTO, [](IDebuggerCommandQueue& queue) { return queue.StepInto().IsSuccessful(); } },
-      ResumingCommandCase{ "StepOver", CommandType::CMD_STEP_OVER, [](IDebuggerCommandQueue& queue) { return queue.StepOver().IsSuccessful(); } }),
+      ResumingCommandCase{ "Continue", BehaviourOfContinue, [](IDebuggerCommandQueue& queue) { return queue.Continue().IsSuccessful(); } },
+      ResumingCommandCase{ "StepInto", BehaviourOfStepInto, [](IDebuggerCommandQueue& queue) { return queue.StepInto().IsSuccessful(); } },
+      ResumingCommandCase{ "StepOver", BehaviourOfStepOver, [](IDebuggerCommandQueue& queue) { return queue.StepOver().IsSuccessful(); } }),
     [](const ::testing::TestParamInfo<ResumingCommandCase>& info) { return std::string(info.param.Name); });
 }

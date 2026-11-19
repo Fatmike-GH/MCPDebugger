@@ -1,5 +1,4 @@
 #pragma once
-#include "CommandType.h"
 #include <Windows.h>
 #include <future>
 
@@ -14,9 +13,8 @@ namespace MCP::Native::Debugger::Commands::Base
   class ICommand
   {
   public:
-    ICommand(CommandType type)
-      : _commandType(type),
-        _resultPromise(new std::promise<std::unique_ptr<ICommandResult>>())
+    ICommand()
+      : _resultPromise(new std::promise<std::unique_ptr<ICommandResult>>())
     {
     }
 
@@ -24,14 +22,12 @@ namespace MCP::Native::Debugger::Commands::Base
 
     virtual void Execute(ICommandContext* context) = 0;
 
-    const CommandType GetType();
     std::future<std::unique_ptr<ICommandResult>> GetFuture();
 
   protected:
     void SetResult(std::unique_ptr<ICommandResult> result);
 
   private:
-    CommandType _commandType;
     std::unique_ptr<std::promise<std::unique_ptr<ICommandResult>>> _resultPromise;
   };
 

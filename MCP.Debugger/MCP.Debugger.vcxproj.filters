@@ -90,6 +90,21 @@
     <ClCompile Include="Native\Composition\BreakpointFactory.cpp">
       <Filter>Native\Composition</Filter>
     </ClCompile>
+    <ClCompile Include="Native\Composition\StopSiteFactory.cpp">
+      <Filter>Native\Composition</Filter>
+    </ClCompile>
+    <ClCompile Include="Native\Debugger\StopSite.cpp">
+      <Filter>Native\Debugger</Filter>
+    </ClCompile>
+    <ClCompile Include="Native\Debugger\Commands\ContinuePlan.cpp">
+      <Filter>Native\Debugger\Commands</Filter>
+    </ClCompile>
+    <ClCompile Include="Native\Debugger\Commands\StepIntoPlan.cpp">
+      <Filter>Native\Debugger\Commands</Filter>
+    </ClCompile>
+    <ClCompile Include="Native\Debugger\Commands\StepOverPlan.cpp">
+      <Filter>Native\Debugger\Commands</Filter>
+    </ClCompile>
     <ClCompile Include="Native\Composition\DebugThreadServices.cpp">
       <Filter>Native\Composition</Filter>
     </ClCompile>
@@ -259,6 +274,33 @@
     </ClInclude>
     <ClInclude Include="Native\Composition\BreakpointFactory.h">
       <Filter>Native\Composition</Filter>
+    </ClInclude>
+    <ClInclude Include="Native\Composition\StopSiteFactory.h">
+      <Filter>Native\Composition</Filter>
+    </ClInclude>
+    <ClInclude Include="Native\Debugger\StopSite.h">
+      <Filter>Native\Debugger</Filter>
+    </ClInclude>
+    <ClInclude Include="Native\Debugger\Commands\ContinuePlan.h">
+      <Filter>Native\Debugger\Commands</Filter>
+    </ClInclude>
+    <ClInclude Include="Native\Debugger\Commands\StepIntoPlan.h">
+      <Filter>Native\Debugger\Commands</Filter>
+    </ClInclude>
+    <ClInclude Include="Native\Debugger\Commands\StepOverPlan.h">
+      <Filter>Native\Debugger\Commands</Filter>
+    </ClInclude>
+    <ClInclude Include="Native\Debugger\Interfaces\IResumePlan.h">
+      <Filter>Native\Debugger\Interfaces</Filter>
+    </ClInclude>
+    <ClInclude Include="Native\Debugger\Interfaces\IStopSite.h">
+      <Filter>Native\Debugger\Interfaces</Filter>
+    </ClInclude>
+    <ClInclude Include="Native\Debugger\Interfaces\IStopSiteFactory.h">
+      <Filter>Native\Debugger\Interfaces</Filter>
+    </ClInclude>
+    <ClInclude Include="Native\Debugger\Interfaces\StopOutcome.h">
+      <Filter>Native\Debugger\Interfaces</Filter>
     </ClInclude>
     <ClInclude Include="Native\Composition\DebugThreadServices.h">
       <Filter>Native\Composition</Filter>
@@ -471,9 +513,6 @@
       <Filter>Native\Debugger\Commands\Base</Filter>
     </ClInclude>
     <ClInclude Include="Native\Debugger\Commands\Base\ICommandResult.h">
-      <Filter>Native\Debugger\Commands\Base</Filter>
-    </ClInclude>
-    <ClInclude Include="Native\Debugger\Commands\Base\CommandType.h">
       <Filter>Native\Debugger\Commands\Base</Filter>
     </ClInclude>
     <ClInclude Include="Native\Debugger\Commands\CommandResult.h">

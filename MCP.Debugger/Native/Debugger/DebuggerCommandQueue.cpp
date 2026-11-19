@@ -7,7 +7,7 @@
 #include <Windows.h>
 #include ".\Interfaces\IBreakpointManager.h"
 #include ".\Interfaces\IDebuggeeBreakIn.h"
-#include ".\Commands\Base\CommandType.h"
+#include ".\Interfaces\IResumePlan.h"
 #include ".\Commands\ContinueCommand.h"
 #include ".\Commands\DisassembleCommand.h"
 #include ".\Commands\ReadMemoryCommand.h"
@@ -52,19 +52,6 @@ namespace MCP::Native::Debugger
   {
     std::lock_guard<std::mutex> lock(_mutex);
     _paused = value;
-  }
-
-  bool DebuggerCommandQueue::IsGoCommand(Commands::Base::CommandType type)
-  {
-    switch (type)
-    {
-    case Commands::Base::CommandType::CMD_CONTINUE:
-    case Commands::Base::CommandType::CMD_STEP_INTO:
-    case Commands::Base::CommandType::CMD_STEP_OVER:
-      return true;
-    default:
-      return false;
-    }
   }
 
   // Called by main thread
@@ -239,23 +226,24 @@ namespace MCP::Native::Debugger
     return Commands::TryResolveStringResult(false, std::string());
   }
 
-  Commands::Base::CommandType DebuggerCommandQueue::ProcessCommandsSync()
+  Interfaces::StopOutcome DebuggerCommandQueue::ProcessCommandsSync()
   {
     SetPaused(true);
-    Commands::Base::CommandType lastCommand = Commands::Base::CommandType::CMD_CONTINUE;
+    std::optional<Interfaces::StopOutcome> outcome;
 
     while (true)
     {
       _eventWaiter.Reset();
 
-      if (ExecutePendingCommands(lastCommand))
+      outcome = ExecutePendingCommandsOfTheStop();
+      if (outcome)
         break;
 
       _eventWaiter.Wait();
     }
 
     SetPaused(false);
-    return lastCommand;
+    return std::move(*outcome);
   }
 
   void DebuggerCommandQueue::ProcessCommandsAsync()
@@ -265,7 +253,7 @@ namespace MCP::Native::Debugger
     _eventWaiter.Reset();
   }
 
-  bool DebuggerCommandQueue::ExecutePendingCommands(Commands::Base::CommandType& lastCommand)
+  std::optional<Interfaces::StopOutcome> DebuggerCommandQueue::ExecutePendingCommandsOfTheStop()
   {
     std::lock_guard<std::mutex> lock(_mutex);
 
@@ -274,13 +262,17 @@ namespace MCP::Native::Debugger
       Commands::Base::CommandPtr cmd = std::move(_queue.front());
       _queue.pop();
 
-      lastCommand = cmd->GetType();
-      if (HandleCommand(std::move(cmd)))
+      ProcessCommand(std::move(cmd));
+
+      // The command may have resumed the debuggee or ended the session, which also empties the queue: the
+      // outcome is looked at before the queue is touched again. What is queued behind a resuming command
+      // stays queued for the next processing
+      if (_stopOutcome)
       {
-        return true; // Stop the processing loop
+        return std::exchange(_stopOutcome, std::nullopt);
       }
     }
-    return false;
+    return std::nullopt;
   }
 
   void DebuggerCommandQueue::ExecuteAllPendingCommands()
@@ -292,24 +284,8 @@ namespace MCP::Native::Debugger
       Commands::Base::CommandPtr cmd = std::move(_queue.front());
       _queue.pop();
 
-      HandleCommand(std::move(cmd));
+      ProcessCommand(std::move(cmd));
     }
-  }
-
-  bool DebuggerCommandQueue::HandleCommand(Commands::Base::CommandPtr cmd)
-  {
-    if (!cmd) return false;
-
-    Commands::Base::CommandType type = cmd->GetType();
-    ProcessCommand(std::move(cmd));
-
-    if (IsGoCommand(type) || type == Commands::Base::CommandType::CMD_STOP)
-    {
-      return true; // Signal stop
-    }
-
-    // Standard Commands (continue processing queue)
-    return false;
   }
 
   void DebuggerCommandQueue::ProcessCommand(Commands::Base::CommandPtr cmd)
@@ -318,19 +294,32 @@ namespace MCP::Native::Debugger
     cmd->Execute(this);
   }
 
-  void DebuggerCommandQueue::ExecuteClearCommandQueue()
+  bool DebuggerCommandQueue::Resume(std::unique_ptr<Interfaces::IResumePlan> plan)
   {
-    // Executes the logic previously in the CMD_STOP switch case.
-    // Assumes the lock is held by ExecutePendingCommands/ExecuteAllPendingCommands.
-    std::queue<Commands::Base::CommandPtr>().swap(_queue);
+    // Called by a command while it executes, so this thread already holds the queue mutex: the paused flag
+    // and the outcome are used directly, locking again would deadlock. The flag is set for the whole
+    // processing of a stop and cleared before commands are executed between two debug events - there the
+    // debuggee runs and cannot be resumed. A stop is ended by one command only
+    if (!plan || !_paused || _stopOutcome)
+    {
+      return false;
+    }
+
+    _stopOutcome = Interfaces::StopOutcome::Resumed(std::move(plan));
+    return true;
   }
 
-  bool DebuggerCommandQueue::IsDebuggeeStopped()
+  void DebuggerCommandQueue::EndSession()
   {
-    // Asked by a command while it executes, so this thread already holds the queue mutex: the flag is read
-    // directly, locking again would deadlock. It is set for the whole processing of a stop and cleared before
-    // commands are executed between two debug events
-    return _paused;
+    // Called by a command while it executes: the queue mutex is held by this thread, see Resume
+    std::queue<Commands::Base::CommandPtr>().swap(_queue);
+
+    // Only the processing of a stop waits for an outcome. Between two debug events nothing is processed
+    // that could end, and an outcome left there would end the next stop before a client answered it
+    if (_paused && !_stopOutcome)
+    {
+      _stopOutcome = Interfaces::StopOutcome::SessionEnded();
+    }
   }
 
   bool DebuggerCommandQueue::ExecuteReadMemory(DWORD_PTR address, size_t size, std::shared_ptr<std::vector<BYTE>>& outDataBuffer)

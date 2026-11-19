@@ -21,7 +21,7 @@ namespace MCP::Native::Tests::Mocks::Debugger::Interfaces
     MOCK_METHOD(MCP::Native::Debugger::Commands::CommandResult, WriteMemory, (DWORD_PTR va, const BYTE* data, size_t size), (override));
     MOCK_METHOD(MCP::Native::Debugger::Commands::DisassembleResult, Disassemble, (DWORD_PTR va, size_t length), (override));
     MOCK_METHOD(MCP::Native::Debugger::Commands::TryResolveStringResult, TryResolveString, (DWORD_PTR va), (override));
-    MOCK_METHOD(MCP::Native::Debugger::Commands::Base::CommandType, ProcessCommandsSync, (), (override));
+    MOCK_METHOD(MCP::Native::Debugger::Interfaces::StopOutcome, ProcessCommandsSync, (), (override));
     MOCK_METHOD(void, ProcessCommandsAsync, (), (override));
   };
 }

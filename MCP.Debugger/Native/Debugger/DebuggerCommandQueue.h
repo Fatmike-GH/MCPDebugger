@@ -2,9 +2,9 @@
 #include <queue>
 #include <mutex>
 #include <memory>
+#include <optional>
 #include ".\Commands\Base\ICommand.h"
 #include ".\Commands\Base\ICommandContext.h"
-#include ".\Commands\Base\CommandType.h"
 #include ".\Commands\CommandResult.h"
 #include ".\Commands\ReadMemoryResult.h"
 #include ".\Commands\DisassembleResult.h"
@@ -58,13 +58,13 @@ namespace MCP::Native::Debugger
     Commands::TryResolveStringResult TryResolveString(DWORD_PTR va) override;
 
     // Debugger thread control flow
-    Commands::Base::CommandType ProcessCommandsSync() override;
+    Interfaces::StopOutcome ProcessCommandsSync() override;
     void ProcessCommandsAsync() override;
 
     // ICommandContext Implementation
     Interfaces::IBreakpointManager* GetBreakpointManager() override { return &_breakpointManager; }
-    bool IsDebuggeeStopped() override;
-    void ExecuteClearCommandQueue() override;
+    [[nodiscard]] bool Resume(std::unique_ptr<Interfaces::IResumePlan> plan) override;
+    void EndSession() override;
     bool ExecuteReadMemory(DWORD_PTR va, size_t size, std::shared_ptr<std::vector<BYTE>>& outDataBuffer) override;
     bool ExecuteWriteMemory(DWORD_PTR va, const BYTE* data, size_t size) override;
     bool ExecuteDisassemble(DWORD_PTR address, size_t length, std::shared_ptr<std::vector<MCP::Native::Disassembler::Instruction>>& outInstructions) override;
@@ -74,13 +74,16 @@ namespace MCP::Native::Debugger
     void PostCommand(Commands::Base::CommandPtr command);
     bool EnqueueCommand(Commands::Base::CommandPtr cmd);
     void NotifyDebuggerThread(bool isPaused);
-    bool ExecutePendingCommands(Commands::Base::CommandType& lastCommand);
+
+    /// <summary>
+    /// Executes the queued commands in order until one of them ends the processing of the stop, and returns
+    /// the outcome that command left. Empty when the queue ran empty first: the stop goes on.
+    /// </summary>
+    std::optional<Interfaces::StopOutcome> ExecutePendingCommandsOfTheStop();
     void ExecuteAllPendingCommands();
 
-    bool HandleCommand(Commands::Base::CommandPtr cmd);
     void ProcessCommand(Commands::Base::CommandPtr cmd);
 
-    bool IsGoCommand(Commands::Base::CommandType type);
     void SetPaused(bool value);
 
     HANDLE GetCurrentDebuggeeProcess();
@@ -96,7 +99,11 @@ namespace MCP::Native::Debugger
     std::queue<Commands::Base::CommandPtr> _queue;
     std::mutex _mutex;
     MCP::Native::Threading::EventWaiter _eventWaiter;
-    bool _paused = false;
+    bool _paused = false; // True while the debug thread processes a stop
+
+    // How the processing of the current stop ends, left by the command that ends it while it executes and
+    // taken by the processing right behind that command. Empty at any other time. Guarded by _mutex
+    std::optional<Interfaces::StopOutcome> _stopOutcome;
 
     DWORD _currentProcessId;
     DWORD _currentThreadId;

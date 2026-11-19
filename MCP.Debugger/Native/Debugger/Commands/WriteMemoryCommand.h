@@ -1,5 +1,4 @@
 #pragma once
-#include ".\Base\CommandType.h"
 #include ".\Base\ICommand.h"
 
 namespace MCP::Native::Debugger::Commands
@@ -8,10 +7,9 @@ namespace MCP::Native::Debugger::Commands
   {
   public:
     WriteMemoryCommand(DWORD_PTR address, const BYTE* data, size_t size)
-      : ICommand(Base::CommandType::CMD_WRITE_MEMORY),
-      _address(address),
-      _dataSize(size),
-      _dataBuffer(data)
+      : _address(address),
+        _dataSize(size),
+        _dataBuffer(data)
     {
     }
 

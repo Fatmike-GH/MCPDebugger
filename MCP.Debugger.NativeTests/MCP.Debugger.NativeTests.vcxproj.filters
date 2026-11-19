@@ -141,6 +141,18 @@
     <ClCompile Include="..\MCP.Debugger\Native\Debugger\DebugEventHandler\ExceptionEventHandler.cpp">
       <Filter>Production sources under test</Filter>
     </ClCompile>
+    <ClCompile Include="..\MCP.Debugger\Native\Debugger\Commands\ContinuePlan.cpp">
+      <Filter>Production sources under test</Filter>
+    </ClCompile>
+    <ClCompile Include="..\MCP.Debugger\Native\Debugger\Commands\StepIntoPlan.cpp">
+      <Filter>Production sources under test</Filter>
+    </ClCompile>
+    <ClCompile Include="..\MCP.Debugger\Native\Debugger\Commands\StepOverPlan.cpp">
+      <Filter>Production sources under test</Filter>
+    </ClCompile>
+    <ClCompile Include="..\MCP.Debugger\Native\Debugger\StopSite.cpp">
+      <Filter>Production sources under test</Filter>
+    </ClCompile>
     <ClCompile Include="Main.cpp" />
     <ClCompile Include="Debugger\Commands\ContinueCommandTests.cpp">
       <Filter>Debugger\Commands</Filter>
@@ -189,6 +201,18 @@
     </ClCompile>
     <ClCompile Include="Debugger\DebugEventHandler\DebugEventHandlerTests.cpp">
       <Filter>Debugger\DebugEventHandler</Filter>
+    </ClCompile>
+    <ClCompile Include="Debugger\StopSiteTests.cpp">
+      <Filter>Debugger</Filter>
+    </ClCompile>
+    <ClCompile Include="Debugger\Commands\ContinuePlanTests.cpp">
+      <Filter>Debugger\Commands</Filter>
+    </ClCompile>
+    <ClCompile Include="Debugger\Commands\StepIntoPlanTests.cpp">
+      <Filter>Debugger\Commands</Filter>
+    </ClCompile>
+    <ClCompile Include="Debugger\Commands\StepOverPlanTests.cpp">
+      <Filter>Debugger\Commands</Filter>
     </ClCompile>
     <ClCompile Include="Debugger\DebugEventHandler\ExceptionEventHandlerTests.cpp">
       <Filter>Debugger\DebugEventHandler</Filter>
@@ -260,6 +284,18 @@
     </ClInclude>
     <ClInclude Include="Mocks\Platform\Interfaces\MockProcessMemory.h">
       <Filter>Mocks\Platform\Interfaces</Filter>
+    </ClInclude>
+    <ClInclude Include="Mocks\Debugger\Interfaces\MockResumePlan.h">
+      <Filter>Mocks\Debugger\Interfaces</Filter>
+    </ClInclude>
+    <ClInclude Include="Mocks\Debugger\Interfaces\MockStopSite.h">
+      <Filter>Mocks\Debugger\Interfaces</Filter>
+    </ClInclude>
+    <ClInclude Include="Mocks\Debugger\Interfaces\MockStopSiteFactory.h">
+      <Filter>Mocks\Debugger\Interfaces</Filter>
+    </ClInclude>
+    <ClInclude Include="TestHelpers\ResumePlanProbe.h">
+      <Filter>TestHelpers</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

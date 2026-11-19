@@ -7,7 +7,7 @@ namespace MCP::Native::Debugger::Commands
 {
   void StopCommand::Execute(Base::ICommandContext* context)
   {
-    context->ExecuteClearCommandQueue();
+    context->EndSession();
     SetResult(std::make_unique<CommandResult>(true));
   }
 }

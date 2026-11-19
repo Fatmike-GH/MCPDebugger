@@ -1,7 +1,7 @@
 #pragma once
 #include <Windows.h>
 #include <memory>
-#include "..\Commands\Base\CommandType.h"
+#include "StopOutcome.h"
 #include "..\Commands\CommandResult.h"
 #include "..\Commands\DisassembleResult.h"
 #include "..\Commands\ReadMemoryResult.h"
@@ -40,9 +40,10 @@ namespace MCP::Native::Debugger::Interfaces
 
     /// <summary>
     /// Executes operations while the debuggee is stopped and waits for further ones, until one of them resumes
-    /// the debuggee (continue, step into, step over) or stops the session. Returns the type of that operation.
+    /// the debuggee or ends the session. Returns that outcome: the plan the resuming operation left, or the
+    /// end of the session. Operations queued behind a resuming one stay queued for the next processing.
     /// </summary>
-    virtual Commands::Base::CommandType ProcessCommandsSync() = 0;
+    virtual StopOutcome ProcessCommandsSync() = 0;
 
     /// <summary>Executes the operations queued so far and returns without waiting.</summary>
     virtual void ProcessCommandsAsync() = 0;

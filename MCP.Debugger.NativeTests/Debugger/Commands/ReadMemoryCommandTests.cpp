@@ -60,16 +60,4 @@ namespace MCP::Native::Tests::Debugger::Commands
     EXPECT_FALSE(readResult->IsSuccessful());
     EXPECT_EQ(nullptr, readResult->GetData());
   }
-
-  TEST(ReadMemoryCommandTests, GetTypeReturnsReadMemory)
-  {
-    // Arrange
-    ReadMemoryCommand command(0x401000, 16);
-
-    // Act
-    Base::CommandType type = command.GetType();
-
-    // Assert
-    EXPECT_EQ(Base::CommandType::CMD_READ_MEMORY, type);
-  }
 }

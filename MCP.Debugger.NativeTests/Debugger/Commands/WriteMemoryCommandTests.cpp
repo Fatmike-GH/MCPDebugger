@@ -56,17 +56,4 @@ namespace MCP::Native::Tests::Debugger::Commands
     ASSERT_TRUE(IsCompleted(future));
     EXPECT_FALSE(future.get()->IsSuccessful());
   }
-
-  TEST(WriteMemoryCommandTests, GetTypeReturnsWriteMemory)
-  {
-    // Arrange
-    const BYTE data[] = { 0x01 };
-    WriteMemoryCommand command(0x405000, data, sizeof(data));
-
-    // Act
-    Base::CommandType type = command.GetType();
-
-    // Assert
-    EXPECT_EQ(Base::CommandType::CMD_WRITE_MEMORY, type);
-  }
 }

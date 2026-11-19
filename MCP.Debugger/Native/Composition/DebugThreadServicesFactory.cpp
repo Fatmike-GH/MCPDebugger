@@ -3,6 +3,7 @@
 #include <utility>
 #include "BreakpointFactory.h"
 #include "DebugThreadServices.h"
+#include "StopSiteFactory.h"
 #include "..\Debugger\BreakpointManager.h"
 #include "..\Debugger\DebuggeeBreakIn.h"
 #include "..\Debugger\DebuggerCommandQueue.h"
@@ -68,7 +69,8 @@ namespace MCP::Native::Composition
 
     std::map<DWORD, std::unique_ptr<Events::Interfaces::IDebugEventHandler>> eventHandlers;
     eventHandlers[EXCEPTION_DEBUG_EVENT] = std::make_unique<Events::ExceptionEventHandler>(
-      _debugEventStorage, breakpointManager, _eventHandler, startupWaiter, commandQueue, disassembler);
+      _debugEventStorage, breakpointManager, _eventHandler, startupWaiter, commandQueue,
+      std::make_unique<StopSiteFactory>(breakpointManager, disassembler));
     eventHandlers[EXIT_PROCESS_DEBUG_EVENT] = std::make_unique<Events::ExitProcessEventHandler>(_debugEventStorage, _eventHandler);
     eventHandlers[CREATE_PROCESS_DEBUG_EVENT] = std::make_unique<Events::CreateProcessEventHandler>(_debugEventStorage);
     eventHandlers[CREATE_THREAD_DEBUG_EVENT] = std::make_unique<Events::CreateThreadEventHandler>(_debugEventStorage);

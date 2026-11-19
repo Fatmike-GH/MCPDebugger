@@ -1,17 +1,15 @@
 #pragma once
-#include ".\Base\CommandType.h"
 #include ".\Base\ICommand.h"
 
 namespace MCP::Native::Debugger::Commands
 {
+  /// <summary>
+  /// Ends the debug session: tells its context that the session ended, which discards the commands still
+  /// queued. It always succeeds.
+  /// </summary>
   class StopCommand : public Base::ICommand
   {
   public:
-    StopCommand()
-      : ICommand(Base::CommandType::CMD_STOP)
-    {
-    }
-
     void Execute(Base::ICommandContext* context) override;
   };
 }

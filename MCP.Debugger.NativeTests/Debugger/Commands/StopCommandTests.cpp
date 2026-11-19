@@ -12,11 +12,11 @@ namespace MCP::Native::Tests::Debugger::Commands
   using MCP::Native::Tests::TestHelpers::IsCompleted;
   using ::testing::StrictMock;
 
-  TEST(StopCommandTests, ExecuteClearsTheQueueAndCompletesWithSuccess)
+  TEST(StopCommandTests, ExecuteEndsTheSessionAndCompletesWithSuccess)
   {
     // Arrange
     StrictMock<MockCommandContext> context;
-    EXPECT_CALL(context, ExecuteClearCommandQueue()).Times(1);
+    EXPECT_CALL(context, EndSession()).Times(1);
     StopCommand command;
     auto future = command.GetFuture();
 
@@ -26,17 +26,5 @@ namespace MCP::Native::Tests::Debugger::Commands
     // Assert
     ASSERT_TRUE(IsCompleted(future));
     EXPECT_TRUE(future.get()->IsSuccessful());
-  }
-
-  TEST(StopCommandTests, GetTypeReturnsStop)
-  {
-    // Arrange
-    StopCommand command;
-
-    // Act
-    Base::CommandType type = command.GetType();
-
-    // Assert
-    EXPECT_EQ(Base::CommandType::CMD_STOP, type);
   }
 }

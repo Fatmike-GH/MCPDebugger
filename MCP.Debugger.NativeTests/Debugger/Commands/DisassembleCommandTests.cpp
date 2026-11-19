@@ -62,16 +62,4 @@ namespace MCP::Native::Tests::Debugger::Commands
     EXPECT_FALSE(disassembleResult->IsSuccessful());
     EXPECT_EQ(nullptr, disassembleResult->GetInstructions());
   }
-
-  TEST(DisassembleCommandTests, GetTypeReturnsDisassemble)
-  {
-    // Arrange
-    DisassembleCommand command(0x401000, 32);
-
-    // Act
-    Base::CommandType type = command.GetType();
-
-    // Assert
-    EXPECT_EQ(Base::CommandType::CMD_DISASSEMBLE, type);
-  }
 }

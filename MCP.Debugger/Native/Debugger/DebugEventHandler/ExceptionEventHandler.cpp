@@ -6,7 +6,10 @@
 #include "..\Interfaces\BreakpointEventArgs.h"
 #include "..\Interfaces\IBreakpointManager.h"
 #include "..\Interfaces\IDebuggerCommandQueue.h"
-#include "..\..\Disassembler\Interfaces\IDisassembler.h"
+#include "..\Interfaces\IResumePlan.h"
+#include "..\Interfaces\IStopSite.h"
+#include "..\Interfaces\StopOutcome.h"
+#include <utility>
 
 namespace MCP::Native::Debugger::DebugEventHandler
 {
@@ -15,18 +18,17 @@ namespace MCP::Native::Debugger::DebugEventHandler
                                                MCP::Native::Debugger::Interfaces::IDebuggerEventHandler& eventHandler,
                                                MCP::Native::Threading::EventWaiter& startupWaiter,
                                                MCP::Native::Debugger::Interfaces::IDebuggerCommandQueue& commandQueue,
-                                               MCP::Native::Disassembler::Interfaces::IDisassembler& disassembler)
+                                               std::unique_ptr<MCP::Native::Debugger::Interfaces::IStopSiteFactory> stopSiteFactory)
+    : _stopSiteFactory(std::move(stopSiteFactory))
   {
     _debugEventStorage = &debugEventStorage;
     _breakpointManager = &breakpointManager;
     _eventHandler = &eventHandler;
     _startupWaiter = &startupWaiter;
     _commandQueue = &commandQueue;
-    _disassembler = &disassembler;
 
     _systemBreakpoint = true;
     _stepOffPending = false;
-    _postBreakpointAction = MCP::Native::Debugger::Commands::Base::CommandType::CMD_NONE;
 
     _ntdllDbgBreakPointAddress = (DWORD_PTR)GetProcAddress(GetModuleHandleA("ntdll.dll"), "DbgBreakPoint");
   }
@@ -80,19 +82,18 @@ namespace MCP::Native::Debugger::DebugEventHandler
       return HandleSystemBreakpoint(exception, processInfo, threadInfo);
     }
 
-    if (_stepOverBreakpointAddress != 0 && address == _stepOverBreakpointAddress)
+    // A breakpoint the current plan placed itself: the debuggee got where the plan wanted it. Asked before
+    // the breakpoints of the client are, so that the hit is reported as the end of a step
+    if (_currentPlan && _currentPlan->OwnsBreakpointAt(address))
     {
-      // We landed after the CALL.
-      // Remove the temporary breakpoint from the manager and memory
-      _breakpointManager->RemoveBreakpoint(address);
-      _stepOverBreakpointAddress = 0;
+      // Ending the plan takes its breakpoint out of the manager and the debuggee's memory
+      std::unique_ptr<MCP::Native::Debugger::Interfaces::IStopSite> stopSite = CreateStopSite(exception, processInfo);
+      EndCurrentPlan(*stopSite);
 
       // Back up EIP/RIP because the INT 3 instruction advanced it
       RewindInstructionPointer(threadInfo.info.hThread, (PVOID)address);
 
-      // Notify that a "Step" completed
-      // We treat the end of a Step Over just like a Single Step completion
-      return HandleStepHalt(exception, processInfo, threadInfo);
+      return ReportStepStop(exception, processInfo, threadInfo, *stopSite);
     }
 
     // User-defined breakpoint or the breakpoint on entryPoint
@@ -107,7 +108,7 @@ namespace MCP::Native::Debugger::DebugEventHandler
 
   DWORD ExceptionEventHandler::HandleSingleStepException(EXCEPTION_DEBUG_INFO& exception, ProcessInfo& processInfo, ThreadInfo& threadInfo)
   {
-    // The single step every go command starts with has ended: the debuggee has left the stop address
+    // The single step every resumed run starts with has ended: the debuggee has left the stop address
     if (_stepOffPending)
     {
       return HandleStepOffBreakpoint(exception, processInfo, threadInfo);
@@ -135,31 +136,19 @@ namespace MCP::Native::Debugger::DebugEventHandler
 
     _eventHandler->OnSystemBreakpoint(CreateBreakpointEventArgs(exception, processInfo, threadInfo));
 
-    MCP::Native::Debugger::Commands::Base::CommandType command = _commandQueue->ProcessCommandsSync();
+    MCP::Native::Debugger::Interfaces::StopOutcome outcome = _commandQueue->ProcessCommandsSync();
 
-    if (command == MCP::Native::Debugger::Commands::Base::CommandType::CMD_STOP)
+    if (outcome.IsSessionEnded())
     {
       return DBG_EXCEPTION_NOT_HANDLED;
     }
 
-    // CMD_STEP_INTO / CMD_STEP_OVER: Trap Flag doesn't work on system breakpoint.
-    if (command == MCP::Native::Debugger::Commands::Base::CommandType::CMD_CONTINUE)
-    {
-      DWORD_PTR entryPoint = (DWORD_PTR)processInfo.info.lpStartAddress;
-      _breakpointManager->SetBreakpoint(entryPoint);
-    }
-    else if (command == MCP::Native::Debugger::Commands::Base::CommandType::CMD_STEP_INTO)
-    {
-      DWORD_PTR entryPoint = (DWORD_PTR)processInfo.info.lpStartAddress;
-      _breakpointManager->SetBreakpoint(entryPoint);
-    }
-    else if (command == MCP::Native::Debugger::Commands::Base::CommandType::CMD_STEP_OVER)
-    {
-      DWORD_PTR entryPoint = (DWORD_PTR)processInfo.info.lpStartAddress;
-      _breakpointManager->SetBreakpoint(entryPoint);
-    }
+    // Whatever the plan is, the debuggee runs to its entry point from here: the trap flag doesn't work on
+    // the system breakpoint, so no plan can step from it. The plan is dropped without being begun
+    DWORD_PTR entryPoint = (DWORD_PTR)processInfo.info.lpStartAddress;
+    _breakpointManager->SetBreakpoint(entryPoint);
 
-    // OS will handle the initial system breakpoint and run to our new breakpoint (if set) or continue running
+    // OS will handle the initial system breakpoint and run to our new breakpoint
     return DBG_EXCEPTION_NOT_HANDLED;
   }
 
@@ -168,6 +157,10 @@ namespace MCP::Native::Debugger::DebugEventHandler
     DWORD_PTR address = (DWORD_PTR)exception.ExceptionRecord.ExceptionAddress;
     DWORD_PTR entryPoint = (DWORD_PTR)processInfo.info.lpStartAddress;
     bool isEntryPoint = (address == entryPoint);
+
+    // First of all: what the plan of the run that ends here placed must be gone when the stop is reported
+    std::unique_ptr<MCP::Native::Debugger::Interfaces::IStopSite> stopSite = CreateStopSite(exception, processInfo);
+    EndCurrentPlan(*stopSite);
 
     if (isEntryPoint)
     {
@@ -189,39 +182,29 @@ namespace MCP::Native::Debugger::DebugEventHandler
       _eventHandler->OnBreakpoint(CreateBreakpointEventArgs(exception, processInfo, threadInfo));
     }
 
-    return ResumeFromStop(exception, processInfo, threadInfo);
+    return ResumeFromStop(threadInfo, *stopSite);
   }
 
-  DWORD ExceptionEventHandler::ResumeFromStop(EXCEPTION_DEBUG_INFO& exception, ProcessInfo& processInfo, ThreadInfo& threadInfo)
+  DWORD ExceptionEventHandler::ResumeFromStop(ThreadInfo& threadInfo, MCP::Native::Debugger::Interfaces::IStopSite& stopSite)
   {
-    MCP::Native::Debugger::Commands::Base::CommandType command = _commandQueue->ProcessCommandsSync();
-    if (command == MCP::Native::Debugger::Commands::Base::CommandType::CMD_STOP)
+    MCP::Native::Debugger::Interfaces::StopOutcome outcome = _commandQueue->ProcessCommandsSync();
+    if (outcome.IsSessionEnded())
     {
       return DBG_CONTINUE; // Main loop will exit
     }
 
-    DWORD_PTR stopAddress = (DWORD_PTR)exception.ExceptionRecord.ExceptionAddress;
-
-    _stepOverBreakpointAddress = 0;
-    if (command == MCP::Native::Debugger::Commands::Base::CommandType::CMD_STEP_OVER)
-    {
-      size_t instrLen = 0;
-      if (IsCallInstruction(processInfo.info.hProcess, stopAddress, instrLen))
-      {
-        // Step over a CALL: run until the instruction behind it
-        _stepOverBreakpointAddress = stopAddress + instrLen;
-        _breakpointManager->SetBreakpoint(_stepOverBreakpointAddress);
-      }
-    }
+    // The plan prepares its run while the debuggee still stands at the stop address, before the single
+    // step is asked for
+    _currentPlan = outcome.TakePlan();
+    _currentPlan->Begin(stopSite);
 
     // The instruction at the stop address has to run before a breakpoint instruction may be written there.
-    // That also goes for a breakpoint that is set only after this go command, while the thread still stands
-    // at the address - so the hold on the address cannot end here, and it does not matter whether a
-    // breakpoint is set there right now. Every go command executes the instruction with one single step;
-    // afterwards HandleStepOffBreakpoint releases the address and acts on the go command
+    // That also goes for a breakpoint that is set only after the debuggee was resumed, while the thread
+    // still stands at the address - so the hold on the address cannot end here, and it does not matter
+    // whether a breakpoint is set there right now. Whatever the plan is, the instruction is executed with
+    // one single step; afterwards HandleStepOffBreakpoint releases the address and asks the plan how to go on
     _breakpointManager->SetTrapFlag(threadInfo.info.hThread, true);
     _stepOffPending = true;
-    _postBreakpointAction = command;
     return DBG_CONTINUE;
   }
 
@@ -231,29 +214,10 @@ namespace MCP::Native::Debugger::DebugEventHandler
     _stepOffPending = false;
     _breakpointManager->ReleaseHeldBreakpoint();
 
-    MCP::Native::Debugger::Commands::Base::CommandType command = _postBreakpointAction;
-    _postBreakpointAction = MCP::Native::Debugger::Commands::Base::CommandType::CMD_NONE;
-
-    if (command == MCP::Native::Debugger::Commands::Base::CommandType::CMD_CONTINUE)
+    // Without a current plan there is nobody to halt for: another stop has ended the plan while the single
+    // step was still pending
+    if (_currentPlan && _currentPlan->HaltsAfterFirstInstruction())
     {
-      return DBG_CONTINUE;
-    }
-    else if (command == MCP::Native::Debugger::Commands::Base::CommandType::CMD_STEP_INTO)
-    {
-      return HandleStepHalt(exception, processInfo, threadInfo);
-    }
-    else if (command == MCP::Native::Debugger::Commands::Base::CommandType::CMD_STEP_OVER)
-    {
-      // If _stepOverBreakpointAddress is set, it means we just Single Stepped into a function (because it was a CALL), but we have a breakpoint waiting 
-      // at the return address.
-
-      if (_stepOverBreakpointAddress != 0)
-      {
-        // We are inside the function now. Continue running until we hit the _stepOverBreakpointAddress.
-        return DBG_CONTINUE;
-      }
-
-      // Otherwise, it was a normal instruction (MOV, ADD, etc), so the step is done.
       return HandleStepHalt(exception, processInfo, threadInfo);
     }
 
@@ -262,13 +226,40 @@ namespace MCP::Native::Debugger::DebugEventHandler
 
   DWORD ExceptionEventHandler::HandleStepHalt(EXCEPTION_DEBUG_INFO& exception, ProcessInfo& processInfo, ThreadInfo& threadInfo)
   {
+    std::unique_ptr<MCP::Native::Debugger::Interfaces::IStopSite> stopSite = CreateStopSite(exception, processInfo);
+    EndCurrentPlan(*stopSite);
+
+    return ReportStepStop(exception, processInfo, threadInfo, *stopSite);
+  }
+
+  DWORD ExceptionEventHandler::ReportStepStop(EXCEPTION_DEBUG_INFO& exception,
+                                              ProcessInfo& processInfo,
+                                              ThreadInfo& threadInfo,
+                                              MCP::Native::Debugger::Interfaces::IStopSite& stopSite)
+  {
     // A breakpoint at the address the step ended at must not show in the memory the listener of the event
     // reads, and must not stop the debuggee before the instruction there has run
     _breakpointManager->HoldBreakpointAt((DWORD_PTR)exception.ExceptionRecord.ExceptionAddress);
 
     _eventHandler->OnSingleStep(CreateBreakpointEventArgs(exception, processInfo, threadInfo));
 
-    return ResumeFromStop(exception, processInfo, threadInfo);
+    return ResumeFromStop(threadInfo, stopSite);
+  }
+
+  std::unique_ptr<MCP::Native::Debugger::Interfaces::IStopSite> ExceptionEventHandler::CreateStopSite(EXCEPTION_DEBUG_INFO& exception, ProcessInfo& processInfo)
+  {
+    return _stopSiteFactory->Create(processInfo.info.hProcess, (DWORD_PTR)exception.ExceptionRecord.ExceptionAddress);
+  }
+
+  void ExceptionEventHandler::EndCurrentPlan(MCP::Native::Debugger::Interfaces::IStopSite& stopSite)
+  {
+    if (!_currentPlan)
+    {
+      return;
+    }
+
+    _currentPlan->End(stopSite);
+    _currentPlan.reset();
   }
 
   void ExceptionEventHandler::RewindInstructionPointer(HANDLE threadHandle, PVOID address)
@@ -282,11 +273,6 @@ namespace MCP::Native::Debugger::DebugEventHandler
     context.Eip = (DWORD32)address;
 #endif
     SetThreadContext(threadHandle, &context);
-  }
-
-  bool ExceptionEventHandler::IsCallInstruction(HANDLE processHandle, DWORD_PTR currentIp, size_t& instrLen)
-  {
-    return _disassembler->IsCallInstruction(processHandle, currentIp, instrLen);
   }
 
   std::shared_ptr<MCP::Native::Debugger::Interfaces::BreakpointEventArgs> ExceptionEventHandler::CreateBreakpointEventArgs(EXCEPTION_DEBUG_INFO& exception, ProcessInfo& processInfo, ThreadInfo& threadInfo)

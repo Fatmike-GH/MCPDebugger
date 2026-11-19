@@ -55,16 +55,4 @@ namespace MCP::Native::Tests::Debugger::Commands
     EXPECT_FALSE(stringResult->IsSuccessful());
     EXPECT_TRUE(stringResult->GetResult().empty());
   }
-
-  TEST(TryResolveStringCommandTests, GetTypeReturnsTryResolveString)
-  {
-    // Arrange
-    TryResolveStringCommand command(0x403000);
-
-    // Act
-    Base::CommandType type = command.GetType();
-
-    // Assert
-    EXPECT_EQ(Base::CommandType::CMD_TRY_RESOLVE_STRING, type);
-  }
 }

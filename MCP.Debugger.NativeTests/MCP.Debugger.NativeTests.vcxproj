@@ -23,12 +23,15 @@
   <ItemGroup>
     <ClCompile Include="..\MCP.Debugger\Native\Debugger\Commands\Base\ICommand.cpp" />
     <ClCompile Include="..\MCP.Debugger\Native\Debugger\Commands\ContinueCommand.cpp" />
+    <ClCompile Include="..\MCP.Debugger\Native\Debugger\Commands\ContinuePlan.cpp" />
     <ClCompile Include="..\MCP.Debugger\Native\Debugger\Commands\DisassembleCommand.cpp" />
     <ClCompile Include="..\MCP.Debugger\Native\Debugger\Commands\ReadMemoryCommand.cpp" />
     <ClCompile Include="..\MCP.Debugger\Native\Debugger\Commands\RemoveBreakpointCommand.cpp" />
     <ClCompile Include="..\MCP.Debugger\Native\Debugger\Commands\SetBreakpointCommand.cpp" />
     <ClCompile Include="..\MCP.Debugger\Native\Debugger\Commands\StepIntoCommand.cpp" />
+    <ClCompile Include="..\MCP.Debugger\Native\Debugger\Commands\StepIntoPlan.cpp" />
     <ClCompile Include="..\MCP.Debugger\Native\Debugger\Commands\StepOverCommand.cpp" />
+    <ClCompile Include="..\MCP.Debugger\Native\Debugger\Commands\StepOverPlan.cpp" />
     <ClCompile Include="..\MCP.Debugger\Native\Debugger\Commands\StopCommand.cpp" />
     <ClCompile Include="..\MCP.Debugger\Native\Debugger\Commands\TryResolveStringCommand.cpp" />
     <ClCompile Include="..\MCP.Debugger\Native\Debugger\Commands\WriteMemoryCommand.cpp" />
@@ -38,6 +41,7 @@
     <ClCompile Include="..\MCP.Debugger\Native\Debugger\DebugEventHandler\ExceptionEventHandler.cpp" />
     <ClCompile Include="..\MCP.Debugger\Native\Debugger\Debugger.cpp" />
     <ClCompile Include="..\MCP.Debugger\Native\Debugger\DebuggerCommandQueue.cpp" />
+    <ClCompile Include="..\MCP.Debugger\Native\Debugger\StopSite.cpp" />
     <ClCompile Include="..\MCP.Debugger\Native\Disassembler\Disassembler.cpp" />
     <ClCompile Include="..\MCP.Debugger\Native\Disassembler\SymbolResolver.cpp" />
     <ClCompile Include="..\MCP.Debugger\Native\PEFile\ExecutableValidator.cpp" />
@@ -50,13 +54,17 @@
     <ClCompile Include="Debugger\BreakpointManagerTests.cpp" />
     <ClCompile Include="Debugger\DebuggerCommandQueueTests.cpp" />
     <ClCompile Include="Debugger\DebuggerTests.cpp" />
+    <ClCompile Include="Debugger\StopSiteTests.cpp" />
     <ClCompile Include="Debugger\Commands\ContinueCommandTests.cpp" />
+    <ClCompile Include="Debugger\Commands\ContinuePlanTests.cpp" />
     <ClCompile Include="Debugger\Commands\DisassembleCommandTests.cpp" />
     <ClCompile Include="Debugger\Commands\ReadMemoryCommandTests.cpp" />
     <ClCompile Include="Debugger\Commands\RemoveBreakpointCommandTests.cpp" />
     <ClCompile Include="Debugger\Commands\SetBreakpointCommandTests.cpp" />
     <ClCompile Include="Debugger\Commands\StepIntoCommandTests.cpp" />
+    <ClCompile Include="Debugger\Commands\StepIntoPlanTests.cpp" />
     <ClCompile Include="Debugger\Commands\StepOverCommandTests.cpp" />
+    <ClCompile Include="Debugger\Commands\StepOverPlanTests.cpp" />
     <ClCompile Include="Debugger\Commands\StopCommandTests.cpp" />
     <ClCompile Include="Debugger\Commands\TryResolveStringCommandTests.cpp" />
     <ClCompile Include="Debugger\Commands\WriteMemoryCommandTests.cpp" />
@@ -79,6 +87,9 @@
     <ClInclude Include="Mocks\Debugger\Interfaces\MockDebuggerSession.h" />
     <ClInclude Include="Mocks\Debugger\Interfaces\MockDebuggerSessionFactory.h" />
     <ClInclude Include="Mocks\Debugger\Interfaces\MockDebuggerThread.h" />
+    <ClInclude Include="Mocks\Debugger\Interfaces\MockResumePlan.h" />
+    <ClInclude Include="Mocks\Debugger\Interfaces\MockStopSite.h" />
+    <ClInclude Include="Mocks\Debugger\Interfaces\MockStopSiteFactory.h" />
     <ClInclude Include="Mocks\Disassembler\Interfaces\MockDisassembler.h" />
     <ClInclude Include="Mocks\Disassembler\Interfaces\MockSymbolResolver.h" />
     <ClInclude Include="Mocks\PEFile\Interfaces\MockExecutableValidator.h" />
@@ -88,6 +99,7 @@
     <ClInclude Include="Mocks\ProcessExplorer\Interfaces\MockProcessExplorer.h" />
     <ClInclude Include="TestHelpers\CrossThread.h" />
     <ClInclude Include="TestHelpers\Futures.h" />
+    <ClInclude Include="TestHelpers\ResumePlanProbe.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="vcpkg.json" />

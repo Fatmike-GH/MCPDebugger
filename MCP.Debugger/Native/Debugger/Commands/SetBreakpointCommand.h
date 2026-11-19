@@ -1,5 +1,4 @@
 #pragma once
-#include ".\Base\CommandType.h"
 #include ".\Base\ICommand.h"
 
 namespace MCP::Native::Debugger::Commands
@@ -8,8 +7,7 @@ namespace MCP::Native::Debugger::Commands
   {
   public:
     SetBreakpointCommand(DWORD_PTR address)
-      : ICommand(Base::CommandType::CMD_SET_BREAKPOINT),
-      _address(address)
+      : _address(address)
     {
     }
 
