@@ -53,6 +53,7 @@ namespace MCP::Native::Debugger::DebugEventHandler
     DWORD HandleGuardPageException(EXCEPTION_DEBUG_INFO& exception, ProcessInfo& processInfo, ThreadInfo& threadInfo);
 
     DWORD HandleSystemBreakpoint(EXCEPTION_DEBUG_INFO& exception, ProcessInfo& processInfo, ThreadInfo& threadInfo);
+    DWORD HandleEntryPointBreakpoint(EXCEPTION_DEBUG_INFO& exception, ProcessInfo& processInfo, ThreadInfo& threadInfo);
     DWORD HandleUserBreakpoint(EXCEPTION_DEBUG_INFO& exception, ProcessInfo& processInfo, ThreadInfo& threadInfo);
     DWORD HandleStepOffBreakpoint(EXCEPTION_DEBUG_INFO& exception, ProcessInfo& processInfo, ThreadInfo& threadInfo);
     DWORD HandleStepHalt(EXCEPTION_DEBUG_INFO& exception, ProcessInfo& processInfo, ThreadInfo& threadInfo);
@@ -84,6 +85,12 @@ namespace MCP::Native::Debugger::DebugEventHandler
     /// Does nothing when no plan is current.
     /// </summary>
     void EndCurrentPlan(MCP::Native::Debugger::Interfaces::IStopSite& stopSite);
+
+    /// <summary>
+    /// What a stop at a breakpoint that was hit needs before it is reported: holds the stop address - the
+    /// exception address - and sets the instruction pointer of the thread back to it.
+    /// </summary>
+    void HoldAndRewindAtBreakpoint(EXCEPTION_DEBUG_INFO& exception, ThreadInfo& threadInfo);
 
     void RewindInstructionPointer(HANDLE threadHandle, PVOID address);
     std::shared_ptr<MCP::Native::Debugger::Interfaces::BreakpointEventArgs> CreateBreakpointEventArgs(EXCEPTION_DEBUG_INFO& exception, ProcessInfo& processInfo, ThreadInfo& threadInfo);

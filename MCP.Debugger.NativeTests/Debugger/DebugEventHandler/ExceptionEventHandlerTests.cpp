@@ -95,7 +95,10 @@ namespace MCP::Native::Tests::Debugger::DebugEventHandler
     static constexpr DWORD ProcessId = 1000;
     static constexpr DWORD ThreadId = 2000;
 
-    /// <summary>Entry point of the process. Stops there are handled differently, so no test stops at it.</summary>
+    /// <summary>
+    /// Entry point of the process. A stop there is the entry-point stop, which is handled differently, so only
+    /// the tests of that stop stop at it.
+    /// </summary>
     static constexpr DWORD_PTR EntryPoint = 0x401000;
 
     /// <summary>The address the debuggee is stopped at when the go command is issued.</summary>
@@ -593,6 +596,54 @@ namespace MCP::Native::Tests::Debugger::DebugEventHandler
     EXPECT_EQ(ended.ContinueStatus, static_cast<DWORD>(DBG_CONTINUE));
     EXPECT_EQ(_singleStepRequests, 0);
     EXPECT_EQ(_stepStops.size(), 1u);
+  }
+
+  TEST_F(ExceptionEventHandlerTests, TheHitOfTheEntryPointBreakpointRemovesItAndReportsTheEntryPointStop)
+  {
+    // Arrange
+    PassTheSystemBreakpoint(); // leaves the breakpoint at the entry point set and armed
+    bool setWhenTheStopWasReported = true;
+    bool armedWhenTheStopWasReported = true;
+    EXPECT_CALL(_eventHandler, OnEntryPointBreakpoint(_)).WillOnce([&]
+    {
+      setWhenTheStopWasReported = _breakpointManager.HasBreakpoint(EntryPoint);
+      armedWhenTheStopWasReported = IsArmed(EntryPoint);
+    });
+    ExpectStopAnsweredWithTheEndOfTheSession();
+
+    // Act
+    HandleResult stopped = DeliverBreakpointExceptionAt(EntryPoint);
+
+    // Assert: the strict event handler fails the test when a breakpoint stop is reported as well, the strict
+    // queue when the handler does not wait for the client
+    EXPECT_FALSE(setWhenTheStopWasReported);
+    EXPECT_FALSE(armedWhenTheStopWasReported);
+    EXPECT_EQ(stopped.ContinueStatus, static_cast<DWORD>(DBG_CONTINUE));
+    EXPECT_EQ(_singleStepRequests, 0);
+    EXPECT_THAT(_stopSites, ElementsAre(Pair(FakeProcessHandle(), EntryPoint)));
+  }
+
+  TEST_F(ExceptionEventHandlerTests, ABreakpointSetAtTheEntryPointDuringTheEntryPointStopStaysUnarmedUntilTheInstructionRan)
+  {
+    // Arrange
+    PassTheSystemBreakpoint();
+    EXPECT_CALL(_eventHandler, OnEntryPointBreakpoint(_)).Times(1);
+    ExpectBreakpointCreatedFor(EntryPoint); // the breakpoint the client sets during the stop
+    ExpectStopAnsweredWith(std::make_unique<ContinuePlan>(), [this] { _breakpointManager.SetBreakpoint(EntryPoint); });
+
+    // Act: the debuggee hits the entry-point breakpoint, the client sets a breakpoint there and continues
+    DeliverBreakpointExceptionAt(EntryPoint);
+
+    // Assert: the entry point is held like any other stop address
+    EXPECT_TRUE(_breakpointManager.HasBreakpoint(EntryPoint));
+    EXPECT_FALSE(IsArmed(EntryPoint));
+    EXPECT_EQ(_singleStepRequests, 1);
+
+    // Act: the instruction at the entry point ran
+    DeliverSingleStepAt(NextAddress);
+
+    // Assert
+    EXPECT_TRUE(IsArmed(EntryPoint));
   }
 
   TEST_F(ExceptionEventHandlerTests, AStepOverInterruptedByABreakpointInTheCalledFunctionLeavesNoBreakpointBehindTheCall)

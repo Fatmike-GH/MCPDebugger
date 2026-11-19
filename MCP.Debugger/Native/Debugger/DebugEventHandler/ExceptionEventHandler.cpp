@@ -96,9 +96,16 @@ namespace MCP::Native::Debugger::DebugEventHandler
       return ReportStepStop(exception, processInfo, threadInfo, *stopSite);
     }
 
-    // User-defined breakpoint or the breakpoint on entryPoint
+    // A breakpoint of the breakpoint manager. At the process start address it is always the entry-point stop,
+    // also for a breakpoint a client set there
     if (_breakpointManager->HasBreakpoint(address))
     {
+      DWORD_PTR entryPoint = (DWORD_PTR)processInfo.info.lpStartAddress;
+      if (address == entryPoint)
+      {
+        return HandleEntryPointBreakpoint(exception, processInfo, threadInfo);
+      }
+
       return HandleUserBreakpoint(exception, processInfo, threadInfo);
     }
 
@@ -152,37 +159,43 @@ namespace MCP::Native::Debugger::DebugEventHandler
     return DBG_EXCEPTION_NOT_HANDLED;
   }
 
-  DWORD ExceptionEventHandler::HandleUserBreakpoint(EXCEPTION_DEBUG_INFO& exception, ProcessInfo& processInfo, ThreadInfo& threadInfo)
+  DWORD ExceptionEventHandler::HandleEntryPointBreakpoint(EXCEPTION_DEBUG_INFO& exception, ProcessInfo& processInfo, ThreadInfo& threadInfo)
   {
-    DWORD_PTR address = (DWORD_PTR)exception.ExceptionRecord.ExceptionAddress;
-    DWORD_PTR entryPoint = (DWORD_PTR)processInfo.info.lpStartAddress;
-    bool isEntryPoint = (address == entryPoint);
-
     // First of all: what the plan of the run that ends here placed must be gone when the stop is reported
     std::unique_ptr<MCP::Native::Debugger::Interfaces::IStopSite> stopSite = CreateStopSite(exception, processInfo);
     EndCurrentPlan(*stopSite);
 
-    if (isEntryPoint)
-    {
-      // The breakpoint on the entry point reports this one stop only
-      _breakpointManager->RemoveBreakpoint(address);
-    }
+    // The breakpoint on the entry point reports this one stop only
+    _breakpointManager->RemoveBreakpoint((DWORD_PTR)exception.ExceptionRecord.ExceptionAddress);
 
-    // Takes the breakpoint instruction out of memory before the stop is reported: the listener of the event
-    // reads the debuggee's memory
-    _breakpointManager->HoldBreakpointAt(address);
-    RewindInstructionPointer(threadInfo.info.hThread, exception.ExceptionRecord.ExceptionAddress);
+    HoldAndRewindAtBreakpoint(exception, threadInfo);
 
-    if (isEntryPoint)
-    {
-      _eventHandler->OnEntryPointBreakpoint(CreateBreakpointEventArgs(exception, processInfo, threadInfo));
-    }
-    else
-    {
-      _eventHandler->OnBreakpoint(CreateBreakpointEventArgs(exception, processInfo, threadInfo));
-    }
+    _eventHandler->OnEntryPointBreakpoint(CreateBreakpointEventArgs(exception, processInfo, threadInfo));
 
     return ResumeFromStop(threadInfo, *stopSite);
+  }
+
+  DWORD ExceptionEventHandler::HandleUserBreakpoint(EXCEPTION_DEBUG_INFO& exception, ProcessInfo& processInfo, ThreadInfo& threadInfo)
+  {
+    // First of all: what the plan of the run that ends here placed must be gone when the stop is reported
+    std::unique_ptr<MCP::Native::Debugger::Interfaces::IStopSite> stopSite = CreateStopSite(exception, processInfo);
+    EndCurrentPlan(*stopSite);
+
+    HoldAndRewindAtBreakpoint(exception, threadInfo);
+
+    _eventHandler->OnBreakpoint(CreateBreakpointEventArgs(exception, processInfo, threadInfo));
+
+    return ResumeFromStop(threadInfo, *stopSite);
+  }
+
+  void ExceptionEventHandler::HoldAndRewindAtBreakpoint(EXCEPTION_DEBUG_INFO& exception, ThreadInfo& threadInfo)
+  {
+    // Takes the breakpoint instruction out of memory before the stop is reported: the listener of the event
+    // reads the debuggee's memory
+    _breakpointManager->HoldBreakpointAt((DWORD_PTR)exception.ExceptionRecord.ExceptionAddress);
+
+    // Back up EIP/RIP because the INT 3 instruction advanced it
+    RewindInstructionPointer(threadInfo.info.hThread, exception.ExceptionRecord.ExceptionAddress);
   }
 
   DWORD ExceptionEventHandler::ResumeFromStop(ThreadInfo& threadInfo, MCP::Native::Debugger::Interfaces::IStopSite& stopSite)
